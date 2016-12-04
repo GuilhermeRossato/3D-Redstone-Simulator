@@ -2,7 +2,6 @@
 
 A javascript performance experiment to simulate minecraft's redstone logic in a 3D environment.
 
-
 Main objectives and priorities for this project:
 
 1. Menu
@@ -17,13 +16,6 @@ Dependencies, Inspiration and Credits
 2. [Minecraft](https://minecraft.net/pt-br/) - by (Mojang)[https://mojang.com/]
 3. Digital Circuit Logic, or [Boolean Algebra](https://en.wikipedia.org/wiki/Boolean_algebra)
 
-Three.js will be used to show the world.
-
-
-
-A browser app to simulate minecraft redstone logic using THREE.js
-A browser app to generate multi purpose functions using interpolation.
-
 Acess this link to open the application:
 
-https://cdn.rawgit.com/GuilhermeRossato/Function-Generator/master/index.html
+https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/index.html
