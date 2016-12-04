@@ -170,7 +170,7 @@ Menu.prototype = {
 	},
 	onKeyDown: function(ev) {
 		let id = ev.keyCode - 49;
-		if (id >= 0 && id <= 4)
+		if (ev.ctrlKey && id >= 0 && id <= 4)
 			this.buttons[id].onclick(this.buttons[id]);
 		else if (ev.ctrlKey && ev.key == "z")
 			this.getButtonByLabel("Undo").onclick();
