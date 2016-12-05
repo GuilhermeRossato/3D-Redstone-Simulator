@@ -45,6 +45,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-Script/Libraries/
+Script/Libraries/stats.min.js
+Script/Libraries/three.min.js
 *.bat
 *.min.js
