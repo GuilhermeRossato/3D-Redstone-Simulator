@@ -241,7 +241,8 @@ function Menu(domMenu, domSubmenu) {
 		this.buttons.push(button);
 	}
 	);
-	this.selectedData = "{ type: \"GStructure\", size: { x: 0, y: 0, z: 0 }, data: \"\" }";
+	//{ type: \"GStructure\", size: { x: 0, y: 0, z: 0 }, data: \"\" }
+	this.selectedData = "";
 	this.pasteData = function(text) {
 		console.log("Change me!", text);
 	}

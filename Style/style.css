@@ -1,10 +1,14 @@
+body {
+	cursor:pointer;
+}
+
 div.full {
 	text-align: center;
 	display: table;
 	height:100%;
 	width:100%;
 	z-index:-1;
-	margin-top: 0px;
+	margin:0;
 	position: absolute;
 	top:0;
 }
@@ -15,7 +19,7 @@ div.full div {
 }
 
 div.full div h1 {
-	margin:0px;
+	margin:5px;
 	padding:0px;
 	text-size:36px;
 }
