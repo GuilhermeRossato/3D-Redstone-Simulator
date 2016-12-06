@@ -1,0 +1,33 @@
+div.full {
+	text-align: center;
+	display: table;
+	height:100%;
+	width:100%;
+	z-index:-1;
+	margin:0;
+	position: absolute;
+	top:0;
+}
+
+div.full div.first-message {
+	display: table-cell;
+	vertical-align:middle;
+	background-color:rgba(0,0,0,0.5);
+}
+
+div.full div.menu {
+	display: table-cell;
+	vertical-align:middle;
+}
+
+div.full div h1 {
+	margin:5px;
+	padding:0px;
+	text-size:36px;
+}
+
+div.full div p {
+	margin:0px;
+	padding:0px;
+	text-size:12px;
+}
