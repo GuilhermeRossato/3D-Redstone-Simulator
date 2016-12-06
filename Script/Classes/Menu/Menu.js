@@ -1,3 +1,5 @@
+var menuClick = false;
+
 Menu.prototype = {
 	constructor: Menu,
 	options: menu_structure,
@@ -93,6 +95,7 @@ Menu.prototype = {
 		domButton.clickFunc = buttonData.onclick;
 		domButton.destroy = buttonData.destroy;
 		domButton.onclick = function() {
+			menuClick = true;
 			if (this.enabled && this.clickFunc instanceof Function) {
 				if (this.group != 1 || !this.state)
 					this.clickFunc();
@@ -221,17 +224,27 @@ Menu.prototype = {
 		input.style.margin = 0;
 		input.style.background = "transparent";
 		return input;
+	},
+	onPointerlockChange: function() {
+		if (document.pointerLockElement == document.body) {
+			this.domButtons.style.display = 'none';
+			this.submenu.style.display = 'none';
+		} else {
+			this.domButtons.style.display = 'flex';
+			this.submenu.style.display = 'flex';
+		}
 	}
 }
-function Menu(domMenu, domSubmenu) {
+function Menu(domMenu, domSubmenu, smallMenu) {
 	this.assert(domMenu instanceof HTMLDivElement, "Invalid Menu Element (Expected a DIV)");
 	this.assert(domSubmenu instanceof HTMLDivElement, "Invalid Submenu Element (Expected a DIV)");
 	let domButtons = document.createElement("div");
 	domButtons.className = "buttons";
+	this.domButtons = domButtons;
 	this.buttons = [];
 	this.events = {};
 	this.submenu = domSubmenu;
-	this.iconSize = 48;
+	this.iconSize = smallMenu?24:48;
 	Menu.prototype.options.forEach((buttonData)=>{
 		let buttonElement = document.createElement("div");
 		buttonElement.className = "button";
@@ -251,4 +264,5 @@ function Menu(domMenu, domSubmenu) {
 	domMenu.appendChild(this.hiddenInput);
 	this.updateSizeStyle();
 	document.addEventListener("keydown", (ev)=>this.onKeyDown.call(this, ev));
+	document.addEventListener("pointerlockchange", (ev)=>this.onPointerlockChange.call(this, ev));
 }

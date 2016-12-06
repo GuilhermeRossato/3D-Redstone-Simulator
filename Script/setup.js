@@ -7,7 +7,10 @@ var domSubmenu = document.createElement("div")
 domSubmenu.className = "submenu";
 domInterface.appendChild(domMenu);
 domInterface.appendChild(domSubmenu);
-var menu = new Menu(domMenu,domSubmenu);
+var smallMenu = false;
+if ((typeof getCookie === "function") && (getCookie("rs_smallMenu") == '1'))
+	smallMenu = true;
+var menu = new Menu(domMenu,domSubmenu, smallMenu);
 var logger = new Logger(domInterface);
 var pointerlockSupport = ('pointerLockElement'in document || 'mozPointerLockElement'in document || 'webkitPointerLockElement'in document);
 if (!pointerlockSupport) {
