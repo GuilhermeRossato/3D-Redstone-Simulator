@@ -1,5 +1,6 @@
 /**
  * @author mrdoob / http://mrdoob.com/
+ * Slightly edited by GuilhermeRossato
  */
 THREE.PointerLockControls = function(camera) {
 	var scope = this;
@@ -22,13 +23,11 @@ THREE.PointerLockControls = function(camera) {
 	this.dispose = function() {
 		document.removeEventListener('mousemove', onMouseMove, false);
 	}
-	;
 	document.addEventListener('mousemove', onMouseMove, false);
 	this.enabled = false;
 	this.getObject = function() {
 		return yawObject;
 	}
-	;
 	this.getDirection = function() {
 		// assumes the camera itself is not rotated
 		var direction = new THREE.Vector3(0,0,-1);
@@ -38,7 +37,40 @@ THREE.PointerLockControls = function(camera) {
 			v.copy(direction).applyEuler(rotation);
 			return v;
 		}
-		;
-	}();
+	}
+	this.moveForward = false;
+	this.moveLeft = false;
+	this.moveBackward = false;
+	this.moveRight = false;
+	this.moveUp = false;
+	this.moveDown = false;
+	this.onKeyChange = function(keyCode, down) {
+		switch (keyCode) {
+		case 38: // up
+		case 87: // w
+			this.moveForward = down;
+			break;
+		case 37: // left
+		case 65: // a
+			this.moveLeft = down;
+			break;
+		case 40: // down
+		case 83: // s
+			this.moveBackward = down;
+			break;
+		case 39: // right
+		case 68: // d
+			this.moveRight = down;
+			break;
+		case 32: // space
+			this.moveUp = down;
+			break;
+		case 16: // shift
+			this.moveDown = down;
+			break;
+		}
+	}
+	document.addEventListener( 'keydown', (event) => this.onKeyChange(event.keyCode, true), false );
+	document.addEventListener( 'keyup', (event) => this.onKeyChange(event.keyCode, false), false );
+	this.getDirection();
 }
-;
