@@ -44,7 +44,7 @@ THREE.PointerLockControls = function(camera) {
 	this.moveRight = false;
 	this.moveUp = false;
 	this.moveDown = false;
-	this.onKeyChange = function(keyCode, down) {
+	this.onKeyChange = function(keyCode, down, shiftKey) {
 		switch (keyCode) {
 		case 38: // up
 		case 87: // w
@@ -63,14 +63,14 @@ THREE.PointerLockControls = function(camera) {
 			this.moveRight = down;
 			break;
 		case 32: // space
-			this.moveUp = down;
+			this.moveUp = this.enabled && down;
 			break;
 		case 16: // shift
-			this.moveDown = down;
+			this.moveDown = this.enabled && down;
 			break;
 		}
 	}
-	document.addEventListener( 'keydown', (event) => this.onKeyChange(event.keyCode, true), false );
-	document.addEventListener( 'keyup', (event) => this.onKeyChange(event.keyCode, false), false );
+	document.addEventListener( 'keydown', (event) => this.onKeyChange(event.keyCode, true, event.shiftKey), false );
+	document.addEventListener( 'keyup', (event) => this.onKeyChange(event.keyCode, false, event.shiftKey), false );
 	this.getDirection();
 }
