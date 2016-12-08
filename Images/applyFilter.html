@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Apply Pixel Filter</title>
+	</head>
+	<body>
+		<div>
+			<input type='text' id='filename' value='grass_top.png'/>
+			<button onclick="onButtonLoad()">Load image</button>
+		</div>
+		<div>
+			<canvas id='canvas' style='image-rendering:pixelated; margin-top: 5px; padding: 1px; border: 1px #000 dashed'></canvas>
+		</div>
+		<script src="../Script/BezierFunctions.js"></script>
+		<script>
+			
+			function red(original) {
+				return interpolate([118, 58], [145, 70], [173, 75]).at(original)-10;
+			}
+			function green(original) {
+				return interpolate([118, 101], [145, 119], [173, 128]).at(original)-10;
+			}
+			function blue(original) {
+				return interpolate([118, 36], [145, 44], [173, 47]).at(original)-10;
+			}
+			function alpha(original) {
+				return original;
+			}
+			function onLoad(event) {
+				if (event.type == "load") {
+					canvasDrawImage();
+					canvasProcess();
+				}
+			}
+			function onButtonLoad() {
+				image.src = "";
+				try {
+					if (input.value.indexOf(".") == -1) {
+						image.src = "./Textures/" + input.value + ".png";
+					} else {
+						image.src = "./Textures/" + input.value;
+					}
+				} catch (e) {
+					canvasClear();
+				}
+			}
+			function canvasDrawImage() {
+				ctx.clearRect(0, 0, 16, 16);
+				ctx.drawImage(image, 0, 0);
+			}
+			function canvasProcess() {
+				var imgData = ctx.getImageData(0, 0, 16, 16);
+				var len = imgData.data.length;
+				for (var i = 0; i < len; i+=4) {
+					imgData.data[i+0] = Math.max(Math.min(red(imgData.data[i+0]), 255), 0);
+					imgData.data[i+1] = Math.max(Math.min(green(imgData.data[i+1]), 255), 0);
+					imgData.data[i+2] = Math.max(Math.min(blue(imgData.data[i+2]), 255), 0);
+					imgData.data[i+3] = Math.max(Math.min(alpha(imgData.data[i+3]), 255), 0);
+				}
+				ctx.putImageData(imgData, 0, 0);
+			}
+			function canvasClear() {
+				ctx.clearRect(0, 0, 16, 16);
+				ctx.strokeStyle = "#888";
+				ctx.beginPath();
+				ctx.arc(8, 8, 6, 0, 2 * Math.PI);
+				ctx.moveTo(2, 2);
+				ctx.lineTo(14, 14);
+				ctx.stroke();
+			}
+			var image = new Image();
+			var canvas = document.getElementById("canvas");
+			var input = document.getElementById("filename");
+			var ctx = canvas.getContext("2d");
+			canvas.width = 16;
+			canvas.height = 16;
+			canvas.style.width = "240px";
+			canvas.style.height = "240px";
+			canvasClear();
+			image.onload = onLoad;
+			image.onerror = canvasClear;
+			onButtonLoad();
+		</script>
+	</body>
+</html>
