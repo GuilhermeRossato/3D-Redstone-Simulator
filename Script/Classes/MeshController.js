@@ -8,7 +8,7 @@ MeshController.prototype = {
 	},
 	justAddMesh: function(id, data) {
 		this.meshes.push({
-			id: id
+			id: id,
 			data: data
 		});
 	},
