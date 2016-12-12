@@ -18,10 +18,13 @@ If you download a release and run index.html on your browser and see that a cros
 1. Menu (done)
 2. 3D Controls similar to minecraft (done)
 3. Correct Block Drawing (done)
-4. Save/Load System
-5. Redstone Simulation
-6. Piston Simulation
-7. Water and Lava Simulation
+4. Inventory and Hotbar system
+5. Block placement
+6. Selection tools (fill, copy, etc)
+7. Save/Load System
+8. Redstone Simulation
+9. Piston Simulation
+10. Water and Lava Simulation (low priority)
 
 #Dependencies, Credits and Inspiration
 
