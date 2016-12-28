@@ -2,14 +2,13 @@ var options = {
 	playerSpeed: 0.075,
 	viewDistance: 100
 };
-
 var controlsEnabled = false;
 var camera, scene, renderer;
 var geometry, material, mesh;
-var controls, raycaster;
+var controls;
 var velocity, light, player;
 var chunks;
-var position = {x: 0, y: 0, z: 0}
+var animator;
 
 function setup() {
 	renderer = new THREE.WebGLRenderer({
@@ -17,70 +16,59 @@ function setup() {
 		alpha: false
 	});
 	renderer.setClearColor(0x333333, 1)
-	
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.25, options.viewDistance );
-
+	camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.25,options.viewDistance);
 	scene = new THREE.Scene();
 	chunks = new ChunkController(scene);
 	chunks.createFirstMesh(168); // Stone Brick
 	chunks.createFirstMesh(160); // Spruce Plank
 	chunks.createFirstMesh(24); // Sandstone
+
 	//scene.fog = new THREE.Fog(0xf2f7ff,1,100);
 
 	light = new THREE.DirectionalLight(0xffffff,4);
 	light.position.set(3, 4, 2);
 	scene.add(light);
-
 	light = new THREE.DirectionalLight(0xffffff,3);
 	light.position.set(-4, -2, -3);
 	scene.add(light);
-
-	controls = new THREE.PointerLockControls( camera );
+	
+	controls = new THREE.PointerLockControls(camera);
+	
 	player = controls.getObject();
 	loadPlayerFromCookies();
-	scene.add( player );
-
+	scene.add(player);
 	//raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
-
-	geometry = new THREE.PlaneGeometry( 16*8, 16*8, 10, 10 );
-	geometry.rotateX( - Math.PI / 2 );
-	material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-	mesh = new THREE.Mesh( geometry, material );
+	geometry = new THREE.PlaneGeometry(16 * 8,16 * 8,10,10);
+	geometry.rotateX(-Math.PI / 2);
+	material = new THREE.MeshBasicMaterial({
+		vertexColors: THREE.VertexColors
+	});
+	mesh = new THREE.Mesh(geometry,material);
 	mesh.position.y = -0.5;
-	scene.add( mesh );
-
-	
-
-
-
-
-	var textureLoader = chunks.textureLoader;
-	//material = new THREE.MeshLambertMaterial( { color: 0x555555, map: texture } );
-	
-	var translate = [0,0,0];
+	scene.add(mesh);
+	var translate = [0, 0, 0];
 	function addBlock(x, y, z, geo, mater) {
-			var cube = new THREE.Mesh(geo,mater);
-			cube.position.x = x+translate[0];
-			cube.position.y = y+translate[1];
-			cube.position.z = z+translate[2];
-			scene.add(cube);
+		var cube = new THREE.Mesh(geo,mater);
+		cube.position.x = x + translate[0];
+		cube.position.y = y + translate[1];
+		cube.position.z = z + translate[2];
+		scene.add(cube);
 	}
 	geometry = chunks.cubeGeometry;
 	material = chunks.getMesh(24);
-	
-	for (var i = -5; i < 6; i ++) {
-		for (var j = -5; j < 6; j ++) {
+	for (var i = -5; i < 6; i++) {
+		for (var j = -5; j < 6; j++) {
 			addBlock(i, 0, j, geometry, material);
 		}
 	}
 	material = chunks.getMesh(160);
 	translate[0] = -3;
+	translate[2] = -1;
 	addBlock(1, 1, 0, geometry, material);
 	addBlock(2, 2, 0, geometry, material);
 	addBlock(1, 2, 0, geometry, material);
 	addBlock(3, 2, 0, geometry, material);
 	material = chunks.getMesh(168);
-	//addBlock(2, 1, 0, geometry, material);
 	addBlock(3, 1, 0, geometry, material);
 	addBlock(4, 1, 0, geometry, material);
 	addBlock(4, 1, 1, geometry, material);
@@ -90,13 +78,15 @@ function setup() {
 	addBlock(0, 3, 0, geometry, material);
 	document.body.appendChild(renderer.domElement);
 	velocity = new THREE.Vector3();
+	
+	animator = new AnimationController(camera, true, true);
 }
-
 function update() {
 	//raycaster.ray.origin.copy(player.position)
 	//raycaster.ray.origin.y -= 10;
 	//var intersections = raycaster.intersectObjects(blocks);
 	//var isOnObject = intersections.length > 0;
+	
 	velocity.z = 0;
 	velocity.x = 0;
 	velocity.y = 0;
@@ -104,14 +94,14 @@ function update() {
 		velocity.z -= 1;
 	if (controls.moveBackward)
 		velocity.z += 1;
-	if ( controls.moveLeft )
+	if (controls.moveLeft)
 		velocity.x -= 1;
-	if ( controls.moveRight )
+	if (controls.moveRight)
 		velocity.x += 1;
 	velocity.normalize();
-	if ( controls.moveUp )
+	if (controls.moveUp)
 		velocity.y += 1;
-	if ( controls.moveDown )
+	if (controls.moveDown)
 		velocity.y -= 1;
 	velocity.multiplyScalar(options.playerSpeed);
 	player.translateX(velocity.x);
@@ -122,27 +112,26 @@ function update() {
 		if (velocity.y < 0)
 			velocity.y = 0;
 	}
+	if (animator.enabled) {
+		animator.step();
+		//animator.updateCamera();
+	}
 	renderer.render(scene, camera);
 }
-
 function pause() {
 	document.exitPointerLock();
 }
-
 function resume() {
 	document.body.requestPointerLock();
 }
-
 function onClick() {
 	pause();
 }
-
 function resize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
 function onPointerlockChange(event) {
 	if (document.pointerLockElement == document.body) {
 		controlsEnabled = true;
@@ -153,7 +142,6 @@ function onPointerlockChange(event) {
 		controls.enabled = false;
 	}
 }
-
 function updatePositionalCookie() {
 	if (typeof setCookie === "function") {
 		setCookie("rs_posX", player.position.x, 30);
@@ -163,33 +151,30 @@ function updatePositionalCookie() {
 		setCookie("rs_rotY", player.rotation.y, 30);
 	}
 }
-
 function loadPlayerFromCookies() {
 	if (typeof getCookie === "function") {
-		var x = getCookie("rs_posX"),
-			y = getCookie("rs_posY"),
-			z = getCookie("rs_posZ");
-		if (x&&y&&z) {
+		var x = getCookie("rs_posX")
+		  , y = getCookie("rs_posY")
+		  , z = getCookie("rs_posZ");
+		if (x && y && z) {
 			player.position.x = parseFloat(x);
 			player.position.y = parseFloat(y);
 			player.position.z = parseFloat(z);
 		}
 		x = getCookie("rs_rotX");
 		y = getCookie("rs_rotY");
-		if (x&&y) {
+		if (x && y) {
 			controls.getPitchObject().rotation.x = parseFloat(x);
 			player.rotation.y = parseFloat(y);
 		}
 	}
 }
-
 function updateMenuCookies() {
 	if (typeof setCookie === "function") {
-		setCookie("rs_statsExtended", stats.dom.children[0].enabled?'1':'0', 30);
-		setCookie("rs_smallMenu", (menu.iconSize === 24)?'1':'0');
+		setCookie("rs_statsExtended", stats.dom.children[0].enabled ? '1' : '0', 30);
+		setCookie("rs_smallMenu", (menu.iconSize === 24) ? '1' : '0');
 	}
 }
-
 var statsExtended = false;
 if ((typeof getCookie === "function") && (getCookie("rs_statsExtended") == '1'))
 	statsExtended = true;
@@ -226,30 +211,29 @@ document.addEventListener('pointerlockerror', pause, false);
 stats.begin();
 setup();
 mainUpdateLoop();
-window.addEventListener( 'resize', resize, false );
+window.addEventListener('resize', resize, false);
 resize();
-
 function mainUpdateLoop() {
 	stats.update();
 	menuClick = false;
 	var delta = stats.delta;
-	if (delta >= 16*1) {
-		if (delta < 16*2) {
+	if (delta >= 16 * 1) {
+		if (delta < 16 * 2) {
 			stats.normalStep();
 			stats.delta -= 16;
 			update();
-		} else if (delta < 16*3) {
+		} else if (delta < 16 * 3) {
 			stats.normalStep();
-			stats.delta -= 16*2;
+			stats.delta -= 16 * 2;
 			update();
 			update();
-		} else if (delta < 16*4) {
+		} else if (delta < 16 * 4) {
 			stats.normalStep();
-			stats.delta -= 16*3;
+			stats.delta -= 16 * 3;
 			update();
 			update();
 			update();
-		} else if (delta < 16*8) {
+		} else if (delta < 16 * 8) {
 			stats.lagStep();
 		} else {
 			stats.lagStep();
