@@ -198,7 +198,7 @@ const block_data = [{
 		bottom: "furnace_top.png"
 	}
 }, {
-	id: 61,
+	id: 62,
 	texture: "rail_normal.png",
 	special: true
 }, {
@@ -218,7 +218,7 @@ const block_data = [{
 	texture: "door_iron_lower.png",
 	special: true
 }, {
-	id: 69,
+	id: 72,
 	texture: "planks_oak.png",
 	special: true
 }, {
@@ -305,4 +305,86 @@ const block_data = [{
 }, {
 	id: 159,
 	texture: "hardened_clay_stained_white.png"
+}, {
+	id: 160,
+	texture: "planks_spruce.png"
+}, {
+	id: 161,
+	texture: "planks_birch.png"
+}, {
+	id: 162,
+	texture: "planks_jungle.png"
+}, {
+	id: 163,
+	texture: "planks_acacia.png"
+}, {
+	id: 164,
+	texture: "planks_big_oak.png"
+}, {
+	id: 168,
+	texture: "stonebrick.png"
+}, {
+	id: 169,
+	texture: "stonebrick_carved.png"
+}, {
+	id: 169,
+	texture: "stonebrick_cracked.png"
+}, {
+	id: 169,
+	texture: "stonebrick_mossy.png"
+}, {
+	id: 181,
+	texture: "wool_colored_orange.png"
+}, {
+	id: 182,
+	texture: "wool_colored_magenta.png"
+}, {
+	id: 183,
+	texture: "wool_colored_light_blue.png"
+}, {
+	id: 184,
+	texture: "wool_colored_yellow.png"
+}, {
+	id: 185,
+	texture: "wool_colored_lime.png"
+}, {
+	id: 186,
+	texture: "wool_colored_pink.png"
+}, {
+	id: 187,
+	texture: "wool_colored_gray.png"
+}, {
+	id: 188,
+	texture: "wool_colored_silver.png"
+}, {
+	id: 189,
+	texture: "wool_colored_cyan.png"
+}, {
+	id: 190,
+	texture: "wool_colored_purple.png"
+}, {
+	id: 191,
+	texture: "wool_colored_blue.png"
+}, {
+	id: 192,
+	texture: "wool_colored_brown.png"
+}, {
+	id: 193,
+	texture: "wool_colored_green.png"
+}, {
+	id: 194,
+	texture: "wool_colored_red.png"
+}, {
+	id: 195,
+	texture: "wool_colored_black.png"
+}, {
+	id: 196,
+	parent: 17,
+	rotation: [0, Math.PI, 0]
+}, {
+	id: 200,
+	texture: "redstone_lamp_off.png"
+}, {
+	id: 201,
+	texture: "redstone_lamp_on.png"
 }];
