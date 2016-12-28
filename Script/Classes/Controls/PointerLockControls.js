@@ -28,6 +28,9 @@ THREE.PointerLockControls = function(camera) {
 	this.getObject = function() {
 		return yawObject;
 	}
+	this.getPitchObject = function() {
+		return pitchObject;
+	}
 	this.getDirection = function() {
 		// assumes the camera itself is not rotated
 		var direction = new THREE.Vector3(0,0,-1);
