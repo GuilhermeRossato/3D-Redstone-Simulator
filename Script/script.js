@@ -38,7 +38,7 @@ function setup() {
 	loadPlayerFromCookies();
 	scene.add(player);
 	//raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
-	geometry = new THREE.PlaneGeometry(16 * 8,16 * 8,10,10);
+	geometry = new THREE.PlaneGeometry(16 * 4,16 * 4,10,10);
 	geometry.rotateX(-Math.PI / 2);
 	material = new THREE.MeshBasicMaterial({
 		vertexColors: THREE.VertexColors
@@ -47,39 +47,55 @@ function setup() {
 	mesh.position.y = -0.5;
 	scene.add(mesh);
 	var translate = [0, 0, 0];
+	var blockIdNow;
 	function addBlock(x, y, z, geo, mater) {
 		var cube = new THREE.Mesh(geo,mater);
 		cube.position.x = x + translate[0];
 		cube.position.y = y + translate[1];
 		cube.position.z = z + translate[2];
+		cube.blockId = blockIdNow;
 		scene.add(cube);
+		chunks.blocks.push(cube);
 	}
-	geometry = chunks.cubeGeometry;
-	material = chunks.getMesh(24);
-	for (var i = -5; i < 6; i++) {
-		for (var j = -5; j < 6; j++) {
+	geometry = chunks.geometries.cube;
+	blockIdNow = 24;
+	material = chunks.getMesh(blockIdNow);
+	for (var i = -4; i <= 4; i++) {
+		for (var j = -4; j <= 4; j++) {
 			addBlock(i, 0, j, geometry, material);
 		}
 	}
-	material = chunks.getMesh(160);
+	blockIdNow = 160;
+	material = chunks.getMesh(blockIdNow);
 	translate[0] = -3;
-	translate[2] = -1;
+	translate[2] = 0;
 	addBlock(1, 1, 0, geometry, material);
+	addBlock(1, 1, -1, geometry, material);
 	addBlock(2, 2, 0, geometry, material);
 	addBlock(1, 2, 0, geometry, material);
 	addBlock(3, 2, 0, geometry, material);
-	material = chunks.getMesh(168);
+	blockIdNow = 168;
+	material = chunks.getMesh(blockIdNow);
 	addBlock(3, 1, 0, geometry, material);
 	addBlock(4, 1, 0, geometry, material);
+	addBlock(5, 1, 0, geometry, material);
 	addBlock(4, 1, 1, geometry, material);
-	addBlock(4, 1, 2, geometry, material);
-	material = chunks.getMesh(24);
+	addBlock(5, 1, 1, geometry, material);
+	blockIdNow = 24;
+	material = chunks.getMesh(blockIdNow);
 	translate[0] = 0;
 	addBlock(0, 3, 0, geometry, material);
+	addBlock(1, 3, -1, geometry, material);
+	addBlock(1, 2, 0, geometry, material);
 	document.body.appendChild(renderer.domElement);
 	velocity = new THREE.Vector3();
-	
-	animator = new AnimationController(camera, true, true);
+	for (var x = -4 ; x <= 4; x ++) {
+		for (var y = 0; y <= 3; y ++) {
+			addBlock(5, y, x, geometry, material);
+			addBlock(-5, y, x, geometry, material);
+		}
+	}
+	animator = new AnimationController(camera, true, false);
 }
 function update() {
 	//raycaster.ray.origin.copy(player.position)
@@ -87,9 +103,9 @@ function update() {
 	//var intersections = raycaster.intersectObjects(blocks);
 	//var isOnObject = intersections.length > 0;
 	
-	velocity.z = 0;
 	velocity.x = 0;
 	velocity.y = 0;
+	velocity.z = 0;
 	if (controls.moveForward)
 		velocity.z -= 1;
 	if (controls.moveBackward)
@@ -112,9 +128,10 @@ function update() {
 		if (velocity.y < 0)
 			velocity.y = 0;
 	}
-	if (animator.enabled) {
+	if (typeof animator === "object" && animator.enabled && !animator.manualStep) {
 		animator.step();
-		//animator.updateCamera();
+	} else if (typeof animator === "object" && animator.enabled) {
+		animator.updateCamera();
 	}
 	renderer.render(scene, camera);
 }
@@ -143,7 +160,7 @@ function onPointerlockChange(event) {
 	}
 }
 function updatePositionalCookie() {
-	if (typeof setCookie === "function") {
+	if ((typeof setCookie === "function")&&((typeof animator === "object" && animator.enabled == false)||(typeof animator === "undefined"))) {
 		setCookie("rs_posX", player.position.x, 30);
 		setCookie("rs_posY", player.position.y, 30);
 		setCookie("rs_posZ", player.position.z, 30);
