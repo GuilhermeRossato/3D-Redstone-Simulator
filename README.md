@@ -8,11 +8,11 @@ Note that during development, the above link will not bring you to a working rel
 
 #Releases
  - v 0.1 [Performance Viability Release]
-![Preview v0.1](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v01.gif)
+![Preview v0.1](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v01_normal.gif)
  - v 0.2 [Primitive Block Distinction]
-![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v02.png)
- - v 0.3 [Block Distinction and Mesh Instantiation]
-![Preview v0.3](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v03.gif)
+![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v02_normal.png)
+ - v 0.3 [Mesh Instantiation and Block Selection]
+![Preview v0.3](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v03_normal.gif)
 
 If you download a release and run index.html on your browser and see that a cross-origin conflict exists (all blocks or textures are black), then it might be necessary to run a server to run this application (such as Apache). It's not safe to allow a web applications to load your computer files, even if it's run locally, that's why it's blocked on most browers. I use chrome with web security disabled, but it's setting up a server isn't difficult.
 
