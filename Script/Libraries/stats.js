@@ -1,7 +1,11 @@
 /**
  * @author mrdoob / http://mrdoob.com/
+ * Heavily edited by Gravyness
  */
-var Stats = function(startsActive) {
+var StatsEdited = function(recipient) {
+	var startsActive = false;
+	if ((typeof getCookie === "function") && (getCookie("rs_statsExtended") == '1'))
+		startsActive = true;
 	var container = document.createElement('div');
 	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
 	container.addEventListener('click', function(event) {
@@ -18,7 +22,11 @@ var Stats = function(startsActive) {
 	var beginTime = (performance || Date).now()
 	  , prevTime = beginTime
 	  , frames = 0;
-	var msPanel = addPanel(new Stats.Panel('MS','#0f0','#020', startsActive, 200));
+	var msPanel = addPanel(new StatsEdited.Panel('MS','#0f0','#020', startsActive, 200));
+	if (typeof recipient !== "object")
+		logger.warn("Could not load milisecond tab due to incorrect recipient parameter");
+	else
+		recipient.appendChild(container);
 	return {
 		REVISION: 16,
 		dom: container,
@@ -45,7 +53,7 @@ var Stats = function(startsActive) {
 		}
 	};
 };
-Stats.Panel = function(name, fg, bg, startsActive, maxValue) {
+StatsEdited.Panel = function(name, fg, bg, startsActive, maxValue) {
 	var PR = Math.round(window.devicePixelRatio || 1);
 	var WIDTH = 80 * PR
 	  , HEIGHT = 48 * PR
