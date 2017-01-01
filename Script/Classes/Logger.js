@@ -27,13 +27,17 @@ Logger.prototype = {
 		let nodesLength = this.domElement.childNodes.length
 		  , childs = this.domElement.childNodes;
 		for (let i = 0; i < nodesLength; i++) {
-			if (typeof (childs[i].fadeInt) === "number" && childs[i].fadeInt < this.fadeTime) {
-				childs[i].fadeInt++;
-				colors = this.colors[childs[i].type].map((o)=>parseFloat(o));
-				colors[3] = interpolate([0, colors[3]], [this.fadeTime, 0]).at(childs[i].fadeInt);
-				textAlpha = interpolate([0, 1], [this.fadeTime, 0]).at(childs[i].fadeInt);
-				childs[i].style.backgroundColor = "rgba(" + colors.join(", ") + ")";
-				childs[i].style.color = "rgba(255,255,255," + textAlpha + ")";
+			if (childs[i] instanceof HTMLDivElement) {
+				if (typeof (childs[i].fadeInt) === "number" && childs[i].fadeInt < this.fadeTime) {
+					childs[i].fadeInt++;
+					colors = this.colors[childs[i].type].map((o)=>parseFloat(o));
+					colors[3] = interpolate([0, colors[3]], [this.fadeTime, 0]).at(childs[i].fadeInt);
+					textAlpha = interpolate([0, 1], [this.fadeTime, 0]).at(childs[i].fadeInt);
+					childs[i].style.backgroundColor = "rgba(" + colors.join(", ") + ")";
+					childs[i].style.color = "rgba(255,255,255," + textAlpha + ")";
+				} else {
+					this.domElement.removeChild(childs[i]);
+				}
 			}
 		}
 	},
@@ -41,8 +45,10 @@ Logger.prototype = {
 		let newDomElement = document.createElement("div")
 		  , nodesLength = this.domElement.childNodes.length
 		  , now = new Date();
-		if (nodesLength + 1 > this.maxLogs)
+		if (nodesLength + 2 > this.maxLogs*2) {
 			this.domElement.removeChild(this.domElement.lastChild);
+			this.domElement.removeChild(this.domElement.lastChild);
+		}
 		newDomElement.className = "log log-"+type;
 		let minutes = (now.getMinutes() < 10 ? "0" : "") + now.getMinutes()
 		  , seconds = (now.getSeconds() < 10 ? "0" : "") + now.getSeconds();
