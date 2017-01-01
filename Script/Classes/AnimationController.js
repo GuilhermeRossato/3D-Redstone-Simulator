@@ -1,10 +1,10 @@
-function AnimationController(camera, starts, restarts) {
+function AnimationController(camera) {
 	this.camera = camera;
-	this.animationDuration_ms = 5000;
+	this.animationDuration_ms = 3000;
 	this.animationStep_ms = 16;
-	this.reset_at_end = restarts ? true : false;
-	this.enabled = starts ? true : false;
-	this.manualStep = false;
+	this.enabled = true;
+	this.reset_at_end = false;
+	this.manualStep = true;
 	this.clickStep = false;
 	this.keyStep = true;
 	if (this.enabled)
@@ -21,12 +21,22 @@ function AnimationController(camera, starts, restarts) {
 	}
 	);
 }
+
 AnimationController.prototype = {
 	constructor: AnimationController,
 	placeCamera: function(t) {
+		this.animation_rotate2(t)
+	},
+	animation_rotate2: function(t) {
+		t = (6*t*t*t*t*t + -15*t*t*t*t + 10*t*t*t);
+		var angle = t * Math.PI * 2
+		  , cos = Math.cos(angle)
+		  , sin = Math.sin(angle);
+		this.camera.position.set(sin * 8, 11 , cos * 8);
+		this.camera.lookAt(new THREE.Vector3(0,-1,0));
+	},
+	animation_rotate1: function(t) {
 		var wide = 1;
-		//t = t * 2;
-		//if (t > 1) t = 1 - (t - 1);
 		t = interpolate([0,1-wide/2], [0,1-wide/2], [1, 1+wide/2], [1, 1+wide/2]).at(t);
 		var angle = t * Math.PI * 2
 		  , cos = Math.cos(angle)
@@ -79,13 +89,17 @@ AnimationController.prototype = {
 		this.placeCamera(ib(0, this.animationDuration_ms, this.at));
 	},
 	forceClearance: function() {
+		var toRemove = [];
 		Array.from(document.body.childNodes).forEach(obj=>{
 			if (!(["LINK", "CANVAS", "SCRIPT"].some(acceptedTag=>obj.tagName === acceptedTag))) {
-				document.body.removeChild(obj);
+				toRemove.push(obj);
 			} else if (obj.tagName === "CANVAS") {
 				obj.style.zIndex = 0;
 			}
 		}
 		)
+		toRemove.forEach((obj) => {
+			document.body.removeChild(obj);
+		})
 	}
 }
