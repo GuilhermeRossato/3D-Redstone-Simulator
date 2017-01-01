@@ -202,15 +202,29 @@ const block_data = [{
 	texture: "rail_normal.png",
 	special: true
 }, {
+	id: 63,
+	texture: "door_wood_upper.png",
+	special: true
+}, {
 	id: 64,
 	texture: "door_wood_lower.png",
+	special: true
+}, {
+	id: 66,
+	texture: "rail_normal.png",
+	special: true
+}, {
+	// Sign Block (68)
+	id: 68,
+	texture: "rail_normal.png",
 	special: true
 }, {
 	id: 69,
 	texture: "lever.png",
 	special: true
 }, {
-	id: 69,
+	// Stone Pressure Plate
+	id: 70,
 	texture: "stone.png",
 	special: true
 }, {
@@ -240,6 +254,9 @@ const block_data = [{
 	texture: "stone.png",
 	special: true
 }, {
+	id: 78,
+	texture: "snow.png"
+}, {
 	id: 79,
 	texture: "ice.png"
 }, {
@@ -259,6 +276,16 @@ const block_data = [{
 }, {
 	id: 82,
 	texture: "clay.png"
+}, {
+	id: 81,
+	texture: {
+		top: "pumpkin_top.png",
+		left: "pumpkin_side.png",
+		right: "pumpkin_side.png",
+		front: "pumpkin_face_off.png",
+		back: "pumpkin_face_on.png",
+		bottom: "pumpkin_top.png"
+	},
 }, {
 	id: 87,
 	texture: "netherrack.png"
@@ -281,9 +308,9 @@ const block_data = [{
 	texture: "trapdoor.png",
 	special: true
 }, {
+	// Stone Brick (98)
 	id: 98,
-	texture: "stonebrick.png",
-	special: true
+	texture: "stonebrick.png"
 }, {
 	id: 121,
 	texture: "end_stone.png"
@@ -303,88 +330,303 @@ const block_data = [{
 	texture: "rail_activator.png",
 	special: true
 }, {
+	// White Stained Clay (159)
 	id: 159,
 	texture: "hardened_clay_stained_white.png"
 }, {
+	// Orange Stained Clay (159:1)
 	id: 160,
-	texture: "planks_spruce.png"
+	texture: "hardened_clay_stained_orange.png"
 }, {
 	id: 161,
-	texture: "planks_birch.png"
+	texture: "hardened_clay_stained_magenta.png"
 }, {
 	id: 162,
-	texture: "planks_jungle.png"
+	texture: "hardened_clay_stained_light_blue.png"
 }, {
 	id: 163,
-	texture: "planks_acacia.png"
+	texture: "hardened_clay_stained_yellow.png"
 }, {
 	id: 164,
-	texture: "planks_big_oak.png"
+	texture: "hardened_clay_stained_lime.png"
+}, {
+	id: 165,
+	texture: "hardened_clay_stained_pink.png"
+}, {
+	id: 166,
+	texture: "hardened_clay_stained_gray.png"
+}, {
+	id: 167,
+	texture: "hardened_clay_stained_silver.png"
 }, {
 	id: 168,
-	texture: "stonebrick.png"
+	texture: "hardened_clay_stained_cyan.png"
 }, {
 	id: 169,
-	texture: "stonebrick_carved.png"
+	texture: "hardened_clay_stained_purple.png"
 }, {
-	id: 169,
-	texture: "stonebrick_cracked.png"
+	// Hay Bale (170)
+	id: 170,
+	texture: {
+		top: "hay_block_top.png",
+		left: "hay_block_side.png",
+		right: "hay_block_side.png",
+		front: "hay_block_side.png",
+		back: "hay_block_side.png",
+		bottom: "hay_block_top.png"
+	}
 }, {
-	id: 169,
+	// Black Stained Clay (159:11)
+	id: 171,
+	texture: "hardened_clay_stained_blue.png"
+}, {
+	// Hardened Clay (172)
+	id: 172,
+	texture: "hardened_clay.png"
+}, {
+	id: 173,
+	texture: "coal_block.png"
+}, {
+	// Brown Stained Clay (159:12)
+	id: 174,
+	texture: "hardened_clay_stained_brown.png"
+}, {
+	id: 175,
+	texture: "hardened_clay_stained_green.png"
+}, {
+	id: 176,
+	texture: "hardened_clay_stained_red.png"
+}, {
+	// Black Stained Clay (159:15)
+	id: 177,
+	texture: "hardened_clay_stained_black.png"
+}, {
+	// Spruce Wood Plank (5:1)
+	id: 178,
+	texture: "planks_spruce.png"
+}, {
+	// Birch Wood Plank (5:2)
+	id: 179,
+	texture: "planks_birch.png"
+}, {
+	// Jungle Wood Plank (5:3)
+	id: 180,
+	texture: "planks_jungle.png"
+}, {
+	// Jungle Wood Plank (5:4)
+	id: 181,
+	texture: "planks_acacia.png"
+}, {
+	// Jungle Wood Plank (5:5)
+	id: 182,
+	texture: "planks_big_oak.png"
+}, {
+	// Mossy Stone Bricks (98:1)
+	id: 183,
 	texture: "stonebrick_mossy.png"
 }, {
-	id: 181,
+	// Cracked Stone Bricks (98:2)
+	id: 184,
+	texture: "stonebrick_cracked.png"
+}, {
+	// Chiseled Stone Bricks (98:3)
+	id: 185,
+	texture: "stonebrick_carved.png"
+}, {
+	// Orange Wool (35:1)
+	id: 186,
 	texture: "wool_colored_orange.png"
 }, {
-	id: 182,
+	id: 187,
 	texture: "wool_colored_magenta.png"
 }, {
-	id: 183,
+	id: 188,
 	texture: "wool_colored_light_blue.png"
 }, {
-	id: 184,
+	id: 189,
 	texture: "wool_colored_yellow.png"
 }, {
-	id: 185,
+	id: 190,
 	texture: "wool_colored_lime.png"
 }, {
-	id: 186,
+	id: 191,
 	texture: "wool_colored_pink.png"
 }, {
-	id: 187,
+	id: 192,
 	texture: "wool_colored_gray.png"
 }, {
-	id: 188,
+	id: 193,
 	texture: "wool_colored_silver.png"
 }, {
-	id: 189,
+	id: 194,
 	texture: "wool_colored_cyan.png"
 }, {
-	id: 190,
+	id: 195,
 	texture: "wool_colored_purple.png"
 }, {
-	id: 191,
+	id: 196,
 	texture: "wool_colored_blue.png"
 }, {
-	id: 192,
+	id: 197,
 	texture: "wool_colored_brown.png"
 }, {
-	id: 193,
+	id: 198,
 	texture: "wool_colored_green.png"
 }, {
-	id: 194,
+	id: 199,
 	texture: "wool_colored_red.png"
 }, {
-	id: 195,
+	// Black Wool (35:15)
+	id: 200,
 	texture: "wool_colored_black.png"
 }, {
-	id: 196,
-	parent: 17,
-	rotation: [0, Math.PI, 0]
-}, {
-	id: 200,
+	id: 201,
 	texture: "redstone_lamp_off.png"
 }, {
-	id: 201,
+	id: 202,
 	texture: "redstone_lamp_on.png"
+}, {
+	// Bottom Stone Slab (44:1)
+	id: 203,
+	texture: {
+		top: "stone_slab_top.png",
+		left: "stone_slab_half.png",
+		right: "stone_slab_half.png",
+		front: "stone_slab_half.png",
+		back: "stone_slab_half.png",
+		bottom: "stone_slab_top.png"
+	},
+	position: [0, -0.25, 0]
+}, {
+	// Top Stone Slab (44:1)
+	id: 204,
+	texture: {
+		top: "stone_slab_top.png",
+		left: "stone_slab_half.png",
+		right: "stone_slab_half.png",
+		front: "stone_slab_half.png",
+		back: "stone_slab_half.png",
+		bottom: "stone_slab_top.png"
+	},
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Sandstone Slab (44:1)
+	id: 205,
+	parent: 24,
+	position: [0, -0.25, 0]
+}, {
+	// Top Sandstone Slab (44:1)
+	id: 206,
+	parent: 24,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Oak Wood Slab (44:2)
+	id: 207,
+	parent: 5,
+	position: [0, -0.25, 0]
+}, {
+	// Top Oak Wood Slab (44:2)
+	id: 208,
+	parent: 5,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Cobblestone Slab (44:3)
+	id: 209,
+	parent: 4,
+	position: [0, -0.25, 0]
+}, {
+	// Top Cobblestone Slab (44:3)
+	id: 210,
+	parent: 4,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Brick Slab (44:4)
+	id: 211,
+	parent: 43,
+	position: [0, -0.25, 0]
+}, {
+	// Top Brick Slab (44:4)
+	id: 212,
+	parent: 45,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Stone Brick Slab (44:5)
+	id: 213,
+	parent: 98,
+	position: [0, -0.25, 0]
+}, {
+	// Top Stone Brick Slab (44:5)
+	id: 214,
+	parent: 98,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Nether Brick Slab (44:6)
+	id: 215,
+	parent: 112,
+	position: [0, -0.25, 0]
+}, {
+	// Top Nether Brick Slab (44:6)
+	id: 216,
+	parent: 112,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Quartz Brick Slab (44:6)
+	id: 217,
+	parent: 155,
+	position: [0, -0.25, 0]
+}, {
+	// Top Quartz Brick Slab (44:6)
+	id: 218,
+	parent: 155,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Spruce Wood Slab (126:1)
+	id: 219,
+	parent: 43,
+	position: [0, -0.25, 0]
+}, {
+	// Top Spruce Wood Slab (126:1)
+	id: 220,
+	parent: 43,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Birch Wood Slab (126:2)
+	id: 221,
+	parent: 43,
+	position: [0, -0.25, 0]
+}, {
+	// Top Birch Wood Slab (126:2)
+	id: 222,
+	parent: 43,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Jungle Wood Slab (126:3)
+	id: 223,
+	parent: 43,
+	position: [0, -0.25, 0]
+}, {
+	// Top Jungle Wood Slab (126:3)
+	id: 224,
+	parent: 43,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Acacia Wood Slab (126:4)
+	id: 225,
+	parent: 43,
+	position: [0, -0.25, 0]
+}, {
+	// Top Acacia Wood Slab (126:4)
+	id: 226,
+	parent: 43,
+	position: [0, 0.25, 0]
+}, {
+	// Bottom Dark Wood Slab (126:5)
+	id: 227,
+	parent: 43,
+	position: [0, -0.25, 0]
+}, {
+	// Top Dark Wood Slab (126:5)
+	id: 228,
+	parent: 43,
+	position: [0, 0.25, 0]
 }];
