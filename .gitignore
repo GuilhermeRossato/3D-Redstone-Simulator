@@ -49,3 +49,4 @@ Script/Libraries/stats.min.js
 Script/Libraries/three.min.js
 *.bat
 *.min.js
+script.ahk
