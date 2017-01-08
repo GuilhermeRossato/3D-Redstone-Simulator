@@ -11,7 +11,7 @@ function manualRandom() {
 	return x - Math.floor(x);
 }
 function generateArea(side) {
-	seed = 9650 + 150;
+	seed = 9800;
 	var map = new Uint8Array(side * side);
 	var repeatSmoothing = 6;
 	var maxHeight = 25;
@@ -51,12 +51,12 @@ function addBlocksInWorld() {
 			blocks.setBlock(i - 10, area[i + j * 20], j - 10, selectedId);
 		}
 	}
-	blocks.setBlock(-1, area[9 + 10 * 20] + 1, 0, 203);
+	/*blocks.setBlock(-1, area[9 + 10 * 20] + 1, 0, 203);
 	blocks.setBlock(0, area[10 + 10 * 20] + 1, 0, 203);
 	blocks.setBlock(1, area[11 + 10 * 20] + 1, 0, 203);
 	blocks.setBlock(-1, area[9 + 12 * 20] + 1, 2, 203);
 	blocks.setBlock(0, area[10 + 12 * 20] + 1, 2, 203);
-	blocks.setBlock(1, area[11 + 12 * 20] + 1, 2, 203);
+	blocks.setBlock(1, area[11 + 12 * 20] + 1, 2, 203);*/
 }
 function setup() {
 	/* Render Setup */
@@ -90,13 +90,13 @@ function setup() {
 	animator = new AnimationController(camera);
 	blocks.setBlock(0, 0, 0, 2);
 	/* Initialize Variables */
-	raycaster = new THREE.Raycaster();
+	raycaster = new THREE.Raycaster(undefined, undefined, 0, 10);
 	velocity = new THREE.Vector3(0,0,0);
 	/* Initializing Selection Box */
 	material = new THREE.MeshLambertMaterial({
-					color: 0xff0000,
-					wireframe: true
-				});
+		color: 0xff0000,
+		wireframe: true
+	});
 	helper = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), material);
 	scene.add(helper);
 	var h = options.selectionBoundSpace / 2;
@@ -140,16 +140,14 @@ function update() {
 		return false;
 	}
 	);
+	controls.update();
 	if (lastInter) {
 		helper.visible = selection.visible = true;
 		selection.position.copy(lastInter.object.realPosition);
 		helper.position.copy(lastInter.point);
 		helper.rotation.copy(camera.getWorldRotation());
 		helper.rotateZ(-0.7854);
-
-	} else {
 	}
-	controls.update();
 	if (typeof animator === "object" && animator.enabled && !animator.manualStep) {
 		animator.step();
 	} else if (typeof animator === "object" && animator.enabled) {
@@ -168,7 +166,6 @@ function updateMenuCookies() {
 		setCookie("rs_smallMenu", (menu.iconSize === 24) ? '1' : '0');
 	}
 }
-var stats = new StatsEdited(document.body);
 stats.begin();
 setup();
 mainUpdateLoop();
