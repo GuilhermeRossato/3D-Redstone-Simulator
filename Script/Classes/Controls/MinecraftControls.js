@@ -27,7 +27,8 @@ function MinecraftControls(scene, camera) {
 			else
 				this.requestMouse();
 			return false;
-		}
+		} else if (ev.key === "F5")
+			this.savePlayerState();
 		return true;
 	}
 	document.body.onkeyup = function(ev) {
@@ -35,7 +36,7 @@ function MinecraftControls(scene, camera) {
 			updateMenuCookies();
 		return true;
 	}
-	document.addEventListener('pointerlockchange', () => {		
+	document.addEventListener('pointerlockchange', () => {
 		if (document.pointerLockElement == document.body) {
 			this.pointerlock.enabled = true;
 		} else {
@@ -52,34 +53,88 @@ function MinecraftControls(scene, camera) {
 	}
 	this.velocity = new THREE.Vector3();
 	this.collision = new CollisionController(scene);
+	this.moveForward = false;
+	this.moveLeft = false;
+	this.moveBackward = false;
+	this.moveRight = false;
+	this.moveUp = false;
+	this.moveDown = false;
+	this.vertical = 0;
+	this.onKeyChange = function(keyCode, down, shiftKey) {
+		switch (keyCode) {
+		case 38: // up
+		case 87: // w
+			this.moveForward = down;
+			break;
+		case 37: // left
+		case 65: // a
+			this.moveLeft = down;
+			break;
+		case 40: // down
+		case 83: // s
+			this.moveBackward = down;
+			break;
+		case 39: // right
+		case 68: // d
+			this.moveRight = down;
+			break;
+		case 32: // space
+			if (down)
+				this.vertical = -1;
+			else if (this.vertical === -1)
+				this.vertical = 0;
+			break;
+		case 16: // shift
+			if (down)
+				this.vertical = 1;
+			else if (this.vertical === 1)
+				this.vertical = 0;
+			break;
+		}
+	}
+	document.addEventListener( 'keydown', (event) => this.onKeyChange(event.keyCode, true, event.shiftKey), false );
+	document.addEventListener( 'keyup', (event) => this.onKeyChange(event.keyCode, false, event.shiftKey), false );
 }
 
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
 	update: function() {
 		this.velocity.set(0, 0, 0);
-		if (this.pointerlock.moveForward)
-			this.velocity.z -= 1;
-		if (this.pointerlock.moveBackward)
-			this.velocity.z += 1;
-		if (this.pointerlock.moveLeft)
-			this.velocity.x -= 1;
-		if (this.pointerlock.moveRight)
-			this.velocity.x += 1;
-		this.velocity.normalize();
-		this.velocity.applyQuaternion(this.player.quaternion);
-		if (!this.collision.horizontalCheck(this.player.position, this.velocity, options.playerSpeed.horizontal)) {
-			this.velocity.multiplyScalar(options.playerSpeed.horizontal);
-			this.player.position.add(this.velocity);
-		}
-		if (!this.collision.verticalCheck(this.player.position, options.playerSpeed.vertical*this.pointerlock.vertical)) {
-			if (this.pointerlock.vertical == -1)
+		this.setupHorizontalVelocity();
+		["x", "z"].forEach(axisString => {
+			if (this.velocity[axisString] != 0) {
+				let canMoveAxis = this.collision.check(axisString.toUpperCase(), this.player.position, this.velocity[axisString], options.playerSpeed.horizontal);
+				if (canMoveAxis) {
+					this.player.position[axisString] += (this.velocity[axisString]*options.playerSpeed.horizontal);
+				} else {
+					this.player.position[axisString] += this.collision.limit;
+				}
+				this.player.position[axisString] = parseFloat(this.player.position[axisString].toFixed(2));	
+			}
+		});
+		var canMoveY = (this.vertical != 0) && this.collision.checkY(this.player.position, this.vertical, options.playerSpeed.vertical);
+		if (canMoveY) {
+			if (this.vertical == -1)
 				this.player.position.y += options.playerSpeed.vertical;
-			if (this.pointerlock.vertical == 1)
+			if (this.vertical == 1)
 				this.player.position.y -= options.playerSpeed.vertical;
+		} else if (this.vertical && this.collision.limitY < 2) {
+			this.player.position.y -= this.collision.limitY;
 		}
 		if (this.player.position.y < 0)
 			this.player.position.y = 0;
+	},
+	setupHorizontalVelocity: function() {
+		if (this.moveForward)
+			this.velocity.z -= 1;
+		if (this.moveBackward)
+			this.velocity.z += 1;
+		if (this.moveLeft)
+			this.velocity.x -= 1;
+		if (this.moveRight)
+			this.velocity.x += 1;
+		this.velocity.normalize();
+		this.velocity.applyQuaternion(this.player.quaternion);
 	},
 	releaseMouse: function() {
 		document.exitPointerLock();

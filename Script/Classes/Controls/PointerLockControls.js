@@ -41,45 +41,5 @@ THREE.PointerLockControls = function(camera) {
 			return v;
 		}
 	}
-	this.moveForward = false;
-	this.moveLeft = false;
-	this.moveBackward = false;
-	this.moveRight = false;
-	this.moveUp = false;
-	this.moveDown = false;
-	this.onKeyChange = function(keyCode, down, shiftKey) {
-		switch (keyCode) {
-		case 38: // up
-		case 87: // w
-			this.moveForward = down;
-			break;
-		case 37: // left
-		case 65: // a
-			this.moveLeft = down;
-			break;
-		case 40: // down
-		case 83: // s
-			this.moveBackward = down;
-			break;
-		case 39: // right
-		case 68: // d
-			this.moveRight = down;
-			break;
-		case 32: // space
-			if (down)
-				this.vertical = -1;
-			else if (this.vertical === -1)
-				this.vertical = 0;
-			break;
-		case 16: // shift
-			if (down)
-				this.vertical = 1;
-			else if (this.vertical === 1)
-				this.vertical = 0;
-			break;
-		}
-	}
-	document.addEventListener( 'keydown', (event) => this.onKeyChange(event.keyCode, true, event.shiftKey), false );
-	document.addEventListener( 'keyup', (event) => this.onKeyChange(event.keyCode, false, event.shiftKey), false );
 	this.getDirection();
 }

@@ -1,14 +1,13 @@
 var options = {
 	playerSpeed: {
 		horizontal: 0.075,
-		vertical: 0.11
+		vertical: 0.105
 	},
 	viewDistance: 50,
 	cookiesLastingDays: 40,
 	collisionBoundingRect: {
-		top: 0.55,
-		bottom: -0.55,
-		horizontal: 0.55
+		vertical: 0.4,
+		horizontal: 0.4
 	},
 	lights: {
 		instances: [],
