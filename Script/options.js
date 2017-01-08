@@ -6,8 +6,8 @@ var options = {
 	viewDistance: 50,
 	cookiesLastingDays: 40,
 	collisionBoundingRect: {
-		vertical: 0.4,
-		horizontal: 0.4
+		vertical: 0.45,
+		horizontal: 0.45
 	},
 	lights: {
 		instances: [],
