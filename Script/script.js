@@ -4,8 +4,9 @@ var controls;
 var velocity, light, player;
 var blocks;
 var animator;
-var selection, helper;
+var selection, collisionHelper;
 var seed;
+
 function manualRandom() {
 	var x = Math.sin(seed++) * 10000;
 	return x - Math.floor(x);
@@ -51,12 +52,6 @@ function addBlocksInWorld() {
 			blocks.setBlock(i - 10, area[i + j * 20], j - 10, selectedId);
 		}
 	}
-	/*blocks.setBlock(-1, area[9 + 10 * 20] + 1, 0, 203);
-	blocks.setBlock(0, area[10 + 10 * 20] + 1, 0, 203);
-	blocks.setBlock(1, area[11 + 10 * 20] + 1, 0, 203);
-	blocks.setBlock(-1, area[9 + 12 * 20] + 1, 2, 203);
-	blocks.setBlock(0, area[10 + 12 * 20] + 1, 2, 203);
-	blocks.setBlock(1, area[11 + 12 * 20] + 1, 2, 203);*/
 }
 function setup() {
 	/* Render Setup */
@@ -93,12 +88,6 @@ function setup() {
 	raycaster = new THREE.Raycaster(undefined, undefined, 0, 10);
 	velocity = new THREE.Vector3(0,0,0);
 	/* Initializing Selection Box */
-	material = new THREE.MeshLambertMaterial({
-		color: 0xff0000,
-		wireframe: true
-	});
-	helper = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), material);
-	scene.add(helper);
 	var h = options.selectionBoundSpace / 2;
 	geometry = new THREE.Geometry();
 	geometry.vertices.push(
@@ -125,11 +114,26 @@ function setup() {
 	});
 	selection = new THREE.Line(geometry, material);
 	scene.add(selection);
+	/* Initializing Collision Helper*/
+	material = new THREE.LineBasicMaterial({
+		color: 0xff0000
+	});
+	geometry = geometry.clone();
+	geometry.vertices.map(obj => obj.multiplyScalar((options.collisionBoundingRect.horizontal+0.0001)/h));
+	collisionHelper = new THREE.Line(geometry, material);
+	scene.add(collisionHelper);
+
+	/* Selection Point */
+	//geometry = new THREE.SphereGeometry( 0.1, 6, 5 );
+	//point = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial( { color: 0xFF3333, shading: THREE.FlatShading } ));
+	//scene.add(point);
+	//geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+	
 }
 function update() {
 	raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
 	selection.visible = false;
-	helper.visible = false;
+	collisionHelper.visible = false;
 	var intersections = raycaster.intersectObjects(scene.children);
 	var lastInter = undefined;
 	intersections.some((obj)=>{
@@ -141,18 +145,17 @@ function update() {
 	}
 	);
 	controls.update();
+	collisionHelper.position.copy(controls.player.position);
 	if (lastInter) {
-		helper.visible = selection.visible = true;
+		selection.visible = true;
 		selection.position.copy(lastInter.object.realPosition);
-		helper.position.copy(lastInter.point);
-		helper.rotation.copy(camera.getWorldRotation());
-		helper.rotateZ(-0.7854);
 	}
 	if (typeof animator === "object" && animator.enabled && !animator.manualStep) {
 		animator.step();
 	} else if (typeof animator === "object" && animator.enabled) {
 		animator.updateCamera();
 	}
+	collisionHelper.visible = true;
 	renderer.render(scene, camera);
 }
 function resize() {

@@ -11,22 +11,24 @@ Note that during development, the above link will not bring you to a working rel
 ![Preview v0.1](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v01_normal.gif)
  - v 0.2 [Primitive Block Distinction]
 ![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v02_normal.png)
- - v 0.3 [Mesh Instantiation and Block Selection]
+ - v 0.3 [Collision Detection and Block Selection]
 ![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v03_normal.gif?raw=true)
 
-If you download a release and run index.html on your browser and see that a cross-origin conflict exists (all blocks or textures are black), then it might be necessary to run a server to run this application (such as Apache). It's not safe to allow a web applications to load your computer files, even if it's run locally, that's why it's blocked on most browers. I use chrome with web security disabled, but it's setting up a server isn't difficult.
+If you download a release, (on windows) use the "Run" shortcut to the .bat to run chrome with web security disabled (not an easy thing to set up otherwise). That solves cross origin conflicts, all blocks textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
 
 #Objectives and Priorities
 1. Menu (done)
 2. 3D Controls similar to minecraft (done)
 3. Correct Block Drawing (done)
+4. Crosshair and Block Selection (done)
 4. Block placement
-5. Inventory and Hotbar system
-6. Selection tools (fill, copy, etc)
-7. Save/Load System
-8. Redstone Simulation
-9. Piston Simulation
-10. Water and Lava Simulation (low priority)
+5. Collision Detection (done)
+6. Inventory and Hotbar system
+7. Selection tools (fill, copy, etc)
+8. Save/Load System
+9. Redstone Simulation
+10. Piston Simulation
+11. Water and Lava Simulation (low priority)
 
 #Dependencies, Credits and Inspiration
 

@@ -18,6 +18,6 @@ if (!pointerlockSupport) {
 	logger.warn("Your browser doesn't support pointer lock API.");
 }
 var centerMessage = new CenterMessage(domInterface, "Click to start","[W, A, S, D] to move up, left, down, right\n[Numeric Keys] to change selected block\n[E, ESC, I] to change selected tool (top menu)\n[Ctrl + 1, 2, 3] Also changes the selected tool\n[Ctrl + C, Ctrl + V] copy and paste selection\n[ +, - ] to change tools menu size");
-
+var crosshair = new Crosshair(domInterface);
 var stats = new StatsEdited(document.body);
 stats.begin();
