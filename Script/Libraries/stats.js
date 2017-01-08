@@ -1,6 +1,6 @@
 /**
  * @author mrdoob / http://mrdoob.com/
- * Heavily edited by Gravyness
+ * Heavily edited by Guilherme Rossato
  */
 var StatsEdited = function(recipient) {
 	var startsActive = false;
@@ -14,7 +14,6 @@ var StatsEdited = function(recipient) {
 		event.preventDefault();
 		container.children[0].toggle();
 	}, false);
-	//
 	function addPanel(panel) {
 		container.appendChild(panel.dom);
 		return panel;
@@ -65,13 +64,14 @@ StatsEdited.Panel = function(name, fg, bg, startsActive, maxValue) {
 	  , GRAPH_HEIGHT = 30 * PR;
 	var canvas = document.createElement('canvas');
 	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
 	var context = canvas.getContext('2d');
 	canvas.toggle = function() {
 		canvas.enabled = !canvas.enabled;
+		if (typeof setCookie === "function")
+			setCookie("rs_statsExtended", canvas.enabled?"1":"0", options.cookiesLastingDays);
 		if (canvas.enabled) {
-			canvas.style.cssText = 'width:80px;height:48px';
 			canvas.height = HEIGHT;
+			canvas.style.cssText = 'width:80px;height:48px';
 			context.font = 'bold ' + (9 * PR) + 'px Helvetica,Arial,sans-serif';
 			context.textBaseline = 'top';
 			context.fillStyle = bg;
@@ -83,8 +83,8 @@ StatsEdited.Panel = function(name, fg, bg, startsActive, maxValue) {
 			context.globalAlpha = 0.9;
 			context.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT);
 		} else {
-			canvas.style.cssText = 'width:80px;height:16px';
 			canvas.height = 16;
+			canvas.style.cssText = 'width:80px;height:16px';
 			context.font = 'bold ' + (9 * PR) + 'px Helvetica,Arial,sans-serif';
 			context.textBaseline = 'top';
 		}
@@ -101,7 +101,6 @@ StatsEdited.Panel = function(name, fg, bg, startsActive, maxValue) {
 			context.fillText(Math.round(value) + ' ' + name, TEXT_X, TEXT_Y);
 			if (canvas.enabled) {
 				context.drawImage(canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT);
-				//context.fillStyle = lagged?"#882222":fg;
 				context.fillRect(GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, GRAPH_HEIGHT);
 				context.fillStyle = lagged?"#882222":bg;
 				context.globalAlpha = 0.9;

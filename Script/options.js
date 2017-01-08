@@ -5,6 +5,11 @@ var options = {
 	},
 	viewDistance: 50,
 	cookiesLastingDays: 40,
+	collisionBoundingRect: {
+		top: 0.55,
+		bottom: -0.55,
+		horizontal: 0.55
+	},
 	lights: {
 		instances: [],
 		selected: 0,

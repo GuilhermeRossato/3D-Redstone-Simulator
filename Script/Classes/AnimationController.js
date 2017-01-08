@@ -2,7 +2,7 @@ function AnimationController(camera) {
 	this.camera = camera;
 	this.animationDuration_ms = 3000;
 	this.animationStep_ms = 16;
-	this.enabled = true;
+	this.enabled = false;
 	this.reset_at_end = false;
 	this.manualStep = true;
 	this.clickStep = false;

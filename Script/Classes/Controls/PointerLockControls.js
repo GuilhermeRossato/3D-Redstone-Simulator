@@ -66,10 +66,16 @@ THREE.PointerLockControls = function(camera) {
 			this.moveRight = down;
 			break;
 		case 32: // space
-			this.moveUp = this.enabled && down;
+			if (down)
+				this.vertical = -1;
+			else if (this.vertical === -1)
+				this.vertical = 0;
 			break;
 		case 16: // shift
-			this.moveDown = this.enabled && down;
+			if (down)
+				this.vertical = 1;
+			else if (this.vertical === 1)
+				this.vertical = 0;
 			break;
 		}
 	}
