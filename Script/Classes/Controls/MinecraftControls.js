@@ -51,12 +51,13 @@ function MinecraftControls(scene, camera) {
 		logger.log("Unable to put player in scene due to incorrect parameter");
 	}
 	this.velocity = new THREE.Vector3();
+	this.collision = new CollisionController(scene);
 }
 
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
 	update: function() {
-		this.velocity.set(0,0,0);
+		this.velocity.set(0, 0, 0);
 		if (this.pointerlock.moveForward)
 			this.velocity.z -= 1;
 		if (this.pointerlock.moveBackward)
@@ -66,14 +67,19 @@ MinecraftControls.prototype = {
 		if (this.pointerlock.moveRight)
 			this.velocity.x += 1;
 		this.velocity.normalize();
-		this.player.translateOnAxis(this.velocity, options.playerSpeed.horizontal);
-		if (this.pointerlock.moveUp)
-			this.player.position.y += options.playerSpeed.vertical;
-		if (this.pointerlock.moveDown)
-			this.player.position.y -= options.playerSpeed.vertical;
-
-		if (this.player.position.y < -2)
-			this.player.position.y = -2;
+		this.velocity.applyQuaternion(this.player.quaternion);
+		if (!this.collision.horizontalCheck(this.player.position, this.velocity, options.playerSpeed.horizontal)) {
+			this.velocity.multiplyScalar(options.playerSpeed.horizontal);
+			this.player.position.add(this.velocity);
+		}
+		if (!this.collision.verticalCheck(this.player.position, options.playerSpeed.vertical*this.pointerlock.vertical)) {
+			if (this.pointerlock.vertical == -1)
+				this.player.position.y += options.playerSpeed.vertical;
+			if (this.pointerlock.vertical == 1)
+				this.player.position.y -= options.playerSpeed.vertical;
+		}
+		if (this.player.position.y < 0)
+			this.player.position.y = 0;
 	},
 	releaseMouse: function() {
 		document.exitPointerLock();
