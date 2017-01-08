@@ -12,7 +12,7 @@ Note that during development, the above link will not bring you to a working rel
  - v 0.2 [Primitive Block Distinction]
 ![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v02_normal.png)
  - v 0.3 [Mesh Instantiation and Block Selection]
-![Preview v0.3](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v03_normal.gif)
+![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v03_normal.gif?raw=true)
 
 If you download a release and run index.html on your browser and see that a cross-origin conflict exists (all blocks or textures are black), then it might be necessary to run a server to run this application (such as Apache). It's not safe to allow a web applications to load your computer files, even if it's run locally, that's why it's blocked on most browers. I use chrome with web security disabled, but it's setting up a server isn't difficult.
 
@@ -32,4 +32,4 @@ If you download a release and run index.html on your browser and see that a cros
 
 1. [three.js](https://threejs.org/) - Javascript 3D Library - Used to represent the world
 2. [Minecraft](https://minecraft.net/pt-br/) - by [Mojang](https://mojang.com/) - Inspiration
-3. Digital Circuit Logic, or [Boolean Algebra](https://en.wikipedia.org/wiki/Boolean_algebra) - The answer to "Why this?"
+3. Digital Circuit Logic, or [Boolean Algebra](https://en.wikipedia.org/wiki/Boolean_algebra) - What is it useful for
