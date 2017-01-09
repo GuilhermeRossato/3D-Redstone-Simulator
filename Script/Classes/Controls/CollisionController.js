@@ -6,29 +6,18 @@ function CollisionController(scene) {
 }
 CollisionController.prototype = {
 	constructor: CollisionController,
-	check: function(axisString, position, axisSpeed, multiplier) {
-		this.limit = 0;
-		var distance = Math.max(0.01,Math.abs(axisSpeed * multiplier));
-		var direction = axisSpeed > 0 ? 1 : -1;
+	check: function(position, direction, distance, boundingBoxLength) {
 		var minValue = Number.MAX_VALUE;
 		var minId = -1;
 		this.raycaster.far = distance;
-		var addVec = {x:0,z:0}
-		if (axisString == "X") {
-			this.raycaster.ray.direction.set(direction, 0, 0);
-			addVec.x = direction*options.collisionBoundingRect.horizontal;
-		} else {
-			this.raycaster.ray.direction.set(0, 0, direction);
-			addVec.z = direction*options.collisionBoundingRect.horizontal;
-		}
-		minId = -1;
-		//[{x:0,y:0,z:0}].forEach((vec,id)=>{
-		var quadsSelected = this["quad"+axisString];
-		quadsSelected.forEach((vec,id)=>{
-			this.raycaster.ray.origin.set(position.x + vec.x + addVec.x, position.y + vec.y, position.z + vec.z + addVec.z);
-			if (axisString == "Z") {
-			//	this.raycaster.ray.origin.z += direction;
-			}
+		this.raycaster.ray.direction.copy(direction);
+		//direction.x *= boundingBoxLength;
+		//direction.y *= boundingBoxLength;
+		//direction.z *= boundingBoxLength;
+		this.quadZ.forEach((vec,id)=>{
+			this.raycaster.ray.origin.set(position.x + vec.x + direction.x * boundingBoxLength,
+										  position.y + vec.y + direction.y * boundingBoxLength,
+										  position.z + vec.z + direction.z * boundingBoxLength);
 			let inter = this.raycaster.intersectObjects(this.sceneChildren);
 			if (inter.length > 0) {
 				if (minValue > inter[0].distance) {
@@ -38,12 +27,31 @@ CollisionController.prototype = {
 			}
 		}
 		);
-		this.limit = (minId >= 0) ? minValue*direction : 0;
+		this.limit = (minId >= 0) ? minValue*direction.x : 0;
 		this.limitId = minId;
 		return (minId == -1);
 	},
-	checkZ: function() {
-		return false;
+	checkX: function(position, direction, distance, boundingBoxLength) {
+		var minValue = Number.MAX_VALUE;
+		var minId = -1;
+		this.raycaster.far = distance;
+		this.raycaster.ray.direction.copy(direction);
+		this.quadX.forEach((vec,id)=>{
+			this.raycaster.ray.origin.set(position.x + vec.x + direction.x * boundingBoxLength,
+										  position.y + vec.y + direction.y * boundingBoxLength,
+										  position.z + vec.z + direction.z * boundingBoxLength);
+			let inter = this.raycaster.intersectObjects(this.sceneChildren);
+			if (inter.length > 0) {
+				if (minValue > inter[0].distance) {
+					minValue = inter[0].distance;
+					minId = id;
+				}
+			}
+		}
+		);
+		this.limit = (minId >= 0) ? minValue*direction.x : 0;
+		this.limitId = minId;
+		return (minId == -1);
 	},
 	updateCollisionBoundingRect: function() {
 		var h = options.collisionBoundingRect.horizontal;
@@ -75,17 +83,30 @@ CollisionController.prototype = {
 			}
 		}
 		);
-		//this.quadZ = [];
-		//this.quadZ.push({x:h,y:-v,z:0});
-		//this.quadZ.push({x:-h,y:-v,z:0});
+		//this.quadX.push({x:-0.01,y:0,z:0});
+		//this.quadZ.push({x:0,y:0,z:-0.01});
+		/*
+		
+		this.quadX = [];
+		this.quadZ = [];
+		this.quadX.push({x:0,y:0,z:h});
+		this.quadX.push({x:0,y:0,z:h});
+		this.quadZ.push({x:h,y:0,z:0});
+		this.quadZ.push({x:h,y:0,z:0});
+		this.quadX.push({x:0,y:0,z:-h});
+		this.quadX.push({x:0,y:0,z:-h});
+		this.quadZ.push({x:-h,y:0,z:0});
+		this.quadZ.push({x:-h,y:0,z:0});*/
+		//this.quadX[2] = {x:0,y:-v,z:-h}
 	},
-	checkY: function(position, direction, distance) {
+	checkZ: function(position, direction, distance, boundingBoxLength) {
 		var minValue = Number.MAX_VALUE;
 		var minId = -1;
-		this.raycaster.far = Math.abs(direction * distance);
-		this.raycaster.ray.direction.set(0, -direction, 0);
-		this.quadY.forEach((vec,id)=>{
-			this.raycaster.ray.origin.set(position.x + vec.x, position.y - direction * options.collisionBoundingRect.vertical + vec.y, position.z + vec.z);
+		this.raycaster.far = distance;
+		this.raycaster.ray.direction.copy(direction);
+		direction.multiplyScalar(boundingBoxLength)
+		this.quadZ.forEach((vec,id)=>{
+			this.raycaster.ray.origin.set(position.x + vec.x + direction.x, position.y + vec.y + direction.y, position.z + vec.z + direction.z);
 			let inter = this.raycaster.intersectObjects(this.sceneChildren);
 			if (inter.length > 0) {
 				if (minValue > inter[0].distance) {
@@ -95,9 +116,29 @@ CollisionController.prototype = {
 			}
 		}
 		);
-		this.limitY = (minId >= 0) ? minValue*direction : 0;
+		this.limitZ = (minId >= 0) ? minValue*direction : 0;
 		this.limitId = minId;
-		return (minId == -1) ;
+		return (minId == -1);
+	},
+	checkY: function(position, direction, distance) {
+		var minValue = Number.MAX_VALUE;
+		var minId = -1;
+		this.raycaster.far = distance;
+		this.raycaster.ray.direction.set(0, direction, 0);
+		this.quadY.forEach((vec,id)=>{
+			this.raycaster.ray.origin.set(position.x + vec.x, position.y + vec.y + direction * options.collisionBoundingRect.vertical, position.z + vec.z);
+			let inter = this.raycaster.intersectObjects(this.sceneChildren);
+			if (inter.length > 0) {
+				if (minValue > inter[0].distance) {
+					minValue = inter[0].distance;
+					minId = id;
+				}
+			}
+		}
+		);
+		this.limit = (minId >= 0) ? minValue*direction : 0;
+		this.limitId = minId;
+		return (minId == -1);
 	}
 }
 function putp(x, y) {
