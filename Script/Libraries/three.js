@@ -12295,6 +12295,9 @@
 		var opaqueObjectsLastIndex = -1;
 		var transparentObjects = [];
 		var transparentObjectsLastIndex = -1;
+		this.getRenderLength = function() {
+			return opaqueObjectsLastIndex+transparentObjectsLastIndex+2;
+		}
 		var morphInfluences = new Float32Array(8);
 		var sprites = [];
 		var lensFlares = [];

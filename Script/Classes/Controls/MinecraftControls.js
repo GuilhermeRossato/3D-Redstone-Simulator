@@ -3,7 +3,6 @@ function MinecraftControls(scene, camera) {
 	if (camera instanceof THREE.Camera)
 		this.pointerlock = new THREE.PointerLockControls(camera);
 	else {
-		console.warn("Controls could not be initialized due to lack of camera");
 		logger.error("Controls could not be initialized due to lack of camera");
 	}
 	this.player = this.pointerlock.getObject();
@@ -21,7 +20,6 @@ function MinecraftControls(scene, camera) {
 		}
 	}
 	document.body.onkeydown = (ev)=>{
-		console.log(ev);
 		if (ev.key === 'e' || ev.key === "i") {
 			if (this.pointerlock.enabled)
 				this.releaseMouse();
@@ -30,6 +28,8 @@ function MinecraftControls(scene, camera) {
 			return false;
 		} else if (ev.key === "F5")
 			this.savePlayerState();
+		else if (ev.key === "f")
+			logger.log("Rendering " + renderer.getRenderLength() + " different faces");
 		return true;
 	}
 	document.body.onkeyup = function(ev) {
@@ -50,8 +50,7 @@ function MinecraftControls(scene, camera) {
 	if (scene instanceof THREE.Scene)
 		scene.add(this.player)
 	else {
-		console.warn("Unable to put player in scene due to incorrect parameter");
-		logger.log("Unable to put player in scene due to incorrect parameter");
+		logger.warn("Unable to put player in scene due to incorrect parameter");
 	}
 	this.velocity = new THREE.Vector3();
 	this.collision = new CollisionController(scene);
