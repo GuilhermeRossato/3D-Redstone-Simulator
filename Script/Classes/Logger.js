@@ -61,13 +61,17 @@ Logger.prototype = {
 		this.resetTimer();
 	},
 	error: function() {
-		this.primitive_log(Array.from(arguments).join(" "), "error");
+		var a = Array.from(arguments).join(" ");
+		console.warn(a);
+		this.primitive_log(a, "error");
 	},
 	log: function() {
 		this.primitive_log(Array.from(arguments).join(" "), "log");
 	},
 	warn: function() {
-		this.primitive_log(Array.from(arguments).join(" "), "warn");
+		var a = Array.from(arguments).join(" ");
+		console.warn(a);
+		this.primitive_log(a, "warn");
 	},
 	progress: function() {
 		this.primitive_log(Array.from(arguments).join(" "), "progress");
