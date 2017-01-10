@@ -21,6 +21,7 @@ function MinecraftControls(scene, camera) {
 		}
 	}
 	document.body.onkeydown = (ev)=>{
+		console.log(ev);
 		if (ev.key === 'e' || ev.key === "i") {
 			if (this.pointerlock.enabled)
 				this.releaseMouse();
@@ -69,86 +70,32 @@ MinecraftControls.prototype = {
 	update: function() {
 		this.setupVelocity();
 		[{
-			axis:"x",
-			quad: this.quadX,
-			optionsName: "horizontal",
+			axis: "x",
+			axisOrientation: "horizontal",
+			quad: this.collision.quadX,
 			sideLength: options.collisionBoundingRect.horizontal,
-			direction: {
-				x: Math.sign(this.velocity.x),
-				y: 0,
-				z: 0
-			}
+			direction: { x: Math.sign(this.velocity.x), y: 0, z: 0 },
+			active: true
 		}, {
-			axis:"y",
-			quad: this.quadY,
-			optionsName: "vertical",
-			direction: {
-				x: 0,
-				y: this.vertical,
-				z: 0
-			}
+			axis: "y",
+			axisOrientation: "vertical",
+			quad: this.collision.quadY,
+			direction: { x: 0, y: this.vertical, z: 0 },
+			active: true
 		}, {
-			axis:"z",
-			quad: this.quadZ,
-			optionsName: "horizontal",
-			direction: {
-				x: 0,
-				y: 0,
-				z: -Math.sign(this.velocity.z)
-			}
+			axis: "z",
+			axisOrientation: "horizontal",
+			quad: this.collision.quadZ,
+			direction: { x: 0, y: 0, z: Math.sign(this.velocity.z) },
+			active: true
 		}].forEach(obj=>{
-			if (this.velocity[obj.axis] != 0) {
-				let velocity = (this.velocity[obj.axis] * options.playerSpeed[obj.optionsName]);
-				let canMove;
-				if (obj.axis == "x") {
-					canMove = this.collision.checkX(this.player.position, obj.direction, Math.abs(velocity), options.collisionBoundingRect[obj.optionName]);
-				} else if (obj.axis == "y") {
-					canMove = this.collision.checkY(this.player.position, obj.direction.y, Math.abs(velocity), options.collisionBoundingRect[obj.optionName]);
-				} else {
-					canMove = this.collision.check(this.player.position, obj.direction, Math.abs(velocity), options.collisionBoundingRect[obj.optionName]);
-				}
-				if (canMove) {
-					this.player.position[obj.axis] += velocity;
-				} else {
-					this.player.position[obj.axis] += this.collision.limit;
-				}
+			if (this.velocity[obj.axis] != 0 && obj.active) {
+				let velocity = this.velocity[obj.axis] * options.playerSpeed[obj.axisOrientation];
+				let canMove = this.collision.check(this.player.position, obj.quad, obj.direction, Math.abs(velocity), options.collisionBoundingRect[obj.axisOrientation]);
+				this.player.position[obj.axis] += canMove?velocity:this.collision.limit;
 			}
 		}
 		);
-		/*
-		if (this.velocity.x != 0) {
-			this.velocity.x *= options.playerSpeed.horizontal;
-			let direction = Math.sign(this.velocity.x);
-			let velocity = Math.abs(this.velocity.x);
-			let canMoveX = this.collision.checkX(this.player.position, direction, velocity);
-			if (canMoveX) {
-				this.player.position.x += this.velocity.x;
-			} else if (direction != 0 && this.collision.limitX < 2) {
-				this.player.position.x += this.collision.limitX;
-			}
-		}
-		if (this.velocity.z != 0) {
-			this.velocity.z *= options.playerSpeed.horizontal;
-			let direction = Math.sign(this.velocity.z);
-			let velocity = Math.abs(this.velocity.z);
-			let canMoveZ = this.collision.checkZ(this.player.position, direction, velocity);
-			if (canMoveZ) {
-				this.player.position.z += this.velocity.z;
-			} else if (direction != 0 && this.collision.limitZ < 2) {
-				this.player.position.z += this.collision.limitZ;
-			}
-		}
-		if (this.velocity.y != 0) {
-			this.velocity.y *= options.playerSpeed.vertical;
-			let direction = this.vertical;
-			let velocity = Math.abs(this.velocity.y);
-			let canMoveY = this.collision.checkY(this.player.position, direction, velocity);
-			if (canMoveY) {
-				this.player.position.y += this.velocity.y;
-			} else if (direction != 0 && this.collision.limitY < 2) {
-				this.player.position.y += this.collision.limitY;
-			}
-		}*/
 	},
 	releaseMouse: function() {
 		document.exitPointerLock();
@@ -234,8 +181,8 @@ MinecraftControls.prototype = {
 			this.velocity.x -= 1;
 		if (this.moveRight)
 			this.velocity.x += 1;
+		this.velocity.y = this.vertical;
 		this.velocity.normalize();
 		this.velocity.applyQuaternion(this.player.quaternion);
-		this.velocity.y = this.vertical;
 	}
 }
