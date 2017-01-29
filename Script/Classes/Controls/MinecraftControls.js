@@ -95,6 +95,8 @@ MinecraftControls.prototype = {
 			}
 		}
 		);
+		if (this.player.position.y < 0)
+			this.player.position.y = 0;
 	},
 	releaseMouse: function() {
 		document.exitPointerLock();
