@@ -53,6 +53,11 @@ function addBlocksInWorld() {
 		}
 	}
 }
+
+function resetLight(scene) {
+	options.lights.clearFrom(scene);
+	options.lights.placeInto(scene);
+}
 function setup() {
 	/* Render Setup */
 	renderer = new THREE.WebGLRenderer({
@@ -66,7 +71,7 @@ function setup() {
 	resize();
 	/* Scene Setup */
 	scene = new THREE.Scene();
-	options.lights.placeInto(scene);
+	resetLight(scene);
 	/* Setup Blocks */
 	blocks = new BlockController(scene);
 	addBlocksInWorld();
@@ -155,7 +160,7 @@ function update() {
 	} else if (typeof animator === "object" && animator.enabled) {
 		animator.updateCamera();
 	}
-	collisionHelper.visible = true;
+	collisionHelper.visible = false;
 	renderer.render(scene, camera);
 }
 function resize() {
