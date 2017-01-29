@@ -60,7 +60,3 @@ CollisionController.prototype = {
 		);
 	}
 }
-function putp(x, y) {
-	controls.player.position.x = b(-0.05, 0.05, x);
-	controls.player.position.z = b(-6.05, -5.95, y);
-}
