@@ -3,22 +3,12 @@ function MinecraftControls(scene, camera) {
 	if (camera instanceof THREE.Camera)
 		this.pointerlock = new THREE.PointerLockControls(camera);
 	else {
-		logger.error("Controls could not be initialized due to lack of camera");
+		console.error("Controls could not be initialized due to lack of camera");
 	}
 	this.player = this.pointerlock.getObject();
 	this.pitch = this.pointerlock.getPitchObject();
 	this.loadPlayerState();
 	this.pointerlock.enabled = false;
-	document.body.onclick = ()=>{
-		if (!menuClick) {
-			if (this.pointerlock.enabled) {
-				if (typeof this.clickCallback === "function")
-					this.clickCallback.call(this);
-			} else {
-				this.requestMouse();
-			}
-		}
-	}
 	document.body.onkeydown = (ev)=>{
 		if (ev.key === 'e' || ev.key === "i") {
 			if (this.pointerlock.enabled)
@@ -29,7 +19,7 @@ function MinecraftControls(scene, camera) {
 		} else if (ev.key === "F5")
 			this.savePlayerState();
 		else if (ev.key === "f")
-			logger.log("Rendering " + renderer.getRenderLength() + " different faces");
+			console.log("Rendering " + renderer.getRenderLength() + " different faces");
 		return true;
 	}
 	document.body.onkeyup = function(ev) {
@@ -40,9 +30,13 @@ function MinecraftControls(scene, camera) {
 	document.addEventListener('pointerlockchange', ()=>{
 		if (document.pointerLockElement == document.body) {
 			this.pointerlock.enabled = true;
+			if (typeof this.onEnter === "function")
+				this.onEnter();
 		} else {
 			this.savePlayerState();
 			this.pointerlock.enabled = false;
+			if (typeof this.onExit === "function")
+				this.onExit();
 		}
 	}
 	, false)
@@ -50,7 +44,7 @@ function MinecraftControls(scene, camera) {
 	if (scene instanceof THREE.Scene)
 		scene.add(this.player)
 	else {
-		logger.warn("Unable to put player in scene due to incorrect parameter");
+		console.warn("Unable to put player in scene due to incorrect parameter");
 	}
 	this.velocity = new THREE.Vector3();
 	this.collision = new CollisionController(scene);

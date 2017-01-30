@@ -7,7 +7,7 @@ Logger.prototype = {
 	constructor: Logger,
 	maxLogs: 5,
 	colors: {
-		//R, G, B, A => Where A is the alpha
+		//R, G, B, A
 		log: [0, 0, 0, 0.1],
 		warn: [128, 0, 0, 0.2],
 		error: [100, 0, 0, 0.3],
