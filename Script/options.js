@@ -9,6 +9,7 @@ var options = {
 		vertical: 0.46875,
 		horizontal: 0.46875
 	},
+	selectionBoundSpace: 1.005,
 	lights: {
 		selected: 0,
 		profiles: [{
@@ -74,18 +75,19 @@ var options = {
 			})
 		},
 		placeInto: function(scene) {
+			if (typeof this.profiles[this.selected] !== "object")
+				throw "Option Profile Error: Selected light index invalid";
 			if (typeof this.profiles[this.selected].create === "function") {
 				this.profiles[this.selected].create(scene);
 			} else {
 				this.profiles[this.selected].definition.forEach(obj=>{
 					let light = new THREE.DirectionalLight(0xffffff,obj.intensity);
-					light.position.copy(obj.position);
+					light.position.copy(obj.position||obj.direction);
 					scene.add(light);
 				}
 				)
 			}
 		}
-	},
-	selectionBoundSpace: 1.005
+	}
 };
 //setInterval(function() { options.lights.clearFrom(scene); options.lights.placeInto(scene); },1000);

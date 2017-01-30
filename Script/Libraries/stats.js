@@ -9,7 +9,7 @@ var StatsEdited = function(recipient) {
 	var container = document.createElement('div');
 	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
 	container.addEventListener('click', function(event) {
-		if (typeof menuClick == "boolean")
+		if (typeof menuClick === "boolean")
 			menuClick = true;
 		event.preventDefault();
 		container.children[0].toggle();
@@ -87,6 +87,11 @@ StatsEdited.Panel = function(name, fg, bg, startsActive, maxValue) {
 			canvas.style.cssText = 'width:80px;height:16px';
 			context.font = 'bold ' + (9 * PR) + 'px Helvetica,Arial,sans-serif';
 			context.textBaseline = 'top';
+			context.fillStyle = bg;
+			context.globalAlpha = 1;
+			context.fillRect(0, 0, WIDTH, GRAPH_Y);
+			context.fillStyle = fg;
+			context.fillText(name, TEXT_X, TEXT_Y);
 		}
 	}
 	canvas.enabled = !startsActive;

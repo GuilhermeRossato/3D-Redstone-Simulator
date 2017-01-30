@@ -1,4 +1,10 @@
-var domInterface = document.getElementById("ui");
+var menuClick = false;
+var interface = new GUI(document.body);
+document.body.onclick({preventDefault:()=>{}});
+
+//document.body.onkeydown({key:"e"});
+//interface.showHelp();
+/*var domInterface = document.getElementById("ui");
 while (domInterface.firstChild)
 	domInterface.removeChild(domInterface.firstChild);
 var domMenu = document.createElement("div")
@@ -27,4 +33,4 @@ var centerMessage = new CenterMessage(domInterface, "Click to start",
 "[ F ] to show debug info");
 var crosshair = new Crosshair(domInterface);
 var stats = new StatsEdited(document.body);
-stats.begin();
+stats.begin();*/
