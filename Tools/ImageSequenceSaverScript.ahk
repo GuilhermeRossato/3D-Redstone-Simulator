@@ -4,7 +4,7 @@ return
 
 ^j::
 BreakLoop = 0
-Loop, 39
+Loop, 110
 {
    Sleep, 160
    send, {AppsKey down}
@@ -40,7 +40,7 @@ Loop, 39
    sendinput, i
    sendinput, m
    Sleep, 10
-   sendinput, g20
+   sendinput, g
    Sleep, 10
    sendinput, %A_Index%
    Sleep, 40
@@ -57,10 +57,10 @@ Loop, 39
       Return
    }
    Sleep, 160
-   Sleep, 120
    send, {s down}
+   Sleep, 140
    send, {s up}
-   Sleep, 20
+   Sleep, 100
    if (BreakLoop = 1)
    {
       MsgBox, Manual exit
