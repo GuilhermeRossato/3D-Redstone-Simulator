@@ -2,6 +2,7 @@ function Logger(recipient) {
 	this.domElement = document.createElement("div");
 	this.domElement.className = "logger";
 	recipient.appendChild(this.domElement);
+	this.lineBreak = false;
 }
 Logger.prototype = {
 	constructor: Logger,
@@ -30,7 +31,7 @@ Logger.prototype = {
 			if (childs[i] instanceof HTMLDivElement) {
 				if (typeof (childs[i].fadeInt) === "number" && childs[i].fadeInt < this.fadeTime) {
 					childs[i].fadeInt++;
-					colors = this.colors[childs[i].type].map((o)=>parseFloat(o));
+					colors = this.colors[childs[i].type].map(o=>o);
 					colors[3] = interpolate([0, colors[3]], [this.fadeTime, 0]).at(childs[i].fadeInt);
 					textAlpha = interpolate([0, 1], [this.fadeTime, 0]).at(childs[i].fadeInt);
 					childs[i].style.backgroundColor = "rgba(" + colors.join(", ") + ")";
@@ -45,9 +46,11 @@ Logger.prototype = {
 		let newDomElement = document.createElement("div")
 		  , nodesLength = this.domElement.childNodes.length
 		  , now = new Date();
-		if (nodesLength + 2 > this.maxLogs*2) {
-			this.domElement.removeChild(this.domElement.lastChild);
-			this.domElement.removeChild(this.domElement.lastChild);
+		if (this.lineBreak && nodesLength + 1 > this.maxLogs)
+				this.domElement.removeChild(this.domElement.lastChild);
+		else if (nodesLength + 2 > this.maxLogs*2) {
+				this.domElement.removeChild(this.domElement.lastChild);
+				this.domElement.removeChild(this.domElement.lastChild);
 		}
 		newDomElement.className = "log log-"+type;
 		let minutes = (now.getMinutes() < 10 ? "0" : "") + now.getMinutes()
@@ -56,7 +59,11 @@ Logger.prototype = {
 		newDomElement.type = type;
 		newDomElement.style.backgroundColor = "rgba(" + this.colors[type].join(", ") + ")";
 		newDomElement.fadeInt = 0;
-		this.domElement.insertBefore(document.createElement("br"), this.domElement.firstChild);
+		newDomElement.style.color = "rgba(255,255,255,1)";
+		newDomElement.style.margin = "0px";
+		newDomElement.style.padding = "0px";
+		if (this.lineBreak)
+			this.domElement.insertBefore(document.createElement("br"), this.domElement.firstChild);
 		this.domElement.insertBefore(newDomElement, this.domElement.firstChild);
 		this.resetTimer();
 	},
