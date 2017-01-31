@@ -1,8 +1,9 @@
-var controls;
+var controls, collisionHelper;
 
 function Player(scene, camera, self) {
 	if (self) {
 		this.controls = new MinecraftControls(scene, camera);
+		this.controls.onPause = () => this.parent.showPaused();
 		this.controls.onEnter = () => this.onGrabMouse();
 		this.controls.onExit = () => this.onReleaseMouse();
 		let h = options.selectionBoundSpace / 2;
@@ -17,6 +18,18 @@ function Player(scene, camera, self) {
 		scene.add(this.selection);
 		/* Definition of global variables */
 		controls = this.controls;
+
+		/* Initializing Collision Helper
+		material = new THREE.LineBasicMaterial({
+			color: 0xff0000
+		});
+		geometry = geometry.clone();
+		geometry.vertices.map(obj => obj.multiplyScalar((options.collisionBoundingRect.horizontal+0.0001)/h));
+		collisionHelper = new THREE.Line(geometry, material);
+		scene.add(collisionHelper);*/
+		/* Initializing Animator */
+		this.animator = new AnimationController(camera);
+		animator = this.animator;
 	} else {
 		let geometry = new THREE.CubeGeometry(1,2,1);
 		let material = new THREE.BasicMaterial({color:0x000000});
@@ -31,10 +44,14 @@ Player.prototype = {
 		this.controls.requestMouse();
 	},
 	onGrabMouse: function() {
-		this.parent.showCrosshair();
+		if (this.parent.gamePaused)
+			this.parent.showCrosshair();
 	},
 	onReleaseMouse: function() {
-		this.parent.showInventory();
+		if (this.parent.stats && ((performance || Date).now() - this.parent.stats.getLastUpdate() > 160))
+			this.parent.showPaused();
+		else if (!this.parent.gamePaused) 
+			this.parent.showInventory();
 	},
 	onMouseDown: function(e) {
 		console.log("World Interaction Press");
@@ -42,10 +59,19 @@ Player.prototype = {
 	onMouseUp: function(e) {
 		
 	},
+	lightUpdate: function() {
+		if (this.selection.visible) {
+			this.selection.visible = false;
+			this.controls.update();
+			this.selection.visible = true;
+		} else 
+			this.controls.update();
+	},
 	update: function() {
-		this.raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
 		this.selection.visible = false;
-		var intersections = this.raycaster.intersectObjects(scene.children);
+		this.raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+		//var intersections = this.raycaster.intersectObjects(scene.children);
+		var intersections = [];
 		var lastInter = undefined;
 		intersections.some((obj)=>{
 			if (obj.object.realPosition instanceof THREE.Vector3) {
@@ -55,11 +81,11 @@ Player.prototype = {
 			return false;
 		}
 		);
-		if (lastInter) {
-			selection.visible = true;
-			selection.position.copy(lastInter.object.realPosition);
-		}
 		this.controls.update();
+		if (lastInter) {
+			this.selection.visible = true;
+			this.selection.position.copy(lastInter.object.realPosition);
+		}
 		if (typeof animator === "object" && animator.enabled && !animator.manualStep) {
 			animator.step();
 		} else if (typeof animator === "object" && animator.enabled) {

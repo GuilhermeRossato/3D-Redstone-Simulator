@@ -1,14 +1,16 @@
 var options = {
 	playerSpeed: {
-		horizontal: 0.075,
+		horizontal: 0.075*3,
 		vertical: 0.105
 	},
-	viewDistance: 50,
+	viewDistance: 100,
 	cookiesLastingDays: 40,
 	collisionBoundingRect: {
 		vertical: 0.46875,
 		horizontal: 0.46875
 	},
+	ignoreExcessiveLag: false,
+	ignoreCollision: false,
 	selectionBoundSpace: 1.005,
 	lights: {
 		selected: 0,
@@ -87,6 +89,18 @@ var options = {
 				}
 				)
 			}
+		}
+	},
+	init: function() {
+		if (typeof getCookie === "function" && getCookie("rs_collision") === "1")
+			this.ignoreCollision = true;
+		if (typeof getCookie === "function" && getCookie("rs_excessiveLag") === "1")
+			this.ignoreExcessiveLag = true;
+	},
+	save: function() {
+		if (typeof setCookie === "function") {
+			setCookie("rs_collision", this.ignoreCollision?"1":"0");
+			setCookie("rs_excessiveLag", this.ignoreExcessiveLag?"1":"0");
 		}
 	}
 };

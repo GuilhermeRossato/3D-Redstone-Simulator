@@ -18,7 +18,19 @@ function MinecraftControls(scene, camera) {
 			return false;
 		} else if (ev.key === "F5")
 			this.savePlayerState();
-		else if (ev.key === "f")
+		else if (!ev.ctrlKey && ev.key === "p" && typeof this.onPause === "function")
+			this.onPause();
+		else if (ev.ctrlKey && ev.key === "b") {
+			options.ignoreCollision = !options.ignoreCollision;
+			options.save();
+			if (typeof logger === "object")
+				logger.log("Collision "+(options.ignoreCollision?"disabled":"enabled"));
+		} else if (ev.ctrlKey && ev.key === "m") {
+			options.ignoreExcessiveLag = !options.ignoreExcessiveLag;
+			options.save();
+			if (typeof logger === "object")
+				logger.log("Auto-pause "+(options.ignoreExcessiveLag?"disabled":"enabled"));
+		} else if (ev.key === "f")
 			console.log("Rendering " + renderer.getRenderLength() + " different faces");
 		return true;
 	}
@@ -47,7 +59,7 @@ function MinecraftControls(scene, camera) {
 		console.warn("Unable to put player in scene due to incorrect parameter");
 	}
 	this.velocity = new THREE.Vector3();
-	this.collision = new CollisionController(scene);
+	this.collision = new CollisionController(scene, blocks.blocks);
 	this.moveForward = false;
 	this.moveLeft = false;
 	this.moveBackward = false;
@@ -55,8 +67,8 @@ function MinecraftControls(scene, camera) {
 	this.moveUp = false;
 	this.moveDown = false;
 	this.vertical = 0;
-	document.addEventListener('keydown', (event)=>this.onKeyChange(event.keyCode, true, event.shiftKey), false);
-	document.addEventListener('keyup', (event)=>this.onKeyChange(event.keyCode, false, event.shiftKey), false);
+	document.addEventListener('keydown', (event)=>this.onKeyChange(event.keyCode, 1, event.shiftKey), false);
+	document.addEventListener('keyup', (event)=>this.onKeyChange(event.keyCode, 0, event.shiftKey), false);
 }
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
@@ -67,22 +79,19 @@ MinecraftControls.prototype = {
 			axisOrientation: "horizontal",
 			quad: this.collision.quadX,
 			sideLength: options.collisionBoundingRect.horizontal,
-			direction: { x: Math.sign(this.velocity.x), y: 0, z: 0 },
-			active: true
+			direction: { x: Math.sign(this.velocity.x), y: 0, z: 0 }
 		}, {
 			axis: "y",
 			axisOrientation: "vertical",
 			quad: this.collision.quadY,
-			direction: { x: 0, y: this.vertical, z: 0 },
-			active: true
+			direction: { x: 0, y: this.vertical, z: 0 }
 		}, {
 			axis: "z",
 			axisOrientation: "horizontal",
 			quad: this.collision.quadZ,
-			direction: { x: 0, y: 0, z: Math.sign(this.velocity.z) },
-			active: true
+			direction: { x: 0, y: 0, z: Math.sign(this.velocity.z) }
 		}].forEach(obj=>{
-			if (this.velocity[obj.axis] != 0 && obj.active) {
+			if (this.velocity[obj.axis] != 0) {
 				let velocity = this.velocity[obj.axis] * options.playerSpeed[obj.axisOrientation];
 				let canMove = this.collision.check(this.player.position, obj.quad, obj.direction, Math.abs(velocity), options.collisionBoundingRect[obj.axisOrientation]);
 				this.player.position[obj.axis] += canMove?velocity:this.collision.limit;
@@ -93,7 +102,10 @@ MinecraftControls.prototype = {
 			this.player.position.y = 0;
 	},
 	releaseMouse: function() {
+		let exit = this.onExit;
+		this.onExit = () => {};
 		document.exitPointerLock();
+		this.onExit = exit;
 	},
 	requestMouse: function() {
 		document.body.requestPointerLock();
@@ -167,17 +179,25 @@ MinecraftControls.prototype = {
 		}
 	},
 	setupVelocity: function() {
-		this.velocity.set(0, 0, 0);
-		if (this.moveForward)
-			this.velocity.z -= 1;
-		if (this.moveBackward)
-			this.velocity.z += 1;
-		if (this.moveLeft)
-			this.velocity.x -= 1;
-		if (this.moveRight)
-			this.velocity.x += 1;
-		this.velocity.y = this.vertical;
-		this.velocity.normalize();
+		let value = this.moveForward + this.moveBackward*2 + this.moveLeft*4 + this.moveRight*8;
+		let x, z;
+		if (value === 1) { x = 0; z = -1 }
+		else if (value === 2) { x = 0; z = 1 }
+		else if (value === 4) { x = -1; z = 0 }
+		else if (value === 5) { x = -0.70703125; z = -0.70703125 }
+		else if (value === 6) { x = -0.70703125; z = 0.70703125 }
+		else if (value === 7) { x = -1; z = 0 }
+		else if (value === 8) { x = 1; z = 0 }
+		else if (value === 9) { x = 0.70703125; z = -0.70703125 }
+		else if (value === 10) { x = 0.70703125; z = 0.70703125 }
+		else if (value === 11) { x = 1; z = 0 }
+		else if (value === 13) { x = 0; z = -1 }
+		else if (value === 14) { x = 0; z = 1 }
+		else {
+			x = 0;
+			z = 0;
+		}
+		this.velocity.set(x, this.vertical, z);
 		this.velocity.applyQuaternion(this.player.quaternion);
 	}
 }
