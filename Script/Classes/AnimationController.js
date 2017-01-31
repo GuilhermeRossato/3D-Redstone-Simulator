@@ -1,12 +1,14 @@
+// This is a very specific class, don't use it somewhere else without some serious rewrite
+
 function AnimationController(camera) {
-	this.camera = camera;
-	this.animationDuration_ms = 3000;
-	this.animationStep_ms = 16;
 	this.enabled = false;
 	this.reset_at_end = false;
 	this.manualStep = true;
 	this.clickStep = false;
 	this.keyStep = true;
+	this.camera = camera;
+	this.animationDuration_ms = 3300;
+	this.animationStep_ms = 30;
 	if (this.enabled)
 		this.begin();
 	this.reset();
@@ -20,12 +22,24 @@ function AnimationController(camera) {
 		}
 	}
 	);
+	if (this.enabled) {
+		this.keydown = document.body.onkeydown;
+		document.body.onkeydown = () => {};
+	}
 }
 
 AnimationController.prototype = {
 	constructor: AnimationController,
 	placeCamera: function(t) {
-		this.animation_rotate2(t)
+		this.animation_go(t);
+		if (typeof player === "object" && player instanceof Player)
+			player.controls.player.position.copy(this.camera.position);
+	},
+	animation_go(t) {
+		t*=t*70;
+		let velocity = {x:-0.9283*t, y:0, z:0.5718*t};
+		this.camera.position.set(velocity.x,13,velocity.z);
+		this.camera.lookAt(new THREE.Vector3(velocity.x-0.9283,12.3,velocity.z+0.5718));
 	},
 	animation_rotate2: function(t) {
 		t = (6*t*t*t*t*t + -15*t*t*t*t + 10*t*t*t);
@@ -42,7 +56,7 @@ AnimationController.prototype = {
 		  , cos = Math.cos(angle)
 		  , sin = Math.sin(angle);
 		var past = (0.25 < t && t < 0.75);
-		this.camera.position.set(sin * 4.5, 4 , cos * 6);
+		this.camera.position.set(sin * 31, 16 , cos * 31);
 		this.camera.lookAt(new THREE.Vector3(0,-1,0));
 	},
 	begin: function() {
@@ -62,6 +76,9 @@ AnimationController.prototype = {
 		if (this.lastOnClick)
 			document.body.onclick = this.lastOnClick;
 		this.enabled = false;
+		this.onkeydown = this.keydown;
+		if (typeof player === "object" && player instanceof Player)
+			player.controls.player.position.set(0,10,0);
 	},
 	step: function() {
 		if (this.enabled) {
@@ -100,6 +117,13 @@ AnimationController.prototype = {
 		)
 		toRemove.forEach((obj) => {
 			document.body.removeChild(obj);
-		})
+		});
+		if (typeof controls === "object")
+			controls.enabled = false;
+		if (typeof gui === "object") {
+			gui.main.style.display = "none"
+			gui.secondary.style.display = "none";
+			gui.fill.style.display = "none";
+		}
 	}
 }
