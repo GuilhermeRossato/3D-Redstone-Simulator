@@ -1,12 +1,14 @@
-function CollisionController(scene) {
+function CollisionController(scene, solids) {
 	this.raycaster = new THREE.Raycaster(undefined,new THREE.Vector3(0,1,0),0,1);
 	this.raycaster.near = 0;
-	this.sceneChildren = scene.children;
+	this.solids = solids;
 	this.updateCollisionBoundingRect();
 }
 CollisionController.prototype = {
 	constructor: CollisionController,
 	check: function(position, quad, direction, distance, boundingBoxLength) {
+		if (options.ignoreCollision)
+			return true;
 		var minValue = Number.MAX_VALUE;
 		var minId = -1;
 		this.raycaster.far = distance;
@@ -15,7 +17,7 @@ CollisionController.prototype = {
 			this.raycaster.ray.origin.set(position.x + vec.x + direction.x * boundingBoxLength,
 										  position.y + vec.y + direction.y * boundingBoxLength,
 										  position.z + vec.z + direction.z * boundingBoxLength);
-			let inter = this.raycaster.intersectObjects(this.sceneChildren);
+			let inter = this.raycaster.intersectObjects(this.solids);
 			if (inter.length > 0) {
 				if (minValue > inter[0].distance) {
 					minValue = inter[0].distance;
@@ -36,9 +38,9 @@ CollisionController.prototype = {
 		var quad = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
 		this.quadY = quad.map((obj,id)=>{
 			return {
-				x: (obj[0]) * h + ((id == 1 || id == 2) ? 0.001 : -0.001),
+				x: (obj[0]) * h + ((id == 1 || id == 2) ? 0.002 : -0.002),
 				y: 0,
-				z: (obj[1]) * h + ((id > 1) ? 0.001 : -0.001)
+				z: (obj[1]) * h + ((id > 1) ? 0.002 : -0.002)
 			}
 		}
 		);

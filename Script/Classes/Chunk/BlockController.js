@@ -18,10 +18,8 @@ BlockController.prototype = {
 	constructor: BlockController,
 	includeBlock: function(x, y, z, id, mesh) {
 		mesh.realPosition = new THREE.Vector3(x,y,z);
-		this.blocks.push({
-			id: id,
-			mesh: mesh
-		});
+		mesh.gid = id;
+		this.blocks.push(mesh);
 	},
 	getBlock: function(x, y, z) {
 		return this.blocks.filter((obj)=>obj.x === x && obj.y === y && obj.z === z)[0];
@@ -50,7 +48,7 @@ BlockController.prototype = {
 	setBlock: function(x, y, z, id) {
 		var obj = this.getBlock(x, y, z);
 		if (typeof obj === "object") {
-			if (obj.id !== id) {
+			if (obj.gid !== id) {
 				this.scene.remove(obj.mesh);
 				if (id !== 0) {
 					this.putBlockIntoWorld(x, y, z, id);
