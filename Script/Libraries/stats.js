@@ -49,6 +49,9 @@ var StatsEdited = function(recipient) {
 		lagStep: function() {
 			msPanel.update(this.delta, true);
 			this.delta = 0;
+		},
+		getLastUpdate: function() {
+			return beginTime;
 		}
 	};
 };
