@@ -1,5 +1,3 @@
-var g;
-
 function Inventory(centeredDiv) {
 	this.base = centeredDiv;
 	this.main = document.createElement("div");
@@ -9,7 +7,6 @@ function Inventory(centeredDiv) {
 	let img = document.createElement("img");
 	img.src = "Images/Menu/inventory.png";
 	img.width = 195 * 2;
-	console.log(img.style.imageRendering);
 	img.style.imageRendering = "-moz-crips-edges";
 	img.style.imageRendering = "pixelated";
 	this.main.appendChild(img);
@@ -46,7 +43,7 @@ function Inventory(centeredDiv) {
 	}
 	this.main.appendChild(this.selection);
 	this.scrollY = 0;
-	this.filtered = itemData;
+	this.filtered = itemData.filter(obj => (obj.id?true:false));
 	this.refreshItems();
 }
 
@@ -63,9 +60,15 @@ Inventory.prototype = {
 	},
 	refreshItems: function() {
 		this.clearItems();
-		for (var i = 0; i < 9; i++) {
-			for (var j = 0; j < 7; j++) {
-				this.addItem(i,j+1,i+(j+this.scrollY)*9);
+		let id = 0;
+		for (var i = 0; i < 7; i++) {
+			for (var j = 0; j < 9; j++) {
+				if (this.filtered.length > id) {
+					this.addItem(j,i+1,this.filtered[id].i);
+					id++;
+				} else {
+					break;
+				}
 			}
 		}
 	},
@@ -94,16 +97,6 @@ Inventory.prototype = {
 		element.style.backgroundRepeat = "no-repeat";
 		element.style.backgroundPositionY = (-itemData[itemId].texture*32)+"px";
 		element.style.backgroundImage = "url(Images/Menu/items.png)";
-
-/*
-	background-position-x: 0px;
-	background-position-y: -32px;
-	background-size: initial;
-	background-repeat-x: no-repeat;
-	background-repeat-y: no-repeat;
-	*/
-		g = element;
-		//element.style.background = "url(Images/Menu/items.png) 0 -32px no-repeat;";
 		this.items.push({
 			itemId: itemId,
 			element: element
@@ -123,6 +116,6 @@ Inventory.prototype = {
 		} else {
 			this.selection.style.display = "none";
 		}
-		console.log(x, y, this.selection.x, this.selection.y);
+		//console.log(x, y, this.selection.x, this.selection.y);
 	}
 }
