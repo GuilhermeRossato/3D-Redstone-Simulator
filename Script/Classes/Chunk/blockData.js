@@ -413,11 +413,11 @@ const block_data = [{
 	id: 180,
 	texture: "planks_jungle.png"
 }, {
-	// Jungle Wood Plank (5:4)
+	// Acacia Wood Plank (5:4)
 	id: 181,
 	texture: "planks_acacia.png"
 }, {
-	// Jungle Wood Plank (5:5)
+	// Dark Oak Wood Plank (5:5)
 	id: 182,
 	texture: "planks_big_oak.png"
 }, {
