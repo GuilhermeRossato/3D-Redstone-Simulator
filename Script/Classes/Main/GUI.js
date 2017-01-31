@@ -1,6 +1,9 @@
 var camera, scene, renderer;
 var controls, player;
+var gui, stats;
+
 function GUI(body) {
+	this.gamePaused = true;
 	this.body = body;
 	this.main = document.getElementById("main");
 	this.assert(this.main instanceof HTMLDivElement, "Main div not found");
@@ -11,47 +14,65 @@ function GUI(body) {
 	this.setupThreejs();
 	this.setupPlayer();
 	this.startLoop();
+	this.main.style.color = "#eeeeee";
 	this.showHelp();
 }
+
+function fullGameTick() {
+	gui.player.update();
+	world.update(gui.player.controls.player.position);
+}
+
+function lightGameTick() {
+	gui.player.lightUpdate();
+	world.lightUpdate(gui.player.controls.player.position);
+}
+
+function update() {
+	stats.update();
+	menuClick = false;
+	var delta = stats.delta;
+	if (delta >= 16 * 1) {
+		if (delta < 16 * 2) {
+			stats.normalStep();
+			stats.delta -= 16;
+			fullGameTick();
+		} else if (delta < 16 * 3) {
+			stats.normalStep();
+			stats.delta -= 16 * 2;
+			lightGameTick();
+			fullGameTick();
+		} else if (delta < 16 * 4) {
+			stats.normalStep();
+			stats.delta -= 16 * 3;
+			lightGameTick();
+			lightGameTick();
+			fullGameTick();
+		} else if (delta < 16 * 5) {
+			stats.lagStep();
+			lightGameTick();
+			lightGameTick();
+		} else {
+			stats.lagStep();
+			lightGameTick();
+			lightGameTick();
+			if (!gui.gamePaused && !options.ignoreExcessiveLag) {
+				controls.releaseMouse();
+				gui.showPaused();
+			}
+		}
+	}
+	gui.renderer.render(gui.scene, gui.camera);
+	window.requestAnimationFrame(update);
+}
+
 GUI.prototype = {
 	constructor: GUI,
 	addBlocksInWorld: function(scene) {},
 	startLoop: function() {
-		this.renderer.domElement.style.display = "block";
-		this.update();
-	},
-	gameTick: function() {
-		this.player.update();
-	},
-	update: function() {
-		this.stats.update();
-		menuClick = false;
-		var delta = this.stats.delta;
-		if (delta >= 16 * 1) {
-			if (delta < 16 * 2) {
-				this.stats.normalStep();
-				this.stats.delta -= 16;
-				this.gameTick();
-			} else if (delta < 16 * 3) {
-				this.stats.normalStep();
-				this.stats.delta -= 16 * 2;
-				this.gameTick();
-				this.gameTick();
-			} else if (delta < 16 * 4) {
-				this.stats.normalStep();
-				this.stats.delta -= 16 * 3;
-				this.gameTick();
-				this.gameTick();
-				this.gameTick();
-			} else if (delta < 16 * 8) {
-				this.stats.lagStep();
-			} else {
-				this.stats.lagStep();
-				controls.releaseMouse();
-			}
-		}
-		renderer.render(scene, camera);
-		window.requestAnimationFrame(() => this.update());
+		gui = this;
+		stats = this.stats;
+		update();
 	},
 	setupThreejs: function() {
 		/* Render Setup */
@@ -60,14 +81,19 @@ GUI.prototype = {
 			alpha: false
 		});
 		this.renderer.setClearColor(0x999999, 1);
-		this.renderer.domElement.style.display = "none";
+		this.renderer.domElement.style.position = "absolute";
 		this.body.appendChild(this.renderer.domElement);
 		/* Camera Setup*/
 		this.camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.25,options.viewDistance);
 		this.resize();
+		window.addEventListener('resize', (ev)=>this.resize(ev), false);
 		/* Scene Setup */
 		this.scene = new THREE.Scene();
 		options.lights.placeInto(this.scene);
+		/* Blocks Setup */
+		this.blocks = new BlockController(this.scene);
+		blocks = this.blocks;
+		addBlocksInWorld({x:0, z:0});
 		/* Definition of global variables */
 		renderer = this.renderer;
 		scene = this.scene;
@@ -94,6 +120,11 @@ GUI.prototype = {
 			while (this.secondary.firstChild)
 				this.secondary.removeChild(this.secondary.firstChild);
 		this.body.style.cursor = "default";
+		this.body.onmousedown = this.body.onmouseup = this.body.onclick = () => {};
+		if (this.fill)
+			this.fill.style.backgroundColor = "transparent";
+		if (typeof logger === "object")
+			this.secondary.appendChild(logger.domElement);
 	},
 	setFill: function(color) {
 		if (!this.fill) {
@@ -110,7 +141,33 @@ GUI.prototype = {
 		}
 		this.fill.style.backgroundColor = color
 	},
+	showPaused: function() {
+		this.gamePaused = true;
+		this.clearInterface();
+		this.setFill("rgba(0,0,0,0.3)");
+		let str = ("Click anywhere to resume\nGame Paused\n");
+		if (!options.ignoreExcessiveLag)
+			str += "Involuntary (and frequent) pausing indicates\nthat your computer can't keep up with the\n simulation due to performance problems.\nYou can disable auto-pausing with Ctrl + M.\nAlternatively, decrease the amount of blocks.";
+		str.split("\n").forEach((text,i)=>{
+			let span = document.createElement("span");
+			span.style.display = "block";
+			span.style.fontWeight = (i === 0) ? "bold" : "normal";
+			span.style.fontSize = (i === 1) ? "48px" : "16px";
+			span.style.marginBottom = (i === 1) ? "10px" : "0px";
+			span.style.textAlign = (i < 2) ? "center" : "left";
+			span.innerText = text;
+			this.main.appendChild(span);
+		}
+		);
+		this.body.style.cursor = "pointer";
+		this.body.onclick = (ev) => this.onSlowClick(ev);
+	},
+	onSlowClick: function(mouseEvent) {
+		this.assert(this.player, "Missing Component Error: Player not defined");
+		this.showCrosshair();
+	},
 	showHelp: function() {
+		this.gamePaused = true;
 		this.clearInterface();
 		this.setFill("rgba(0,0,0,0.4)");
 		let str = ("Click anywhere to start\nInstructions\n" + "[W, A, S, D] to move up, left, down, right\n" + "[Numeric Keys] to change selected block\n" + "[E, ESC, I] to open inventory\n" + "[ F ] to show debug info\n" + "[ H ] show or hide these instructions\n" + "[Left click] Break blocks\n" + "[Right click] Place blocks\n" + "[Wooden axe] is the selection tool\n" + "[ R, Shift+R ] to rotate selection\n" + "[Ctrl + C, Ctrl + V] copy and paste selection\n");
@@ -140,9 +197,9 @@ GUI.prototype = {
 		this.showCrosshair();
 	},
 	showCrosshair: function() {
+		this.gamePaused = false;
 		this.clearInterface();
 		this.player.requestMouse();
-		this.body.onclick = (event)=>{}
 		this.body.onmousedown = (event)=>{
 			this.player.onMouseDown(event);
 		}
@@ -154,6 +211,7 @@ GUI.prototype = {
 		this.main.appendChild(img);
 	},
 	showInventory: function() {
+		this.gamePaused = true;
 		this.clearInterface();
 		this.body.onclick = this.body.onmousedown = this.body.onmouseup = (event)=>{}
 		if (!this.inventory)
