@@ -7,7 +7,7 @@ function AnimationController(camera) {
 	this.clickStep = false;
 	this.keyStep = true;
 	this.camera = camera;
-	this.animationDuration_ms = 3300;
+	this.animationDuration_ms = 5300;
 	this.animationStep_ms = 30;
 	if (this.enabled)
 		this.begin();
@@ -36,7 +36,11 @@ AnimationController.prototype = {
 			player.controls.player.position.copy(this.camera.position);
 	},
 	animation_go(t) {
-		t*=t*70;
+		if (t <= 0.1)
+			t = interpolate([0,0],[0.05,0.025],[0.1,0.1]).at(t);
+		if (t >= 0.9)
+			t = interpolate([0.9,0.9],[0.95,0.975],[1,1]).at(t);
+		t*=110;
 		let velocity = {x:-0.9283*t, y:0, z:0.5718*t};
 		this.camera.position.set(velocity.x,13,velocity.z);
 		this.camera.lookAt(new THREE.Vector3(velocity.x-0.9283,12.3,velocity.z+0.5718));

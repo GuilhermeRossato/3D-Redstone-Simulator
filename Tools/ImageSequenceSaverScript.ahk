@@ -4,7 +4,7 @@ return
 
 ^j::
 BreakLoop = 0
-Loop, 110
+Loop, 176
 {
    Sleep, 160
    send, {AppsKey down}
@@ -16,8 +16,9 @@ Loop, 110
       MsgBox, Manual exit
       Return
    }
+   sleep, 20
    send, {s down}
-   sleep, 80
+   sleep, 100
    send, {s up}
    WinWaitActive, Salvar como, , 6
    if ErrorLevel
@@ -30,7 +31,7 @@ Loop, 110
       MsgBox, Manual exit
       Return
    }
-   Sleep, 160
+   Sleep, 140
    if (BreakLoop = 1)
    {
       MsgBox, Manual exit
@@ -58,9 +59,9 @@ Loop, 110
    }
    Sleep, 160
    send, {s down}
-   Sleep, 140
+   Sleep, 160
    send, {s up}
-   Sleep, 100
+   Sleep, 120
    if (BreakLoop = 1)
    {
       MsgBox, Manual exit

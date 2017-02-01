@@ -80,7 +80,7 @@ GUI.prototype = {
 			antialias: false,
 			alpha: false
 		});
-		this.renderer.setClearColor(0x999999, 1);
+		this.renderer.setClearColor(0x333333, 1);
 		this.renderer.domElement.style.position = "absolute";
 		this.body.appendChild(this.renderer.domElement);
 		/* Camera Setup*/
