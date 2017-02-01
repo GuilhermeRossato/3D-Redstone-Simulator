@@ -13,8 +13,8 @@ Note that during development, the above link will not bring you to a working rel
 ![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v02_normal.png)
  - v 0.3 [Collision Detection and Block Selection]
 ![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v03_normal.gif?raw=true)
- - v 0.3 [Inventory and Procedural Terrain Generation]
-![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v04_normal.gif?raw=true)
+ - v 0.4 [Inventory and Procedural Terrain Generation]
+![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v04_normal.gif?raw=true)
 
 If you download a release, (on windows) use the "Run" shortcut to the .bat to run chrome with web security disabled (not an easy thing to set up otherwise). That solves cross origin conflicts, all blocks textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
 
