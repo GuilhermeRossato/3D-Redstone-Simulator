@@ -16,6 +16,8 @@ function GUI(body) {
 	this.startLoop();
 	this.main.style.color = "#eeeeee";
 	this.showHelp();
+	this.inventory = new Inventory(this.main);
+	this.hotbar = new Hotbar(this.inventory, this.main);
 }
 
 function fullGameTick() {
@@ -209,13 +211,12 @@ GUI.prototype = {
 		let img = document.createElement("img");
 		img.src = "Images/crosshair.png";
 		this.main.appendChild(img);
+		this.hotbar.show();
 	},
 	showInventory: function() {
 		this.gamePaused = true;
 		this.clearInterface();
 		this.body.onclick = this.body.onmousedown = this.body.onmouseup = (event)=>{}
-		if (!this.inventory)
-			this.inventory = new Inventory(this.main);
 		this.inventory.show();
 		this.setFill("rgba(0,0,0,0.5)");
 	},
