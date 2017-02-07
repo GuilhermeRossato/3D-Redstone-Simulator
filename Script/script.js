@@ -105,10 +105,20 @@ world = {
 	},
 	update: function(playerPos) {
 		let pos = {x:playerPos.x, y:0, z:playerPos.z};
-		if (this.allDeadChunks.length === 0) {
+		if (false && this.allDeadChunks.length === 0) { // debug
+			this.addChunk(0,0);
+			this.fillChunk(this.allDeadChunks.pop());
+			this.addChunk(0,1);
+			this.fillChunk(this.allDeadChunks.pop());
+			this.addChunk(1,1);
+			this.fillChunk(this.allDeadChunks.pop());
+			this.addChunk(1,0);
+			this.fillChunk(this.allDeadChunks.pop());
+		} else if (this.allDeadChunks.length === 0) {
 			this.init(pos);
 		} else {
 			let len, i, chunk, dist;
+			//return; // THIS STOPS PROCEDURAL TERRAIN GENERATION
 			len = this.allDeadChunks.length;
 			for (i=0;i<len;i++) {
 				chunk = this.allDeadChunks[i];
