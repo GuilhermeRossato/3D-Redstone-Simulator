@@ -76,8 +76,10 @@ world = {
 		this.allActiveChunks.push(chunk);
 		for (var i = 0; i < 16; i++) {
 			for (var j = 0; j < 16; j++) {
-				blocks.setBlock(j-8,-3+getHeightAt(chunk.position.x+j, chunk.position.z+i)|0, i-8, this.getBlockId());
+				blocks.setBlock(j-8+chunk.position.x,-3+getHeightAt(chunk.position.x+j, chunk.position.z+i)|0, i-8+chunk.position.z, this.getBlockId());
 				let block = blocks.blocks[blocks.blocks.length-1];
+				block.position.x -= chunk.position.x;
+				block.position.z -= chunk.position.z;
 				scene.remove(block);
 				chunk.add(block);
 			}

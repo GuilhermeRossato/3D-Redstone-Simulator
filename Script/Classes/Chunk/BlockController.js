@@ -22,7 +22,7 @@ BlockController.prototype = {
 		this.blocks.push(mesh);
 	},
 	getBlock: function(x, y, z) {
-		return this.blocks.filter((obj)=>obj.x === x && obj.y === y && obj.z === z)[0];
+		return this.blocks.filter((obj)=>obj.realPosition.x === x && obj.realPosition.y === y && obj.realPosition.z === z)[0];
 	},
 	getGeo: function(id) {
 		if (id >= 203 && id <= 228)
