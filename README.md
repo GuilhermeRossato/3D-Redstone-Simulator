@@ -13,7 +13,7 @@ Note that during development, the above link will not always bring you to a work
 ![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v02_normal.png)
  - v 0.3 [Collision Detection and Block Selection]
 ![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v03_normal.gif?raw=true)
- - v 0.4 [Inventory and Procedural Terrain Generation]
+ - v 0.4 [Inventory, Hotbar and Procedural Terrain Generation]
 ![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v04_normal.gif?raw=true)
 
 #How to run / build locally
@@ -26,9 +26,9 @@ If you download a release, (on windows) use the "Run" shortcut to the .bat to ru
 3. Correct Block Drawing (done)
 4. Crosshair and Block Selection (done)
 5. Collision Detection (done)
-6. Procedural Terrain Generation (done / experimental / release v0.4 only)
+6. Procedural Terrain Generation (release v0.4 only)
 7. Block placement (partially done)
-8. Inventory and Hotbar system (partially done)
+8. Inventory and Hotbar system (done)
 9. Selection tools
 10. Save/Load System
 11. Redstone Simulation
