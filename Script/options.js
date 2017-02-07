@@ -1,7 +1,16 @@
 var options = {
 	playerSpeed: {
-		horizontal: 0.075*3,
+		horizontal: 0.085,
 		vertical: 0.105
+	},
+	defaultPosition: {
+		x: 8,
+		y: 10,
+		z: 20
+	},
+	defaultRotation: {
+		pitch: 0,
+		yaw: 0
 	},
 	viewDistance: 100,
 	cookiesLastingDays: 40,

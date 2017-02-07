@@ -10,6 +10,8 @@ function MinecraftControls(scene, camera) {
 	this.loadPlayerState();
 	this.pointerlock.enabled = false;
 	document.body.onkeydown = (ev)=>{
+		if (typeof this.parent === "object" && this.parent.gamePaused)
+			return
 		if (ev.key === 'e' || ev.key === "i") {
 			if (this.pointerlock.enabled)
 				this.releaseMouse();
@@ -117,12 +119,17 @@ MinecraftControls.prototype = {
 			  , z = getCookie("rs_posZ");
 			if (x && y && z) {
 				this.player.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
+			} else {
+				this.player.position.set(options.defaultPosition.x, options.defaultPosition.y, options.defaultPosition.z);
 			}
 			x = getCookie("rs_rotX");
 			y = getCookie("rs_rotY");
 			if (x && y) {
 				this.pitch.rotation.set(parseFloat(x), 0, 0);
 				this.player.rotation.set(0, parseFloat(y), 0);
+			} else {
+				this.pitch.rotation.set(options.defaultRotation.pitch);
+				this.player.rotation.set(options.defaultRotation.yaw);
 			}
 		}
 	},
