@@ -6,6 +6,7 @@ function Player(scene, camera, self) {
 		this.controls.onPause = () => this.parent.showPaused();
 		this.controls.onEnter = () => this.onGrabMouse();
 		this.controls.onExit = () => this.onReleaseMouse();
+		this.controls.parent = this;
 		let h = options.selectionBoundSpace / 2;
 		let geometry = new THREE.Geometry();
 		geometry.vertices.push(new THREE.Vector3(-h,-h,-h), new THREE.Vector3(-h,h,-h), new THREE.Vector3(h,h,-h), new THREE.Vector3(h,-h,-h), new THREE.Vector3(-h,-h,-h), new THREE.Vector3(-h,-h,h), new THREE.Vector3(-h,h,h), new THREE.Vector3(h,h,h), new THREE.Vector3(h,-h,h), new THREE.Vector3(h,-h,-h), new THREE.Vector3(h,h,-h), new THREE.Vector3(-h,h,-h), new THREE.Vector3(-h,h,h), new THREE.Vector3(-h,-h,h), new THREE.Vector3(h,-h,h), new THREE.Vector3(h,h,h), new THREE.Vector3(h,h,-h));
@@ -70,8 +71,8 @@ Player.prototype = {
 	update: function() {
 		this.selection.visible = false;
 		this.raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-		//var intersections = this.raycaster.intersectObjects(scene.children);
-		var intersections = [];
+		var intersections = this.raycaster.intersectObjects(blocks.blocks);
+		//var intersections = [];
 		var lastInter = undefined;
 		intersections.some((obj)=>{
 			if (obj.object.realPosition instanceof THREE.Vector3) {
