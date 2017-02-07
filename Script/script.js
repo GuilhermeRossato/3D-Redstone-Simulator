@@ -54,12 +54,19 @@ world = {
 	chunks: [],
 	allActiveChunks: [],
 	allDeadChunks: [],
-	getBlockId: function() {
+	getBlockId: function(height) {
+		if (height > 1)
+			return 2;
+		else
+			return 12;
+		
+		/*
 		var candidates = [56,1,1,1,1,1,1,1,1,1,1,1,14,15,16,21,14,15,16,1,1,73];
 		let a = Math.random()*candidates.length;
 		if ((a < 1) && Math.random() < 0.99)
 			a = Math.random()*candidates.length;
 		return candidates[a|0];
+		*/
 	},
 	addChunk: function(x,z) {
 		let origin = {x:x*16-8, z:z*16-8};
@@ -76,7 +83,8 @@ world = {
 		this.allActiveChunks.push(chunk);
 		for (var i = 0; i < 16; i++) {
 			for (var j = 0; j < 16; j++) {
-				blocks.setBlock(j-8+chunk.position.x,-3+getHeightAt(chunk.position.x+j, chunk.position.z+i)|0, i-8+chunk.position.z, this.getBlockId());
+				let ht = -2+getHeightAt(chunk.position.x+j, chunk.position.z+i)|0
+				blocks.setBlock(j-8+chunk.position.x, ht, i-8+chunk.position.z, this.getBlockId(ht));
 				let block = blocks.blocks[blocks.blocks.length-1];
 				block.position.x -= chunk.position.x;
 				block.position.z -= chunk.position.z;
