@@ -100,8 +100,8 @@ MinecraftControls.prototype = {
 			}
 		}
 		);
-		if (this.player.position.y < 0)
-			this.player.position.y = 0;
+		if (this.player.position.y < -1)
+			this.player.position.y = -1;
 	},
 	releaseMouse: function() {
 		let exit = this.onExit;
