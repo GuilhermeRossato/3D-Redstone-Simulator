@@ -95,7 +95,6 @@ GUI.prototype = {
 		/* Blocks Setup */
 		this.blocks = new BlockController(this.scene);
 		blocks = this.blocks;
-		addBlocksInWorld({x:0, z:0});
 		/* Definition of global variables */
 		renderer = this.renderer;
 		scene = this.scene;
