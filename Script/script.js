@@ -1,10 +1,98 @@
-function manualRandom() {
-	var x = Math.sin(seed++) * 10000;
-	return x - Math.floor(x);
+function getHeightTest() {
+	return 0;
 }
-function setSeed(x, z) {
-	seed = (37 + x + z * 400);
+var test = {
+	count:0,
+	meshes: [],
+	setup: function() {
+		this.textures = [
+		"stone.png",
+		"grass_green.png",
+		"grass_side.png",
+		"hardened_clay.png"
+		].map((filename)=>{
+			let texture = blocks.textureLoader.load("Images/Textures/"+filename);
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.LinearMipMapLinearFilter;
+			return texture;
+		});
+		this.plane = new THREE.PlaneGeometry(1, 1, 1, 1);
+		this.single = new THREE.Geometry();
+	},
+	sides: [["z",0.5,"z",0], // Front
+		 ["z",-0.5,"y",1], // Back
+		 ["x",0.5,"y",0.5], // Right
+		 ["x",-0.5,"y",-0.5], // Left
+		 ["y",0.5,"x",-0.5], // Top
+		 ["y",-0.5,"x",0.5] // Down
+		 ],
+	edit: function() {
+
+	},
+	clearSingleGeometry: function() {
+		this.single.vertices = [];
+		this.single.faces = [];
+		this.single = new THREE.Geometry();
+	},
+	addBlock: function(x, y, z) {
+		let geometry = this.plane;
+		let meshes = [
+			new THREE.Mesh(geometry),
+			new THREE.Mesh(geometry),
+			new THREE.Mesh(geometry),
+			new THREE.Mesh(geometry),
+			new THREE.Mesh(geometry),
+			new THREE.Mesh(geometry)
+		];
+		this.sides.forEach((data,i)=>{
+		 	meshes[i].position[data[0]] = data[1];
+		 	meshes[i].rotation[data[2]] = data[3]*Math.PI;
+		});
+		meshes.forEach(mesh => {
+			mesh.position.add({x:x,y:y,z:z});
+			mesh.updateMatrix()
+			this.single.merge(mesh.geometry, mesh.matrix);
+		});
+	},
+	add: function() {
+		// Add each block to geometry
+		let i = 0;
+		let j = 0;
+		let size = 60;
+		for (i = -size/2; i < size/2; i++)
+			for (j = -size/2; j < size/2; j++)
+				this.addBlock(i,getHeightTest(),j);
+		// Create final mesh
+		let material = new THREE.MeshLambertMaterial({
+			color: 0x555555,
+			map: this.textures[1],
+			side: THREE.FrontSide
+		});
+		let mesh = new THREE.Mesh(this.single, material);
+		mesh.updateMatrix();
+		this.meshes.push(mesh);
+		scene.add(mesh);
+	},
+	remove: function() {
+		this.meshes.forEach(obj => {
+			scene.remove(obj);
+		})
+		this.meshes = [];
+		this.clearSingleGeometry();
+	},
+	update: function() {
+		if (this.count === 0)
+			this.setup();
+		if (this.count < 120) {
+			this.count++;
+		} else {
+			this.remove();
+			this.count = 1;
+			this.add();
+		}
+	}
 }
+
 function getHeightAt(x, z) {
 	return (perlin(x / 30, z / 29) + 1) * 4.5;
 }
@@ -19,35 +107,6 @@ function generateArea(pos, side) {
 	}
 	return map;
 }
-function removeBlocksFromWorld() {
-	scene.children.forEach(obj => {
-		if (obj.realPosition instanceof THREE.Vector3) {
-			scene.remove(obj);
-		}
-	});
-}
-function addBlocksInWorld(ppos) {
-	/*
-	for (var i = 0 ; i < 3; i++) {
-		for (var j = 0; j < 3; j++) {
-			if (i===0||j===0||i===2||j===2) {
-				for (var k = 0; k < 10+j*Math.random(); k++)
-					blocks.setBlock(i,k,j,17);
-			}
-		}
-	}
-	var size = 4;
-	var pos = {x:ppos.x|0, z:ppos.z|0};
-	var candidates = [2, 2, 2, 98, 98, 98, 178, 98, 98, 178, 98, 178, 98, 178, 178, 98, 178, 2, 178, 178, 98, 178, 17, 178, 178];
-	candidates = candidates.map(obj => (obj===98?24:obj))
-	seed = 48;
-	for (var i = 0; i < size; i++) {
-		for (var j = 0; j < size; j++) {
-			var selectedId = candidates[candidates.length * manualRandom() | 0];
-			blocks.setBlock(i + (pos.x)-size/2, (4+manualRandom()*1.5)|0+(selectedId===17?1:0), j+(pos.z)-size/2, selectedId);
-		}
-	}*/
-}
 world = {
 	maxDist: 16,
 	lastPos: {x: 0, z: 0},
@@ -55,18 +114,7 @@ world = {
 	allActiveChunks: [],
 	allDeadChunks: [],
 	getBlockId: function(height) {
-		if (height > 1)
-			return 2;
-		else
-			return 12;
-		
-		/*
-		var candidates = [56,1,1,1,1,1,1,1,1,1,1,1,14,15,16,21,14,15,16,1,1,73];
-		let a = Math.random()*candidates.length;
-		if ((a < 1) && Math.random() < 0.99)
-			a = Math.random()*candidates.length;
-		return candidates[a|0];
-		*/
+		return (height > 2)?2:12;
 	},
 	addChunk: function(x,z) {
 		let origin = {x:x*16-8, z:z*16-8};
@@ -80,6 +128,7 @@ world = {
 		this.allDeadChunks.push(chunk);
 	},
 	fillChunk: function(chunk) {
+		return;
 		this.allActiveChunks.push(chunk);
 		for (var i = 0; i < 16; i++) {
 			for (var j = 0; j < 16; j++) {
@@ -108,12 +157,18 @@ world = {
 		scene.remove(chunk);
 		this.chunks[chunk.realPosition.z][chunk.realPosition.x]	= undefined;
 	},
+	setup: function() {
+		console.log("started");
+		this.setup = () => {};	
+	},
 	init: function(pos) {
 		this.addChunk((pos.x/16|0),(pos.z/16|0));
 	},
 	update: function(playerPos) {
+		test.update();
+		this.setup();
 		let pos = {x:playerPos.x, y:0, z:playerPos.z};
-		if (false && this.allDeadChunks.length === 0) { // debug
+		if (true && this.allDeadChunks.length === 0) { // debug
 			this.addChunk(0,0);
 			this.fillChunk(this.allDeadChunks.pop());
 			this.addChunk(0,1);
@@ -126,7 +181,7 @@ world = {
 			this.init(pos);
 		} else {
 			let len, i, chunk, dist;
-			//return; // THIS STOPS PROCEDURAL TERRAIN GENERATION
+			return; // THIS STOPS PROCEDURAL TERRAIN GENERATION
 			len = this.allDeadChunks.length;
 			for (i=0;i<len;i++) {
 				chunk = this.allDeadChunks[i];
@@ -156,4 +211,12 @@ world = {
 		}
 	},
 	lightUpdate: function() {}
+}
+
+
+function placePlayer(x,y,z) {
+	x = x || -37;
+	y = y || 11;
+	z = z || 37;
+	player.controls.player.position.set(x,y,z);
 }
