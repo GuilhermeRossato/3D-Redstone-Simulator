@@ -1,3 +1,36 @@
+/* Block Types
+0 : Normal 6 sided solid cube
+1 : 2 diagonal faces, crossing each other (Saplings)
+2 : 1 face, for redstone
+*/
+
+blockData = {
+	"1": {
+		texture: "stone.png"
+	},
+	"2": {
+		texture: {
+			top: "grass_green.png",
+			left: "grass_side.png",
+			right: "grass_side.png",
+			front: "grass_side.png",
+			back: "grass_side.png",
+			bottom: "dirt.png"
+		}
+	},
+	"3": {
+		texture: "dirt.png"
+	},
+	"4": {
+		texture: "cobblestone.png"
+	},
+	"5": {
+		texture: "planks_oak.png",
+		type: 1, // 2 diagonally faces, crossing each other
+		transparent: true
+	}
+}
+
 const block_data = [{
 	id: 1,
 	texture: "stone.png"
