@@ -1,7 +1,9 @@
-/* Block Types
+/* Block Render Types
 0 : Normal 6 sided solid cube
 1 : 2 diagonal faces, crossing each other (Saplings)
-2 : 1 face, for redstone
+2 : Redstone Render, with 1 face only
+6 : Bottom Slab
+7 : Top Slab
 */
 
 blockData = {
@@ -26,8 +28,50 @@ blockData = {
 	},
 	"5": {
 		texture: "planks_oak.png",
-		type: 1, // 2 diagonally faces, crossing each other
+	},
+	"6": {
+		texture: "sapling_oak.png",
+		type: 1,
 		transparent: true
+	},
+	"43": {
+		texture: {
+			top: "stone_slab_top.png",
+			left: "stone_slab_side.png",
+			right: "stone_slab_side.png",
+			front: "stone_slab_side.png",
+			back: "stone_slab_side.png",
+			bottom: "stone_slab_top.png"
+		}
+	},
+	"203": {
+		// Bottom Stone Slab (44:1)
+		type: 6,
+		texture: {
+			top: "stone_slab_top.png",
+			left: "stone_slab_side.png",
+			right: "stone_slab_side.png",
+			front: "stone_slab_side.png",
+			back: "stone_slab_side.png",
+			bottom: "stone_slab_top.png"
+		},
+		transparent: true
+	},
+	"204": {
+		// Top Stone Slab (44:1)
+		type: 7,
+		texture: {
+			top: "stone_slab_top.png",
+			left: "stone_slab_side.png",
+			right: "stone_slab_side.png",
+			front: "stone_slab_side.png",
+			back: "stone_slab_side.png",
+			bottom: "stone_slab_top.png"
+		},
+		transparent: true
+	},
+	"98": {
+		texture: "stonebrick.png"
 	}
 }
 
