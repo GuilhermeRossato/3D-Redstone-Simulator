@@ -1,67 +1,24 @@
-function MinecraftControls(scene, camera) {
-	this.clickCallback = undefined;
-	if (camera instanceof THREE.Camera)
-		this.pointerlock = new THREE.PointerLockControls(camera);
-	else {
-		console.error("Controls could not be initialized due to lack of camera");
-	}
-	this.player = this.pointerlock.getObject();
-	this.pitch = this.pointerlock.getPitchObject();
+function MinecraftControls(parent, scene, camera) {
+	this.onRelease = undefined;
+	this.onStart = undefined;
+
+	if (!(scene instanceof THREE.Scene && camera instanceof THREE.Camera))
+		throw "Parameter Error";
+
+	this.parent = parent;
+	this.pointerlock = new THREE.PointerLockControls(camera);
+	this.yaw = this.pointerlock.getObject();
+	this.pitch = this.yaw.children[0];
+	this.yaw.name = "Camera Yaw";
+	this.pitch.name = "Camera Pitch";
+	scene.add(this.yaw);
 	this.loadPlayerState();
-	this.pointerlock.enabled = false;
-	document.body.onkeydown = (ev)=>{
-		if (typeof this.parent === "object" && this.parent.gamePaused)
-			return
-		if (ev.key === 'e' || ev.key === "i") {
-			if (this.pointerlock.enabled)
-				this.releaseMouse();
-			else
-				this.requestMouse();
-			return false;
-		} else if (ev.key === "F5")
-			this.savePlayerState();
-		else if (!ev.ctrlKey && ev.key === "p" && typeof this.onPause === "function")
-			this.onPause();
-		else if (ev.ctrlKey && ev.key === "b") {
-			options.ignoreCollision = !options.ignoreCollision;
-			options.save();
-			if (typeof logger === "object")
-				logger.log("Collision "+(options.ignoreCollision?"disabled":"enabled"));
-		} else if (ev.ctrlKey && ev.key === "m") {
-			options.ignoreExcessiveLag = !options.ignoreExcessiveLag;
-			options.save();
-			if (typeof logger === "object")
-				logger.log("Auto-pause "+(options.ignoreExcessiveLag?"disabled":"enabled"));
-		} else if (ev.key === "f")
-			console.log("Rendering " + renderer.getRenderLength() + " different faces");
-		return true;
-	}
-	document.body.onkeyup = function(ev) {
-		if (ev.key == '-' || ev.key == '+')
-			updateMenuCookies();
-		return true;
-	}
-	document.addEventListener('pointerlockchange', ()=>{
-		if (document.pointerLockElement == document.body) {
-			this.pointerlock.enabled = true;
-			if (typeof this.onEnter === "function")
-				this.onEnter();
-		} else {
-			this.savePlayerState();
-			this.pointerlock.enabled = false;
-			if (typeof this.onExit === "function")
-				this.onExit();
-		}
-	}
-	, false)
-	document.addEventListener('pointerlockerror', this.releaseMouse, false);
-	if (scene instanceof THREE.Scene)
-		scene.add(this.player)
-	else {
-		console.warn("Unable to put player in scene due to incorrect parameter");
-	}
+	this.direction = new THREE.Vector3();
+	this.speed = new THREE.Vector3(options.player.speed.horizontal,options.player.speed.vertical,options.player.speed.horizontal);
 	this.velocity = new THREE.Vector3();
-	this.collision = new CollisionController(scene, blocks.blocks);
+	this.collision = new CollisionController(this, scene, options.player.collisionSize);
+	this.collision.showBoundingBox(this.yaw.position);
+
 	this.moveForward = false;
 	this.moveLeft = false;
 	this.moveBackward = false;
@@ -69,115 +26,50 @@ function MinecraftControls(scene, camera) {
 	this.moveUp = false;
 	this.moveDown = false;
 	this.vertical = 0;
-	document.addEventListener('keydown', (event)=>this.onKeyChange(event.keyCode, 1, event.shiftKey), false);
-	document.addEventListener('keyup', (event)=>this.onKeyChange(event.keyCode, 0, event.shiftKey), false);
+
+	document.addEventListener('pointerlockchange', (event)=>this.onPointerlockChange(event), false)
+	document.addEventListener('pointerlockerror', (event)=>this.onPointerlockError(event), false);
+	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, 1, event.shiftKey), false);
+	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, 0, event.shiftKey), false);
 }
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
-	update: function() {
-		this.setupVelocity();
-		[{
-			axis: "x",
-			axisOrientation: "horizontal",
-			quad: this.collision.quadX,
-			sideLength: options.collisionBoundingRect.horizontal,
-			direction: { x: Math.sign(this.velocity.x), y: 0, z: 0 }
-		}, {
-			axis: "y",
-			axisOrientation: "vertical",
-			quad: this.collision.quadY,
-			direction: { x: 0, y: this.vertical, z: 0 }
-		}, {
-			axis: "z",
-			axisOrientation: "horizontal",
-			quad: this.collision.quadZ,
-			direction: { x: 0, y: 0, z: Math.sign(this.velocity.z) }
-		}].forEach(obj=>{
-			if (this.velocity[obj.axis] != 0) {
-				let velocity = this.velocity[obj.axis] * options.playerSpeed[obj.axisOrientation];
-				let canMove = this.collision.check(this.player.position, obj.quad, obj.direction, Math.abs(velocity), options.collisionBoundingRect[obj.axisOrientation]);
-				this.player.position[obj.axis] += canMove?velocity:this.collision.limit;
-			}
-		}
-		);
-		if (this.player.position.y < -1)
-			this.player.position.y = -1;
-	},
-	releaseMouse: function() {
-		let exit = this.onExit;
-		this.onExit = () => {};
-		document.exitPointerLock();
-		this.onExit = exit;
-	},
-	requestMouse: function() {
-		document.body.requestPointerLock();
-	},
-	loadPlayerState: function() {
-		if (typeof getCookie === "function") {
-			var x = getCookie("rs_posX")
-			  , y = getCookie("rs_posY")
-			  , z = getCookie("rs_posZ");
-			if (x && y && z) {
-				this.player.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
-			} else {
-				this.player.position.set(options.defaultPosition.x, options.defaultPosition.y, options.defaultPosition.z);
-			}
-			x = getCookie("rs_rotX");
-			y = getCookie("rs_rotY");
-			if (x && y) {
-				this.pitch.rotation.set(parseFloat(x), 0, 0);
-				this.player.rotation.set(0, parseFloat(y), 0);
-			} else {
-				this.pitch.rotation.set(options.defaultRotation.pitch);
-				this.player.rotation.set(options.defaultRotation.yaw);
-			}
+	onPointerlockChange: function() {
+		if (document.pointerLockElement == document.body && !this.pointerlock.enabled) {
+			this.pointerlock.enabled = true;
+			if (this.onStart)
+				this.onStart();
+		} else if (this.pointerlock.enabled) {
+			this.savePlayerState();
+			this.pointerlock.enabled = false;
+			if (this.onRelease)
+				this.onRelease();
 		}
 	},
-	savePlayerState: function() {
-		if ((typeof universeState === "object") && (universeState.animation || universeState.animating)) {} else if (typeof setCookie === "function") {
-			var d = options.cookiesLastingDays;
-			setCookie("rs_posX", this.player.position.x, d);
-			setCookie("rs_posY", this.player.position.y, d);
-			setCookie("rs_posZ", this.player.position.z, d);
-			setCookie("rs_rotX", this.pitch.rotation.x, d);
-			setCookie("rs_rotY", this.player.rotation.y, d);
-		}
+	onPointerlockError: function() {
+		this.releaseMouse();
 	},
-	onKeyChange: function(keyCode, down, shiftKey) {
-		switch (keyCode) {
-		case 38:
-			// up
-		case 87:
-			// w
+	onKeyChange: function(code, down, shiftKey) {
+		switch (code) {
+		case options.keys.forward:
 			this.moveForward = down;
 			break;
-		case 37:
-			// left
-		case 65:
-			// a
+		case options.keys.left:
 			this.moveLeft = down;
 			break;
-		case 40:
-			// down
-		case 83:
-			// s
+		case options.keys.back:
 			this.moveBackward = down;
 			break;
-		case 39:
-			// right
-		case 68:
-			// d
+		case options.keys.right:
 			this.moveRight = down;
 			break;
-		case 32:
-			// space
+		case options.keys.up:
 			if (down)
 				this.vertical = 1;
 			else if (this.vertical === 1)
 				this.vertical = 0;
 			break;
-		case 16:
-			// shift
+		case options.keys.down:
 			if (down)
 				this.vertical = -1;
 			else if (this.vertical === -1)
@@ -185,26 +77,62 @@ MinecraftControls.prototype = {
 			break;
 		}
 	},
-	setupVelocity: function() {
-		let value = this.moveForward + this.moveBackward*2 + this.moveLeft*4 + this.moveRight*8;
+	update: function() {
+		this.setupDirection();
+		if (this.collision)
+			this.collision.step(this.yaw.position, this.direction, this.speed);
+		else
+			this.velocity.set(this.direction.x * this.speed.x, this.direction.y * this.speed.y, this.direction.z * this.speed.z);
+		this.yaw.position.add(this.velocity);
+	},
+	releaseMouse: function() {
+		document.exitPointerLock();
+	},
+	requestMouse: function() {
+		document.body.requestPointerLock();
+	},
+	setupDirection: function() {
+		let value = this.moveForward + this.moveBackward * 2 + this.moveLeft * 4 + this.moveRight * 8;
 		let x, z;
-		if (value === 1) { x = 0; z = -1 }
-		else if (value === 2) { x = 0; z = 1 }
-		else if (value === 4) { x = -1; z = 0 }
-		else if (value === 5) { x = -0.70703125; z = -0.70703125 }
-		else if (value === 6) { x = -0.70703125; z = 0.70703125 }
-		else if (value === 7) { x = -1; z = 0 }
-		else if (value === 8) { x = 1; z = 0 }
-		else if (value === 9) { x = 0.70703125; z = -0.70703125 }
-		else if (value === 10) { x = 0.70703125; z = 0.70703125 }
-		else if (value === 11) { x = 1; z = 0 }
-		else if (value === 13) { x = 0; z = -1 }
-		else if (value === 14) { x = 0; z = 1 }
-		else {
+		if (value > 0 && value < 15 && value !== 12) {
+			x = [0, 0, 0, -1, -0.70703125, -0.70703125, -1, 1, 0.70703125, 0.70703125, 1, 0, 0, 0][value - 1];
+			z = [-1, 1, 0, 0, -0.70703125, 0.70703125, 0, 0, -0.70703125, 0.70703125, 0, 0, -1, 1][value - 1];
+		} else {
 			x = 0;
 			z = 0;
 		}
-		this.velocity.set(x, this.vertical, z);
-		this.velocity.applyQuaternion(this.player.quaternion);
-	}
+		this.direction.set(x, this.vertical, z);
+		this.direction.applyQuaternion(this.yaw.quaternion);
+	},
+	loadPlayerState: function() {
+		if (typeof getCookie === "function") {
+			var x = getCookie("rs_posX")
+			  , y = getCookie("rs_posY")
+			  , z = getCookie("rs_posZ");
+			if (x && y && z) {
+				this.yaw.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
+			} else {
+				this.yaw.position.set(options.defaultPosition.x, options.defaultPosition.y, options.defaultPosition.z);
+			}
+			x = getCookie("rs_rotX");
+			y = getCookie("rs_rotY");
+			if (x && y) {
+				this.pitch.rotation.set(parseFloat(x), 0, 0);
+				this.yaw.rotation.set(0, parseFloat(y), 0);
+			} else {
+				this.pitch.rotation.set(options.defaultRotation.pitch);
+				this.yaw.rotation.set(options.defaultRotation.yaw);
+			}
+		}
+	},
+	savePlayerState: function() {
+		if (typeof setCookie === "function") {
+			var d = options.cookiesLastingDays;
+			setCookie("rs_posX", this.yaw.position.x, d);
+			setCookie("rs_posY", this.yaw.position.y, d);
+			setCookie("rs_posZ", this.yaw.position.z, d);
+			setCookie("rs_rotX", this.pitch.rotation.x, d);
+			setCookie("rs_rotY", this.yaw.rotation.y, d);
+		}
+	},
 }
