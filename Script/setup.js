@@ -4,7 +4,7 @@ var logger = new Logger(interface.secondary);
 options.init();
 var world = new WorldHandler(interface.scene);
 
-window.requestAnimationFrame(update);
+window.requestAnimationFrame(simpleUpdate);
 
 // Stimuly for debug:
 interface.showCrosshair();

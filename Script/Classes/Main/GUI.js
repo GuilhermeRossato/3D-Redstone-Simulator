@@ -35,6 +35,16 @@ function lightGameTick() {
 	world.update(gui.player.position);
 }
 
+function simpleUpdate() {
+	stats.update();
+	menuClick = false;
+	stats.normalStep();
+	stats.delta = 0;
+	fullGameTick();
+	gui.renderer.render(gui.scene, gui.camera);
+	window.requestAnimationFrame(simpleUpdate);
+}
+
 function update() {
 	stats.update();
 	menuClick = false;
