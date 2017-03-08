@@ -94,6 +94,7 @@ WorldHandler.prototype = {
 			if (bd) {
 				let blockInfo = {
 					id: id,
+					type: bd.type,
 					x: x,
 					y: y,
 					z: z
