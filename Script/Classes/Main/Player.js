@@ -4,6 +4,7 @@ function Player(scene, camera, self) {
 	if (self) {
 		/* Controls */
 		this.controls = new MinecraftControls(this, scene, camera);
+		camera.parent.position.add(options.camera.adjustment);
 		Object.defineProperty(this, "position", { get: function () { return this.controls.yaw.position; } });
 		let ctrls = this.controls;
 		this.rotation = {
@@ -18,7 +19,7 @@ function Player(scene, camera, self) {
 		this.raycaster = new THREE.Raycaster(undefined, undefined, 0, 10);
 		/* Selection */
 		this.selection = new MinecraftSelection(scene);
-		this.selection.position.set(0,1,0);
+		this.selection.position.set(0,0,0);
 		this.selection.show();
 		/* Spacial Selection */
 		this.spacialSelection = new SpacialSelection(scene);

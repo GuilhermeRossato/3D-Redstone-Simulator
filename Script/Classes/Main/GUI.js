@@ -121,7 +121,7 @@ GUI.prototype = {
 		this.renderer.domElement.style.position = "absolute";
 		this.body.appendChild(this.renderer.domElement);
 		/* Camera Setup*/
-		this.camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.25,options.viewDistance);
+		this.camera = new THREE.PerspectiveCamera(options.camera.fov,window.innerWidth / window.innerHeight,0.25,options.viewDistance);
 		this.resize();
 		window.addEventListener('resize', (ev)=>this.resize(ev), false);
 		/* Scene Setup */
