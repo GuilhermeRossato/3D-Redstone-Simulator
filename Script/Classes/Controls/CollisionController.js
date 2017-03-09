@@ -8,11 +8,7 @@ function CollisionController(parent, scene, size) {
 		this.showBoundingBox();
 	let c_options = [options.player.showCollisionDetection.x, options.player.showCollisionDetection.y, options.player.showCollisionDetection.z];
 	if (c_options.some(m=>m)) {
-		this.collisionDisplay = {
-			x: [],
-			y: [],
-			z: []
-		}
+		this.collisionDisplay = { x: [], y: [], z: [] }
 		var colors = [];
 		colors.push(c_options[0]?0xDDDDDD:false, c_options[0]?0xDB7D3E:false, c_options[0]?0xB350BC:false, c_options[0]?0x6B8AC9:false, c_options[0]?0xB1A627:false, c_options[0]?0x41AE38:false);
 		colors.push(c_options[2]?0xD08499:false, c_options[2]?0x404040:false, c_options[2]?0x9AA1A1:false, c_options[2]?0x2E6E89:false, c_options[2]?0x7E3DB5:false, c_options[2]?0x2E388D:false);
@@ -45,11 +41,7 @@ CollisionController.prototype = {
 	},
 	showBoundingBox: function() {
 		if (!this.boundingBox)
-			this.initiateBoundingBox({
-				x: 0,
-				y: 0,
-				z: 0
-			});
+			this.initiateBoundingBox({ x: 0, y: 0, z: 0 });
 		this.boundingBox.show();
 	},
 	hideBoundingBox: function() {
@@ -67,13 +59,7 @@ CollisionController.prototype = {
 			let collidingFace, origin;
 			origin = new THREE.Vector3();
 			this.quadX.forEach((quad,i)=>{
-				origin.set(quad.x + velocity.x, quad.y, quad.z);
-				origin.add(position);
-				origin.add({
-					x: 0.5 + midSize * 2,
-					y: i <= 3 ? 0.5 : 0.125,
-					z: 0.5
-				});
+				origin.set(quad.x + velocity.x + position.x + (0.5 + midSize * 2), quad.y + position.y + (i <= 3 ? 0.5 : 0.125), quad.z + position.z + 0.5);
 				if (this.collisionDisplay && this.collisionDisplay.x[i]) {
 					this.collisionDisplay.x[i][0].position.copy(origin);
 					this.collisionDisplay.x[i][0].show();
@@ -88,18 +74,10 @@ CollisionController.prototype = {
 					if (!collidingFace)
 						collidingFace = face;
 					else if (direction.x > 0) {
-						if (collidingFace && collidingFace.position.x < face.position.x)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.blockInfo.blockData.type === undefined)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.position.y < face.position.y)
+						if ((collidingFace.position.x < face.position.x)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					} else if (direction.x < 0) {
-						if (collidingFace && collidingFace.position.x > face.position.x)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.blockInfo.blockData.type === undefined)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.position.y < face.position.y)
+						if ((collidingFace.position.x > face.position.x)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					}
 				}
@@ -121,7 +99,6 @@ CollisionController.prototype = {
 					} else {
 						let heightSlab = 0 - collidingFace.position.y - this.size.y / 2 + position.y;
 						if (heightSlab >= 0 && heightSlab <= 0.5) {
-							// Raise player
 							position.y += 0.5 - heightSlab;
 						} else {
 							velocity.x = 0;
@@ -132,8 +109,8 @@ CollisionController.prototype = {
 			}
 		} else if (this.collisionDisplay) {
 			this.collisionDisplay.x.forEach(obj => {
-				//obj[0].hide();
-				//obj[1].hide();
+				obj[0].hide();
+				obj[1].hide();
 			});
 		}
 		if (direction.z !== 0) {
@@ -141,14 +118,7 @@ CollisionController.prototype = {
 			let collidingFace, origin;
 			origin = new THREE.Vector3();
 			this.quadZ.forEach((quad,i)=>{
-				origin.set(quad.x, quad.y, quad.z + velocity.z);
-				origin.add(position);
-				origin.add({
-					x: 0.5,
-					y: i <= 3 ? 0.5 : 0.125,
-					z: 0.5 + midSize * 2
-				});
-				
+				origin.set(quad.x + position.x + 0.5, quad.y + position.y + (i <= 3 ? 0.5 : 0.125), quad.z + velocity.z+position.z + (0.5 + midSize * 2));
 				if (this.collisionDisplay && this.collisionDisplay.z[i]) {
 					this.collisionDisplay.z[i][0].position.copy(origin);
 					this.collisionDisplay.z[i][0].show();
@@ -163,31 +133,22 @@ CollisionController.prototype = {
 					if (!collidingFace)
 						collidingFace = face;
 					else if (direction.z > 0) {
-						if (collidingFace && collidingFace.position.z < face.position.z)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.blockInfo.blockData.type === undefined)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.position.y < face.position.y)
+						if ((collidingFace.position.z < face.position.z)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					} else if (direction.z < 0) {
-						if (collidingFace && collidingFace.position.z > face.position.z)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.blockInfo.blockData.type === undefined)
-							collidingFace = face;
-						else if (collidingFace && collidingFace.position.y < face.position.y)
+						if ((collidingFace.position.z > face.position.z)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					}
 				}
 			}
 			);
-			if (collidingFace && true) {
+			if (collidingFace) {
 				let stop = false;
 				let facePos = collidingFace.position.z - midSize;
 				if ((position.z + velocity.z <= facePos && position.z >= facePos) || (position.z + velocity.z >= facePos && position.z <= facePos)) {
 					if (collidingFace.blockInfo.blockData.type === 6) {
 						let heightSlab = 0 - collidingFace.position.y - this.size.y / 2 + 0.25 + position.y;
 						if (heightSlab >= 0 && heightSlab <= 0.5) {
-							// Raise player
 							position.y += 0.5 - heightSlab;
 						} else {
 							velocity.z = 0;
@@ -196,7 +157,6 @@ CollisionController.prototype = {
 					} else {
 						let heightSlab = 0 - collidingFace.position.y - this.size.y / 2 + position.y;
 						if (heightSlab >= 0 && heightSlab <= 0.5) {
-							// Raise player
 							position.y += 0.5 - heightSlab;
 						} else {
 							velocity.z = 0;
@@ -218,13 +178,7 @@ CollisionController.prototype = {
 			let collidingFace, origin;
 			origin = new THREE.Vector3();
 			this.quadY.forEach((quad,i)=>{
-				origin.set(quad.x, quad.y + velocity.y, quad.z);
-				origin.add(position);
-				origin.add({
-					x: 0.5,
-					y: ((direction.y < 0) ? 0.125 : 0.875) + midSize,
-					z: 0.5
-				});
+				origin.set(quad.x + position.x + 0.5, quad.y + velocity.y + position.y + (((direction.y < 0) ? 0.125 : 0.875) + midSize), quad.z+ position.z + 0.5);
 				if (this.collisionDisplay && this.collisionDisplay.y[i]) {
 					this.collisionDisplay.y[i][0].position.copy(origin);
 					this.collisionDisplay.y[i][0].show();

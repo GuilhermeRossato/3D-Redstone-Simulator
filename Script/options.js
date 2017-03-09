@@ -27,7 +27,7 @@ var options = {
 		},
 		ignoreCollision: false,
 		speed: {
-			horizontal: 0.085*0.1,
+			horizontal: 0.085,
 			vertical: 0.105
 		},
 		collisionSize: {
