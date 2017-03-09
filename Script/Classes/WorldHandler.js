@@ -55,14 +55,20 @@ WorldHandler.prototype = {
 		world.setBlock(3,2,7,4);
 		world.setBlock(4,2,6,4);
 		world.setBlock(5,1,6,43);
-		world.setBlock(6,2,6,204);
-		world.setBlock(6,6,6,203);
+		world.setBlock(6,2,6,203);
+		world.setBlock(6,3,6,203);
+		world.setBlock(6,2,7,4);
+		world.setBlock(6,6,6,204);
 		world.setBlock(6,6,7,98);
 		world.setBlock(6,6,9,98);
-		world.setBlock(6,5,11,98);
-		world.setBlock(6,4,13,98);
-		world.setBlock(6,3,15,98);
-		world.setBlock(6,2,17,98);
+		repeat(4, i => {
+			world.setBlock(3,i+1,1,98);
+			world.setBlock(3,i+1,0,98);
+			if (i < 3) {
+				world.setBlock(-2,1,i,98);
+				world.setBlock(-2,2,i,98);
+			}
+		});
 	},
 	setTouchingFacesVisibility: function(x, y, z, ownFaces, state) {
 		this.facesDisplacement.forEach((obj,i)=>{
@@ -93,8 +99,8 @@ WorldHandler.prototype = {
 			let bd = blockData[id];
 			if (bd) {
 				let blockInfo = {
+					blockData: bd,
 					id: id,
-					type: bd.type,
 					x: x,
 					y: y,
 					z: z
@@ -138,10 +144,10 @@ WorldHandler.prototype = {
 			faces.forEach((obj,i) => {
 				if (i < 4) {
 					obj.geometry = this.halfPlane;
-					obj.position.y += (data.type === 6)?0.25:-0.25;
-				} else if (i === 4 && data.type === 7) {
+					obj.position.y += (data.type === 7)?0.25:-0.25;
+				} else if (i === 4 && data.type === 6) {
 					obj.position.y -= 0.5;
-				} else if (i === 5 && data.type === 6) {
+				} else if (i === 5 && data.type === 7) {
 					obj.position.y += 0.5;
 				}
 			});
