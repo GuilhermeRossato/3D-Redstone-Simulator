@@ -6,6 +6,10 @@
 7 : Top Slab
 */
 
+function isSolid(bd) {
+	return bd.type !== 1 && bd.type !== 2;
+}
+
 blockData = {
 	"1": {
 		texture: "stone.png"
