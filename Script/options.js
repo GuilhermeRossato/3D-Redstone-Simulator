@@ -1,4 +1,12 @@
 var options = {
+	camera: {
+		fov: 95,
+		adjustment: {
+			x: 0,
+			y: 0.625,
+			z: 0
+		}
+	},
 	keys: {
 		forward: "KeyW",
 		right: "KeyD",
@@ -11,22 +19,21 @@ var options = {
 	},
 	antialias: false,
 	player: {
+		showBoundingBox: false,
+		showCollisionDetection: {
+			x: false,
+			y: false,
+			z: false
+		},
 		ignoreCollision: false,
-		verticalAdjustment: 0.0,
 		speed: {
-			horizontal: 0.085/1,
-			vertical: 0.105/1
+			horizontal: 0.085*0.1,
+			vertical: 0.105
 		},
 		collisionSize: {
 			x: 0.75,
 			y: 1.625,
 			z: 0.75
-		},
-		collisionBoundingRect: {
-			vertical: 1.625,
-			horizontal: 0.4375,
-			bottom: 1.25,
-			top: 0.875
 		}
 	},
 	defaultPosition: {
@@ -41,7 +48,8 @@ var options = {
 	viewDistance: 100,
 	cookiesLastingDays: 40,
 	ignoreExcessiveLag: false,
-	selectionBoundOffset: 0,//0.0025,
+	selectionBoundOffset: 0,
+	//0.0025,
 	lights: {
 		selected: 0,
 		profiles: [{
@@ -53,12 +61,36 @@ var options = {
 					light.name = name;
 					scene.add(light);
 				}
-				addLight("Top", {x:0, y:1, z:0}, 2.935);
-				addLight("Front", {x:0, y:0, z:-1}, 2.382)
-				addLight("Back", {x:0, y:0, z:1}, 2.3548)
-				addLight("Left", {x:-1, y:0, z:0}, 1.7764)
-				addLight("Right", {x:1, y:0, z:0}, 1.7742)
-				addLight("Bottom", {x:0, y:-1, z:0}, 1.5161)
+				addLight("Top", {
+					x: 0,
+					y: 1,
+					z: 0
+				}, 2.935);
+				addLight("Front", {
+					x: 0,
+					y: 0,
+					z: -1
+				}, 2.382)
+				addLight("Back", {
+					x: 0,
+					y: 0,
+					z: 1
+				}, 2.3548)
+				addLight("Left", {
+					x: -1,
+					y: 0,
+					z: 0
+				}, 1.7764)
+				addLight("Right", {
+					x: 1,
+					y: 0,
+					z: 0
+				}, 1.7742)
+				addLight("Bottom", {
+					x: 0,
+					y: -1,
+					z: 0
+				}, 1.5161)
 			}
 		}, {
 			name: "Darker",

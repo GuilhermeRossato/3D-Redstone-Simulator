@@ -17,8 +17,7 @@ function MinecraftControls(parent, scene, camera) {
 	this.speed = new THREE.Vector3(options.player.speed.horizontal,options.player.speed.vertical,options.player.speed.horizontal);
 	this.velocity = new THREE.Vector3();
 	this.collision = new CollisionController(this, scene, options.player.collisionSize);
-	this.collision.showBoundingBox(this.yaw.position);
-
+	
 	this.moveForward = false;
 	this.moveLeft = false;
 	this.moveBackward = false;
