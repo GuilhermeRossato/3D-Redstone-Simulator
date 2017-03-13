@@ -53,7 +53,7 @@ var options = {
 	lights: {
 		selected: 0,
 		profiles: [{
-			name: "Real",
+			name: "Realistic",
 			create: function(scene) {
 				function addLight(name, position, intensity) {
 					let light = new THREE.DirectionalLight(0xffffff,intensity);
@@ -61,36 +61,12 @@ var options = {
 					light.name = name;
 					scene.add(light);
 				}
-				addLight("Top", {
-					x: 0,
-					y: 1,
-					z: 0
-				}, 2.935);
-				addLight("Front", {
-					x: 0,
-					y: 0,
-					z: -1
-				}, 2.382)
-				addLight("Back", {
-					x: 0,
-					y: 0,
-					z: 1
-				}, 2.3548)
-				addLight("Left", {
-					x: -1,
-					y: 0,
-					z: 0
-				}, 1.7764)
-				addLight("Right", {
-					x: 1,
-					y: 0,
-					z: 0
-				}, 1.7742)
-				addLight("Bottom", {
-					x: 0,
-					y: -1,
-					z: 0
-				}, 1.5161)
+				addLight("Top", { x: 0, y: 1, z: 0 }, 2.935);
+				addLight("Front", { x: 0, y: 0, z: -1 }, 2.382)
+				addLight("Back", { x: 0, y: 0, z: 1 }, 2.3548)
+				addLight("Left", { x: -1, y: 0, z: 0 }, 1.7764)
+				addLight("Right", { x: 1, y: 0, z: 0 }, 1.7742)
+				addLight("Bottom", { x: 0, y: -1, z: 0 }, 1.5161)
 			}
 		}, {
 			name: "Darker",
