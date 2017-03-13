@@ -113,6 +113,7 @@ CollisionController.prototype = {
 				obj[1].hide();
 			});
 		}
+		position.x += velocity.x;
 		if (direction.z !== 0) {
 			let midSize = this.size.z / 2 * ((direction.z < 0) ? -1 : 1);
 			let collidingFace, origin;
@@ -171,7 +172,6 @@ CollisionController.prototype = {
 				obj[1].hide();
 			});
 		}
-		position.x += velocity.x;
 		position.z += velocity.z;
 		if (direction.y !== 0) {
 			let midSize = this.size.y / 2 * ((direction.y < 0) ? -1 : 1);
