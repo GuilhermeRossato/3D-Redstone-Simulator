@@ -13,27 +13,21 @@ const WorldInterface = {
 }
 
 const ItemFunctions = {
-	"271 Wooden Axe": {
-		onSelected: function(current) {
+	//"271 Wooden Axe": {
+	"1 Stone": {
+		onSelected: function() {
+			console.log("Selected");
+		},
+		onDeselected: function() {
+			console.log("Deselected");
+		},
+		onLeftDown: function() {
 			
 		},
-		onDeselected: function(last) {
-			
-		},
-		onLeftDown: function(ev) {
-			
-		},
-		onLeftUp: function(ev) {
+		onLeftUp: function() {
 			
 		}
 	}
-}
-
-function onItemChange(last, current) {
-	if (ItemFunctions[last.name] && ItemFunctions[last.name].onDeselected)
-		ItemFunctions[last.name].onDeselected(current);
-	if (ItemFunctions[current.name] && ItemFunctions[current.name].onSelected)
-		ItemFunctions[current.name].onSelected(last);
 }
 
 function onWorldClick(ev) {
@@ -42,6 +36,5 @@ function onWorldClick(ev) {
 			ItemFunctions[ev.selectedItem.name].onLeftDown(ev);
 	} else if (ev.type === "LeftUp")
 		if (ItemFunctions[ev.selectedItem.name] && ItemFunctions[ev.selectedItem.name].onLeftUp)
-			ItemFunctions[ev.selectedItem.name].onLeftUp(ev);
-	
+			ItemFunctions[ev.selectedItem.name].onLeftUp(ev);	
 }

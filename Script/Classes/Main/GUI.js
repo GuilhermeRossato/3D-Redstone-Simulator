@@ -18,7 +18,9 @@ function GUI(body) {
 	this.main.style.color = "#eeeeee";
 	this.showHelp();
 	this.inventory = new Inventory(this.main);
+	this.inventory.onItemSwitch = (a, b) => { this.onItemSwitch.call(this, a, b) };
 	this.hotbar = new Hotbar(this.inventory,this.main);
+	this.hotbar.onItemChange = (a, b) => { this.onItemChange.call(this, a, b) };
 	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, true), false);
 	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, false), false);
 
@@ -85,6 +87,32 @@ function update() {
 
 GUI.prototype = {
 	constructor: GUI,
+	onItemSwitch: function(before, after) {
+		let data;
+		if (before.position === this.hotbar.selection) {
+			data = itensData[before.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onDeselected)
+				ItemFunctions[data.name].onDeselected();
+		}
+		if (after.position === this.hotbar.selection) {
+			data = itensData[after.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onSelected)
+				ItemFunctions[data.name].onSelected();
+		}
+	},
+	onItemChange: function(before, after) {
+		let data;
+		if (before.position === this.hotbar.selection) {
+			data = itensData[before.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onDeselected)
+				ItemFunctions[data.name].onDeselected();
+		}
+		if (before.position === this.hotbar.selection) {
+			data = itensData[after.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onSelected)
+				ItemFunctions[data.name].onSelected();
+		}
+	},
 	onKeyChange: function(code, down) {
 		if (down)
 			switch (code) {
@@ -95,11 +123,12 @@ GUI.prototype = {
 					this.showInventory();
 				}
 				break;
-			case options.keys.debug: 
+			case options.keys.debug:
 				this.player.releaseMouse();
 				setTimeout(()=>{
 					this.showCrosshair(true)
-				}, 10);
+				}
+				, 10);
 				break;
 			}
 	},
@@ -121,7 +150,7 @@ GUI.prototype = {
 		this.renderer.domElement.style.position = "absolute";
 		this.body.appendChild(this.renderer.domElement);
 		/* Camera Setup*/
-		this.camera = new THREE.PerspectiveCamera(options.camera.fov,window.innerWidth / window.innerHeight,0.25,options.viewDistance);
+		this.camera = new THREE.PerspectiveCamera(options.camera.fov,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
 		this.resize();
 		window.addEventListener('resize', (ev)=>this.resize(ev), false);
 		/* Scene Setup */
@@ -238,6 +267,9 @@ GUI.prototype = {
 	},
 	showCrosshair: function(ignoreRequest) {
 		this.gamePaused = false;
+		if (this.inventory.isShown()) {
+			this.inventory.hide();
+		}
 		this.clearInterface();
 		if (!ignoreRequest)
 			this.player.requestMouse();
