@@ -16,8 +16,8 @@ function MinecraftControls(parent, scene, camera) {
 	this.direction = new THREE.Vector3();
 	this.speed = new THREE.Vector3(options.player.speed.horizontal,options.player.speed.vertical,options.player.speed.horizontal);
 	this.velocity = new THREE.Vector3();
-	this.collision = new CollisionController(this, scene, options.player.collisionSize);
-	
+	this.collision = new CollisionController(this,scene,options.player.collisionSize);
+
 	this.moveForward = false;
 	this.moveLeft = false;
 	this.moveBackward = false;
@@ -28,8 +28,8 @@ function MinecraftControls(parent, scene, camera) {
 
 	document.addEventListener('pointerlockchange', (event)=>this.onPointerlockChange(event), false)
 	document.addEventListener('pointerlockerror', (event)=>this.onPointerlockError(event), false);
-	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, 1, event.shiftKey), false);
-	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, 0, event.shiftKey), false);
+	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, 1, event.ctrlKey, event.shiftKey), false);
+	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, 0, event.ctrlKey, event.shiftKey), false);
 }
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
@@ -48,33 +48,34 @@ MinecraftControls.prototype = {
 	onPointerlockError: function() {
 		this.releaseMouse();
 	},
-	onKeyChange: function(code, down, shiftKey) {
-		switch (code) {
-		case options.keys.forward:
-			this.moveForward = down;
-			break;
-		case options.keys.left:
-			this.moveLeft = down;
-			break;
-		case options.keys.back:
-			this.moveBackward = down;
-			break;
-		case options.keys.right:
-			this.moveRight = down;
-			break;
-		case options.keys.up:
-			if (down)
-				this.vertical = 1;
-			else if (this.vertical === 1)
-				this.vertical = 0;
-			break;
-		case options.keys.down:
-			if (down)
-				this.vertical = -1;
-			else if (this.vertical === -1)
-				this.vertical = 0;
-			break;
-		}
+	onKeyChange: function(code, down, ctrlKey, shiftKey) {
+		if (!ctrlKey)
+			switch (code) {
+			case options.keys.forward:
+				this.moveForward = down;
+				break;
+			case options.keys.left:
+				this.moveLeft = down;
+				break;
+			case options.keys.back:
+				this.moveBackward = down;
+				break;
+			case options.keys.right:
+				this.moveRight = down;
+				break;
+			case options.keys.up:
+				if (down)
+					this.vertical = 1;
+				else if (this.vertical === 1)
+					this.vertical = 0;
+				break;
+			case options.keys.down:
+				if (down)
+					this.vertical = -1;
+				else if (this.vertical === -1)
+					this.vertical = 0;
+				break;
+			}
 	},
 	update: function() {
 		this.setupDirection();
