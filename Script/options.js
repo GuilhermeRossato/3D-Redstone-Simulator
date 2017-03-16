@@ -39,19 +39,18 @@ var options = {
 		}
 	},
 	defaultPosition: {
-		x: 8,
+		x: 10,
 		y: 10,
-		z: 20
+		z: 10
 	},
 	defaultRotation: {
-		pitch: 0,
-		yaw: 0
+		pitch: -0.7,
+		yaw: 0.7
 	},
 	viewDistance: 100,
 	cookiesLastingDays: 40,
 	ignoreExcessiveLag: false,
-	selectionBoundOffset: 0,
-	//0.0025,
+	selectionBoundOffset: 0.0025,
 	lights: {
 		selected: 0,
 		profiles: [{
