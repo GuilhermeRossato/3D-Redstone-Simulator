@@ -4,26 +4,17 @@ function Player(scene, camera, self) {
 	if (self) {
 		/* Controls */
 		this.controls = new MinecraftControls(this, scene, camera);
-		camera.parent.position.add(options.camera.adjustment);
-		Object.defineProperty(this, "position", { get: function () { return this.controls.yaw.position; } });
-		let ctrls = this.controls;
-		this.rotation = {
-			get pitch () { return ctrls.pitch.rotation.x; },
-			set pitch (value) { return ctrls.pitch.rotation.x = value; },
-			get yaw () { return ctrls.yaw.rotation.y; },
-			set yaw (value) { return ctrls.yaw.rotation.y = value; }
-		}
+		this.defineVirtualProperties();
 		this.controls.onPause = () => this.parent.showPaused();
 		this.controls.onEnter = () => this.onGrabMouse();
 		this.controls.onExit = () => this.onReleaseMouse();
 		this.raycaster = new THREE.Raycaster(undefined, undefined, 0, 10);
 		/* Selection */
 		this.selection = new MinecraftSelection(scene);
-		this.selection.position.set(0,0,0);
 		this.selection.show();
 		/* Spacial Selection */
 		this.spacialSelection = new SpacialSelection(scene);
-		/* Definition of global variables */
+		/* Definition of global variables for production only */
 		controls = this.controls;
 		selection = this.selection;
 	} else {
@@ -36,6 +27,16 @@ function Player(scene, camera, self) {
 
 Player.prototype = {
 	constructor: Player,
+	defineVirtualProperties: function() {
+		let ctrls = this.controls;
+		Object.defineProperty(this, "position", { get: function () { return this.controls.yaw.position; } });
+		this.rotation = {
+			get pitch () { return ctrls.pitch.rotation.x; },
+			set pitch (value) { return ctrls.pitch.rotation.x = value; },
+			get yaw () { return ctrls.yaw.rotation.y; },
+			set yaw (value) { return ctrls.yaw.rotation.y = value; }
+		}
+	},
 	requestMouse: function() {
 		this.controls.requestMouse();
 	},
@@ -73,8 +74,8 @@ Player.prototype = {
 		if (intersections[0] && intersections[0].object instanceof THREE.Mesh) {
 			let obj = intersections[0].object;
 			if (obj.blockInfo) {
-				//this.selection.position.copy(intersections[0].object.blockInfo);
-				//this.selection.show();
+				this.selection.position.copy(intersections[0].object.blockInfo);
+				this.selection.show();
 			}
 			//console.log(intersections[0].object.rotation);
 		}

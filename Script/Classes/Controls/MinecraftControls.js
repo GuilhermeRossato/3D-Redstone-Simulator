@@ -1,17 +1,11 @@
 function MinecraftControls(parent, scene, camera) {
 	this.onRelease = undefined;
 	this.onStart = undefined;
-
 	if (!(scene instanceof THREE.Scene && camera instanceof THREE.Camera))
 		throw "Parameter Error";
 
 	this.parent = parent;
-	this.pointerlock = new THREE.PointerLockControls(camera);
-	this.yaw = this.pointerlock.getObject();
-	this.pitch = this.yaw.children[0];
-	this.yaw.name = "Camera Yaw";
-	this.pitch.name = "Camera Pitch";
-	scene.add(this.yaw);
+	this.generatePointerlock(scene);
 	this.loadPlayerState();
 	this.direction = new THREE.Vector3();
 	this.speed = new THREE.Vector3(options.player.speed.horizontal,options.player.speed.vertical,options.player.speed.horizontal);
@@ -33,6 +27,16 @@ function MinecraftControls(parent, scene, camera) {
 }
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
+	generatePointerlock: function(scene) {
+		// PointerLockControls is a class created by mrdoobs, here I adjust it to my needs.
+		this.pointerlock = new THREE.PointerLockControls(camera);
+		this.yaw = this.pointerlock.getObject();
+		this.pitch = this.yaw.children[0];
+		this.yaw.name = "Camera Yaw";
+		this.pitch.name = "Camera Pitch";
+		this.pitch.position.add(options.camera.adjustment);
+		scene.add(this.yaw);
+	},
 	onPointerlockChange: function() {
 		if (document.pointerLockElement == document.body && !this.pointerlock.enabled) {
 			this.pointerlock.enabled = true;
@@ -108,20 +112,20 @@ MinecraftControls.prototype = {
 		if (typeof getCookie === "function") {
 			var x = getCookie("rs_posX")
 			  , y = getCookie("rs_posY")
-			  , z = getCookie("rs_posZ");
+			  , z = getCookie("rs_posZ")
+			  , pitch = getCookie("rs_rotX")
+			  , yaw = getCookie("rs_rotY");
 			if (x && y && z) {
 				this.yaw.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
 			} else {
 				this.yaw.position.set(options.defaultPosition.x, options.defaultPosition.y, options.defaultPosition.z);
 			}
-			x = getCookie("rs_rotX");
-			y = getCookie("rs_rotY");
-			if (x && y) {
-				this.pitch.rotation.set(parseFloat(x), 0, 0);
-				this.yaw.rotation.set(0, parseFloat(y), 0);
+			if (pitch && yaw) {
+				this.pitch.rotation.set(parseFloat(pitch), 0, 0);
+				this.yaw.rotation.set(0, parseFloat(yaw), 0);
 			} else {
-				this.pitch.rotation.set(options.defaultRotation.pitch);
-				this.yaw.rotation.set(options.defaultRotation.yaw);
+				this.pitch.rotation.x = options.defaultRotation.pitch;
+				this.yaw.rotation.y = options.defaultRotation.yaw;
 			}
 		}
 	},
