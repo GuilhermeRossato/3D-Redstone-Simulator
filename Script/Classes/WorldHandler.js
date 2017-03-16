@@ -1,4 +1,6 @@
 function WorldHandler(scene) {
+	this.loader = new WorldLoader(this);
+	this.saver = new WorldSaver(this);
 	this.scene = scene;
 	this.blocks = [];
 	this.allFaces = [];
@@ -26,6 +28,17 @@ function WorldHandler(scene) {
 
 WorldHandler.prototype = {
 	constructor: WorldHandler,
+	getBlockList: function() {
+		var allBlocks = [];
+		this.blocks.forEach((x_axis, x) => {
+			x_axis.forEach((z_axis, x) => {
+				z_axis.forEach((y_axis, y) => {
+					allBlocks.push(y_axis);
+				});
+			});
+		});
+		return allBlocks;
+	},
 	sidesDisplacement: [["z", 0.5, "y", 0], // Front (0)
 		["z", -0.5, "y", 1], // Back (1)
 		["x", 0.5, "y", 0.5], // Right (2)
