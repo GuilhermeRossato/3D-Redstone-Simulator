@@ -15,7 +15,9 @@ var options = {
 		up: "Space",
 		down: "ShiftLeft",
 		inventory: "KeyE",
-		debug: "KeyQ"
+		debug: "KeyQ",
+		save: "KeyS",
+		load: "KeyO"
 	},
 	antialias: false,
 	player: {
