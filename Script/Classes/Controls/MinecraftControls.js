@@ -96,12 +96,24 @@ MinecraftControls.prototype = {
 			if (this.velocity[obj.axis] != 0) {
 				let velocity = this.velocity[obj.axis] * options.playerSpeed[obj.axisOrientation];
 				let canMove = this.collision.check(this.player.position, obj.quad, obj.direction, Math.abs(velocity), options.collisionBoundingRect[obj.axisOrientation]);
-				this.player.position[obj.axis] += canMove?velocity:this.collision.limit;
+				let newValue = canMove?velocity:this.collision.limit;
+				if (isNaN(newValue))
+					newValue = 0;
+				this.player.position[obj.axis] += newValue;
 			}
 		}
 		);
 		if (this.player.position.y < 0)
 			this.player.position.y = 0;
+		if (isNaN(this.player.position.x)) {
+			this.player.position.x = options.defaultPosition.x;
+		}
+		if (isNaN(this.player.position.y)) {
+			this.player.position.y = options.defaultPosition.y;
+		}
+		if (isNaN(this.player.position.z)) {
+			this.player.position.z = options.defaultPosition.z;
+		}
 	},
 	releaseMouse: function() {
 		let exit = this.onExit;
@@ -117,10 +129,10 @@ MinecraftControls.prototype = {
 			var x = getCookie("rs_posX")
 			  , y = getCookie("rs_posY")
 			  , z = getCookie("rs_posZ");
-			if (x && y && z) {
+			if (x && y && z && !isNaN(x) && !isNaN(y) && !isNaN(z)) {
 				this.player.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
 			} else {
-				this.player.position.set(options.defaultPosition.x, options.defaultPosition.y, options.defaultPosition.z);
+				this.player.position.copy(options.defaultPosition);
 			}
 			x = getCookie("rs_rotX");
 			y = getCookie("rs_rotY");
@@ -128,8 +140,8 @@ MinecraftControls.prototype = {
 				this.pitch.rotation.set(parseFloat(x), 0, 0);
 				this.player.rotation.set(0, parseFloat(y), 0);
 			} else {
-				this.pitch.rotation.set(options.defaultRotation.pitch);
-				this.player.rotation.set(options.defaultRotation.yaw);
+				this.pitch.rotation.x = (options.defaultRotation.pitch);
+				this.player.rotation.y = (options.defaultRotation.yaw);
 			}
 		}
 	},
@@ -205,6 +217,11 @@ MinecraftControls.prototype = {
 			z = 0;
 		}
 		this.velocity.set(x, this.vertical, z);
-		this.velocity.applyQuaternion(this.player.quaternion);
+		if (controls.player.quaternion && !isNaN(controls.player.quaternion.x)) {
+			this.velocity.applyQuaternion(controls.player.quaternion);
+		} else {
+			controls.player.quaternion.set(0,0,0,0);
+			this.velocity.applyQuaternion(controls.player.quaternion);
+		}
 	}
 }
