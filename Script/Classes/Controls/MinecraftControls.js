@@ -71,6 +71,7 @@ function MinecraftControls(scene, camera) {
 	this.vertical = 0;
 	document.addEventListener('keydown', (event)=>this.onKeyChange(event.keyCode, 1, event.shiftKey), false);
 	document.addEventListener('keyup', (event)=>this.onKeyChange(event.keyCode, 0, event.shiftKey), false);
+	this.fixNaN = 10;
 }
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
@@ -97,22 +98,25 @@ MinecraftControls.prototype = {
 				let velocity = this.velocity[obj.axis] * options.playerSpeed[obj.axisOrientation];
 				let canMove = this.collision.check(this.player.position, obj.quad, obj.direction, Math.abs(velocity), options.collisionBoundingRect[obj.axisOrientation]);
 				let newValue = canMove?velocity:this.collision.limit;
-				if (isNaN(newValue))
-					newValue = 0;
 				this.player.position[obj.axis] += newValue;
 			}
 		}
 		);
 		if (this.player.position.y < 0)
 			this.player.position.y = 0;
-		if (isNaN(this.player.position.x)) {
-			this.player.position.x = options.defaultPosition.x;
-		}
-		if (isNaN(this.player.position.y)) {
-			this.player.position.y = options.defaultPosition.y;
-		}
-		if (isNaN(this.player.position.z)) {
-			this.player.position.z = options.defaultPosition.z;
+		if (this.fixNaN > 0) {
+			this.fixNaN -= 1;
+		} else {
+			if (isNaN(this.player.position.x)) {
+				this.player.position.x = options.defaultPosition.x;
+			}
+			if (isNaN(this.player.position.y)) {
+				this.player.position.y = options.defaultPosition.y;
+			}
+			if (isNaN(this.player.position.z)) {
+				this.player.position.z = options.defaultPosition.z;
+			}
+			this.fixNaN = 10;
 		}
 	},
 	releaseMouse: function() {
@@ -129,14 +133,15 @@ MinecraftControls.prototype = {
 			var x = getCookie("rs_posX")
 			  , y = getCookie("rs_posY")
 			  , z = getCookie("rs_posZ");
-			if (x && y && z && !isNaN(x) && !isNaN(y) && !isNaN(z)) {
+			if (x != "" && y != "" && z != "" && x && y && z) {
 				this.player.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
+				this.fixNaN = 1;
 			} else {
 				this.player.position.copy(options.defaultPosition);
 			}
 			x = getCookie("rs_rotX");
 			y = getCookie("rs_rotY");
-			if (x && y) {
+			if (x && y && x != "" && y != "") {
 				this.pitch.rotation.set(parseFloat(x), 0, 0);
 				this.player.rotation.set(0, parseFloat(y), 0);
 			} else {
