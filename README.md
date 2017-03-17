@@ -6,7 +6,7 @@ A javascript experiment to simulate minecraft's redstone logic in a similar 3D e
 
 Note that during development, the above link will not always bring you to a working release, if you want you can download the most recent [release](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/releases) and run it yourself, this experiment doesn't need building, it works out of the box.
 
-#Releases
+# Releases
  - v 0.1 [Performance Viability Release]
 ![Preview v0.1](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v01_normal.gif?raw=true)
  - v 0.2 [Primitive Block Distinction]
@@ -16,11 +16,11 @@ Note that during development, the above link will not always bring you to a work
  - v 0.4 [Inventory, Hotbar and Procedural Terrain Generation]
 ![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v04_normal.gif?raw=true)
 
-#How to run / build locally
+# How to run / build locally
 
 If you download a release, (on windows) use the "Run" shortcut to the .bat to run chrome with web security disabled. That solves cross origin conflicts, all blocks textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
 
-#Objectives and Priorities
+# Objectives and Priorities
 1. Menu (done)
 2. 3D Controls similar to minecraft (done)
 3. Correct Block Drawing (done)
@@ -35,7 +35,7 @@ If you download a release, (on windows) use the "Run" shortcut to the .bat to ru
 12. Piston Simulation
 13. Water and Lava Simulation
 
-#Dependencies, Credits and Inspiration
+# Dependencies, Credits and Inspiration
 
 1. [three.js](https://threejs.org/) - Javascript 3D Library - Used to represent the world
 2. [Minecraft](https://minecraft.net/pt-br/) - by [Mojang](https://mojang.com/) - Inspiration
