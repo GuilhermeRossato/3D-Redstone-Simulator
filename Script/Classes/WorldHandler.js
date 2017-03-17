@@ -5,15 +5,18 @@ function WorldHandler(scene) {
 	this.blocks = [];
 	this.allFaces = [];
 	this.faces = [];
-	this.plane = new THREE.PlaneGeometry(1,1,1,1);
-	this.halfPlane = new THREE.PlaneGeometry(1,0.5,1,1);
-	this.halfPlane.faceVertexUvs[0][1][2].set(1,0.5);
-	this.halfPlane.faceVertexUvs[0][0][2].set(1,0.5);
-	this.halfPlane.faceVertexUvs[0][0][0].set(0,0.5);
 	this.textures = {};
+	this.generateGeometries();
 	this.textureLoader = new THREE.TextureLoader();
-	this.lastBlockDetails = {
-		x: 0, y: 0, z: 0, id: 0,
+}
+
+WorldHandler.prototype = {
+	constructor: WorldHandler,
+	lastBlockDetails: {
+		x: 0,
+		y: 0,
+		z: 0,
+		id: 0,
 		match: function(x, y, z, id) {
 			return ( this.x === x && this.y === y && this.z === z && this.id === id) ;
 		},
@@ -23,65 +26,68 @@ function WorldHandler(scene) {
 			this.z = z;
 			this.id = id;
 		}
-	}
-}
-
-WorldHandler.prototype = {
-	constructor: WorldHandler,
+	},
+	generateGeometries: function() {
+		this.geometries = {
+			plane: new THREE.PlaneGeometry(1,1,1,1),
+			half: new THREE.PlaneGeometry(1,0.5,1,1),
+			quarter: new THREE.PlaneGeometry(1,0.25,1,1)
+		}
+		this.geometries.half.faceVertexUvs[0][1][2].set(1, 0.5);
+		this.geometries.half.faceVertexUvs[0][0][2].set(1, 0.5);
+		this.geometries.half.faceVertexUvs[0][0][0].set(0, 0.5);
+	},
 	getBlockList: function() {
 		var allBlocks = [];
-		this.blocks.forEach((x_axis, x) => {
-			x_axis.forEach((z_axis, x) => {
-				z_axis.forEach((y_axis, y) => {
+		this.blocks.forEach((x_axis,x)=>{
+			x_axis.forEach((z_axis,x)=>{
+				z_axis.forEach((y_axis,y)=>{
 					allBlocks.push(y_axis);
-				});
-			});
-		});
-		return allBlocks;
-	},
-	sidesDisplacement: [["z", 0.5, "y", 0], // Front (0)
-		["z", -0.5, "y", 1], // Back (1)
-		["x", 0.5, "y", 0.5], // Right (2)
-		["x", -0.5, "y", -0.5], // Left (3)
-		["y", 0.5, "x", -0.5], // Top (4)
-		["y", -0.5, "x", 0.5]// Down (5)
-	],
-	facesDisplacement: [[0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0]],
-	generate: function() {
-		//let map = generateArea({x:0,y:0,z:0}, 64);
-		let size = 20;
-		repeat(size, (i)=>{
-			repeat(size, (j)=>{
-				//if (i%2 === 0 && j%2 === 0)
-				world.setBlock(i - size / 2, 0, j - size / 2, 98);
-				/*
-				map[i+j*32] += 2;
-				repeat(map[i+j*32], (k) => {
-					world.setBlock(i-16,k,j-16,(k===map[i+j*32]-1)?2:3);
-				});*/
+				}
+				);
 			}
 			);
 		}
 		);
-		world.setBlock(3,1,6,2);
-		world.setBlock(3,2,6,6);
-		world.setBlock(3,2,7,4);
-		world.setBlock(4,2,6,4);
-		world.setBlock(5,1,6,43);
-		world.setBlock(6,2,6,203);
-		world.setBlock(6,3,6,203);
-		world.setBlock(6,2,7,4);
-		world.setBlock(6,6,6,204);
-		world.setBlock(6,6,7,98);
-		world.setBlock(6,6,9,98);
-		repeat(4, i => {
-			world.setBlock(3,i+1,1,98);
-			world.setBlock(3,i+1,0,98);
-			if (i < 3) {
-				world.setBlock(-2,1,i,98);
-				world.setBlock(-2,2,i,98);
+		return allBlocks;
+	},
+	sidesDisplacement: [["z", 0.5, "y", 0], // Front (0)
+	["z", -0.5, "y", 1], // Back (1)
+	["x", 0.5, "y", 0.5], // Right (2)
+	["x", -0.5, "y", -0.5], // Left (3)
+	["y", 0.5, "x", -0.5], // Top (4)
+	["y", -0.5, "x", 0.5]// Down (5)
+	],
+	facesDisplacement: [[0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0]],
+	generate: function() {
+		let size = 20;
+		repeat(size, (i)=>{
+			repeat(size, (j)=>{
+				world.setBlock(i - size / 2, 0, j - size / 2, 98);
 			}
-		});
+			);
+		}
+		);
+		world.setBlock(3, 1, 6, 2);
+		world.setBlock(3, 2, 6, 6);
+		world.setBlock(3, 2, 7, 4);
+		world.setBlock(4, 2, 6, 4);
+		world.setBlock(5, 1, 6, 43);
+		world.setBlock(6, 2, 6, 203);
+		world.setBlock(6, 3, 6, 203);
+		world.setBlock(6, 2, 7, 4);
+		world.setBlock(6, 6, 6, 204);
+		world.setBlock(6, 6, 7, 98);
+		world.setBlock(6, 6, 9, 98);
+		repeat(4, i=>{
+			world.setBlock(3, i + 1, 1, 98);
+			world.setBlock(3, i + 1, 0, 98);
+			if (i < 3) {
+				world.setBlock(-2, 1, i, 98);
+				world.setBlock(-2, 2, i, 98);
+			}
+		}
+		);
 	},
 	setTouchingFacesVisibility: function(x, y, z, ownFaces, state) {
 		this.facesDisplacement.forEach((obj,i)=>{
@@ -119,11 +125,11 @@ WorldHandler.prototype = {
 					z: z
 				}
 				let faces = this.generateFaces(x, y, z, id, bd);
-				faces.forEach(face => face.blockInfo = blockInfo);
+				faces.forEach(face=>face.blockInfo = blockInfo);
 				if (!bd.transparent) {
 					this.hideTouchingFaces(x, y, z, faces);
 				} else {
-					faces.forEach(face => face.transparent = true);
+					faces.forEach(face=>face.transparent = true);
 					blockInfo.transparent = true;
 				}
 				this.putFacesIntoWorld(x, y, z, faces);
@@ -153,24 +159,28 @@ WorldHandler.prototype = {
 	},
 	generateFaces: function(x, y, z, id, data) {
 		if (data.type === 6 || data.type === 7) {
-			let faces = this.generateFaces(x,y,z,id,{type:0, texture: data.texture});
-			faces.forEach((obj,i) => {
+			let faces = this.generateFaces(x, y, z, id, {
+				type: 0,
+				texture: data.texture
+			});
+			faces.forEach((obj,i)=>{
 				if (i < 4) {
-					obj.geometry = this.halfPlane;
-					obj.position.y += (data.type === 7)?0.25:-0.25;
+					obj.geometry = this.geometries.half;
+					obj.position.y += (data.type === 7) ? 0.25 : -0.25;
 				} else if (i === 4 && data.type === 6) {
 					obj.position.y -= 0.5;
 				} else if (i === 5 && data.type === 7) {
 					obj.position.y += 0.5;
 				}
-			});
+			}
+			);
 			return faces;
 		} else if (data.type === 1) {
 			if (typeof data.texture === "string") {
 				/* Normal saplings with one texture */
 				let texture = this.getSimpleTexture(data.texture, true);
 				texture.side = THREE.DoubleSide;
-				let meshes = [new THREE.Mesh(this.plane,texture), new THREE.Mesh(this.plane,texture)];
+				let meshes = [new THREE.Mesh(this.geometries.plane,texture), new THREE.Mesh(this.geometries.plane,texture)];
 				meshes[0].rotation.y = Math.PI / 4;
 				meshes[1].rotation.y = -Math.PI / 4;
 				meshes.forEach(mesh=>{
@@ -192,11 +202,11 @@ WorldHandler.prototype = {
 			if (typeof data.texture === "string") {
 				let texture = this.getSimpleTexture(data.texture);
 				for (let i = 0; i < 6; i++)
-					meshes.push(new THREE.Mesh(this.plane,texture));
+					meshes.push(new THREE.Mesh(this.geometries.plane,texture));
 			} else {
 				let textures = [this.getSimpleTexture(data.texture.front), this.getSimpleTexture(data.texture.back), this.getSimpleTexture(data.texture.left), this.getSimpleTexture(data.texture.right), this.getSimpleTexture(data.texture.top), this.getSimpleTexture(data.texture.bottom)];
 				for (let i = 0; i < 6; i++)
-					meshes.push(new THREE.Mesh(this.plane,textures[i]));
+					meshes.push(new THREE.Mesh(this.geometries.plane,textures[i]));
 			}
 			this.sidesDisplacement.map((info,i)=>{
 				let mesh = meshes[i];
@@ -226,7 +236,7 @@ WorldHandler.prototype = {
 			//texture.anisotropy = 0; // Proven to be unnecessary at the time
 			let material = new THREE.MeshLambertMaterial({
 				map: texture,
-				transparent: transparent?true:false,
+				transparent: transparent ? true : false,
 				color: 0x555555
 			});
 			this.textures[filename] = material;
