@@ -239,7 +239,7 @@ GUI.prototype = {
 		this.gamePaused = true;
 		this.clearInterface();
 		this.setFill("rgba(0,0,0,0.4)");
-		let str = ("Click anywhere to start\nInstructions\n" + "[W, A, S, D] to move up, left, down, right\n" + "[Numeric Keys] to change selected block\n" + "[E, ESC, I] to open inventory\n" + "[ F ] to show debug info\n" + "[ H ] show or hide these instructions\n" + "[Left click] Break blocks\n" + "[Right click] Place blocks\n" + "[Wooden axe] is the selection tool\n" + "[ R, Shift+R ] to rotate selection\n" + "[Ctrl + C, Ctrl + V] copy and paste selection\n");
+		let str = ("Click anywhere to start\nInstructions\n" + "[W, A, S, D] to move up, left, down, right\n" + "[Numeric Keys] to change selected block\n" + "[E, ESC, I] to open inventory\n" + "[Ctrl + B] to disable collision detection\n [Ctrl + M] to disable auto-pausing");
 		str.split("\n").forEach((text,i)=>{
 			let span = document.createElement("span");
 			span.style.display = "block";

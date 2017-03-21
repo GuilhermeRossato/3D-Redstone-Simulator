@@ -115,7 +115,7 @@ MinecraftControls.prototype = {
 			  , z = getCookie("rs_posZ")
 			  , pitch = getCookie("rs_rotX")
 			  , yaw = getCookie("rs_rotY");
-			if (x && y && z) {
+			if (x&&y&&z&&x != "" && y != "" && z != "") {
 				this.yaw.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
 			} else {
 				this.yaw.position.set(options.defaultPosition.x, options.defaultPosition.y, options.defaultPosition.z);
@@ -138,5 +138,5 @@ MinecraftControls.prototype = {
 			setCookie("rs_rotX", this.pitch.rotation.x, d);
 			setCookie("rs_rotY", this.yaw.rotation.y, d);
 		}
-	},
+	}
 }
