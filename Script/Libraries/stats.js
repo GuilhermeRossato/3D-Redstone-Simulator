@@ -40,8 +40,12 @@ var StatsEdited = function(recipient) {
 			this.delta += time - beginTime;
 			return time;
 		},
+		hide: function() {
+			this.dom.style.display = "none";
+		},
 		update: function() {
 			beginTime = this.end();
+			return this.delta;
 		},
 		normalStep: function() {
 			msPanel.update(this.delta);

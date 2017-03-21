@@ -1,6 +1,7 @@
 var camera, scene, renderer;
 var controls, player;
 var gui, stats;
+var inventory;
 
 function GUI(body) {
 	this.gamePaused = true;
@@ -17,40 +18,56 @@ function GUI(body) {
 	this.main.style.color = "#eeeeee";
 	this.showHelp();
 	this.inventory = new Inventory(this.main);
-	this.hotbar = new Hotbar(this.inventory, this.main);
+	this.inventory.onItemSwitch = (a, b) => { this.onItemSwitch.call(this, a, b) };
+	this.hotbar = new Hotbar(this.inventory,this.main);
+	this.hotbar.onItemChange = (a, b) => { this.onItemChange.call(this, a, b) };
+	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, true), false);
+	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, false), false);
+
+	inventory = this.inventory;
 }
 
 function fullGameTick() {
 	gui.player.update();
-	world.update(gui.player.controls.player.position);
+	world.update(gui.player.position);
 }
 
 function lightGameTick() {
 	gui.player.lightUpdate();
-	world.lightUpdate(gui.player.controls.player.position);
+	world.update(gui.player.position);
+}
+
+function simpleUpdate() {
+	stats.update();
+	menuClick = false;
+	stats.normalStep();
+	stats.delta = 0;
+	fullGameTick();
+	gui.renderer.render(gui.scene, gui.camera);
+	window.requestAnimationFrame(simpleUpdate);
 }
 
 function update() {
 	stats.update();
 	menuClick = false;
 	var delta = stats.delta;
-	if (delta >= 16 * 1) {
-		if (delta < 16 * 2) {
+	if (delta >= 15 * 1) {
+		if (delta < 15 * 2) {
 			stats.normalStep();
-			stats.delta -= 16;
+			stats.delta -= 15;
 			fullGameTick();
-		} else if (delta < 16 * 3) {
+		} else if (delta < 15 * 3) {
 			stats.normalStep();
-			stats.delta -= 16 * 2;
+			stats.delta -= 15 * 2;
 			lightGameTick();
 			fullGameTick();
-		} else if (delta < 16 * 4) {
+		} else if (delta < 15 * 4) {
 			stats.normalStep();
-			stats.delta -= 16 * 3;
+			stats.delta -= 15 * 3;
 			lightGameTick();
 			lightGameTick();
 			fullGameTick();
-		} else if (delta < 16 * 5) {
+		} else if (delta < 15 * 5) {
 			stats.lagStep();
 			lightGameTick();
 			lightGameTick();
@@ -59,7 +76,7 @@ function update() {
 			lightGameTick();
 			lightGameTick();
 			if (!gui.gamePaused && !options.ignoreExcessiveLag) {
-				controls.releaseMouse();
+				this.player.releaseMouse();
 				gui.showPaused();
 			}
 		}
@@ -70,23 +87,70 @@ function update() {
 
 GUI.prototype = {
 	constructor: GUI,
+	onItemSwitch: function(before, after) {
+		let data;
+		if (before.position === this.hotbar.selection) {
+			data = itensData[before.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onDeselected)
+				ItemFunctions[data.name].onDeselected();
+		}
+		if (after.position === this.hotbar.selection) {
+			data = itensData[after.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onSelected)
+				ItemFunctions[data.name].onSelected();
+		}
+	},
+	onItemChange: function(before, after) {
+		let data;
+		if (before.position === this.hotbar.selection) {
+			data = itensData[before.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onDeselected)
+				ItemFunctions[data.name].onDeselected();
+		}
+		if (before.position === this.hotbar.selection) {
+			data = itensData[after.id];
+			if (data && ItemFunctions[data.name] && ItemFunctions[data.name].onSelected)
+				ItemFunctions[data.name].onSelected();
+		}
+	},
+	onKeyChange: function(code, down) {
+		if (down)
+			switch (code) {
+			case options.keys.inventory:
+				if (this.gamePaused) {
+					this.showCrosshair();
+				} else {
+					this.showInventory();
+				}
+				break;
+			case options.keys.debug:
+				this.player.releaseMouse();
+				setTimeout(()=>{
+					this.showCrosshair(true)
+				}
+				, 10);
+				break;
+			}
+	},
+	onInventoryClick: function(ev) {
+		this.inventory.onClick(ev)
+	},
 	addBlocksInWorld: function(scene) {},
 	startLoop: function() {
 		gui = this;
 		stats = this.stats;
-		update();
 	},
 	setupThreejs: function() {
 		/* Render Setup */
 		this.renderer = new THREE.WebGLRenderer({
-			antialias: false,
+			antialias: options.antialias,
 			alpha: false
 		});
 		this.renderer.setClearColor(0x333333, 1);
 		this.renderer.domElement.style.position = "absolute";
 		this.body.appendChild(this.renderer.domElement);
 		/* Camera Setup*/
-		this.camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.25,options.viewDistance);
+		this.camera = new THREE.PerspectiveCamera(options.camera.fov,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
 		this.resize();
 		window.addEventListener('resize', (ev)=>this.resize(ev), false);
 		/* Scene Setup */
@@ -94,9 +158,8 @@ GUI.prototype = {
 		options.lights.placeInto(this.scene);
 		/* Blocks Setup */
 		this.blocks = new BlockController(this.scene);
-		blocks = this.blocks;
-		addBlocksInWorld({x:0, z:0});
 		/* Definition of global variables */
+		blocks = this.blocks;
 		renderer = this.renderer;
 		scene = this.scene;
 		camera = this.camera;
@@ -104,6 +167,9 @@ GUI.prototype = {
 	setupPlayer: function() {
 		this.player = new Player(this.scene,this.camera,true);
 		this.player.parent = this;
+		this.player.controls.onRelease = ()=>{
+			this.showInventory();
+		}
 		player = this.player;
 	},
 	resize: function() {
@@ -122,7 +188,8 @@ GUI.prototype = {
 			while (this.secondary.firstChild)
 				this.secondary.removeChild(this.secondary.firstChild);
 		this.body.style.cursor = "default";
-		this.body.onmousedown = this.body.onmouseup = this.body.onclick = () => {};
+		this.body.onmousedown = this.body.onmouseup = this.body.onclick = ()=>{}
+		;
 		if (this.fill)
 			this.fill.style.backgroundColor = "transparent";
 		if (typeof logger === "object")
@@ -147,9 +214,9 @@ GUI.prototype = {
 		this.gamePaused = true;
 		this.clearInterface();
 		this.setFill("rgba(0,0,0,0.3)");
-		let str = ("Click anywhere to resume\nGame Paused\n");
+		let str = "Click anywhere to resume\nGame Paused\n";
 		if (!options.ignoreExcessiveLag)
-			str += "Involuntary (and frequent) pausing indicates\nthat your computer can't keep up with the\n simulation due to performance problems.\nYou can disable auto-pausing with Ctrl + M.\nAlternatively, decrease the amount of blocks.";
+			str += "Involuntary (and frequent) pausing indicates\nthat your computer can't keep up with the\n simulation due to performance problems.\nYou can disable auto-pausing with Ctrl + M.\nAlternatively, decrease the amount of blocks in your simulation.\n";
 		str.split("\n").forEach((text,i)=>{
 			let span = document.createElement("span");
 			span.style.display = "block";
@@ -162,7 +229,7 @@ GUI.prototype = {
 		}
 		);
 		this.body.style.cursor = "pointer";
-		this.body.onclick = (ev) => this.onSlowClick(ev);
+		this.body.onclick = (ev)=>this.onSlowClick(ev);
 	},
 	onSlowClick: function(mouseEvent) {
 		this.assert(this.player, "Missing Component Error: Player not defined");
@@ -198,10 +265,14 @@ GUI.prototype = {
 		mouseEvent.preventDefault();
 		this.showCrosshair();
 	},
-	showCrosshair: function() {
+	showCrosshair: function(ignoreRequest) {
 		this.gamePaused = false;
+		if (this.inventory.isShown()) {
+			this.inventory.hide();
+		}
 		this.clearInterface();
-		this.player.requestMouse();
+		if (!ignoreRequest)
+			this.player.requestMouse();
 		this.body.onmousedown = (event)=>{
 			this.player.onMouseDown(event);
 		}
@@ -216,12 +287,10 @@ GUI.prototype = {
 	showInventory: function() {
 		this.gamePaused = true;
 		this.clearInterface();
+		this.player.releaseMouse();
 		this.body.onclick = this.body.onmousedown = this.body.onmouseup = (event)=>{}
 		this.inventory.show();
 		this.setFill("rgba(0,0,0,0.5)");
-	},
-	onInventoryClick: function(ev) {
-		this.inventory.onClick(ev)
 	},
 	preventDefaultBehaviours: function() {
 		this.body.style.userSelect = "none";

@@ -1,36 +1,22 @@
-var controls, collisionHelper;
+var controls, selection;
 
 function Player(scene, camera, self) {
 	if (self) {
-		this.controls = new MinecraftControls(scene, camera);
+		/* Controls */
+		this.controls = new MinecraftControls(this, scene, camera);
+		this.defineVirtualProperties();
 		this.controls.onPause = () => this.parent.showPaused();
 		this.controls.onEnter = () => this.onGrabMouse();
 		this.controls.onExit = () => this.onReleaseMouse();
-		this.controls.parent = this;
-		let h = options.selectionBoundSpace / 2;
-		let geometry = new THREE.Geometry();
-		geometry.vertices.push(new THREE.Vector3(-h,-h,-h), new THREE.Vector3(-h,h,-h), new THREE.Vector3(h,h,-h), new THREE.Vector3(h,-h,-h), new THREE.Vector3(-h,-h,-h), new THREE.Vector3(-h,-h,h), new THREE.Vector3(-h,h,h), new THREE.Vector3(h,h,h), new THREE.Vector3(h,-h,h), new THREE.Vector3(h,-h,-h), new THREE.Vector3(h,h,-h), new THREE.Vector3(-h,h,-h), new THREE.Vector3(-h,h,h), new THREE.Vector3(-h,-h,h), new THREE.Vector3(h,-h,h), new THREE.Vector3(h,h,h), new THREE.Vector3(h,h,-h));
-		let material = new THREE.LineBasicMaterial({
-			color: 0x000000
-		});
-		this.selection = new THREE.Line(geometry,material);
-		this.selection.visible = false;
 		this.raycaster = new THREE.Raycaster(undefined, undefined, 0, 10);
-		scene.add(this.selection);
-		/* Definition of global variables */
+		/* Selection */
+		this.selection = new MinecraftSelection(scene);
+		this.selection.show();
+		/* Spacial Selection */
+		this.spacialSelection = new SpacialSelection(scene);
+		/* Definition of global variables for production only */
 		controls = this.controls;
-
-		/* Initializing Collision Helper
-		material = new THREE.LineBasicMaterial({
-			color: 0xff0000
-		});
-		geometry = geometry.clone();
-		geometry.vertices.map(obj => obj.multiplyScalar((options.collisionBoundingRect.horizontal+0.0001)/h));
-		collisionHelper = new THREE.Line(geometry, material);
-		scene.add(collisionHelper);*/
-		/* Initializing Animator */
-		this.animator = new AnimationController(camera);
-		animator = this.animator;
+		selection = this.selection;
 	} else {
 		let geometry = new THREE.CubeGeometry(1,2,1);
 		let material = new THREE.BasicMaterial({color:0x000000});
@@ -41,8 +27,21 @@ function Player(scene, camera, self) {
 
 Player.prototype = {
 	constructor: Player,
+	defineVirtualProperties: function() {
+		let ctrls = this.controls;
+		Object.defineProperty(this, "position", { get: function () { return this.controls.yaw.position; } });
+		this.rotation = {
+			get pitch () { return ctrls.pitch.rotation.x; },
+			set pitch (value) { return ctrls.pitch.rotation.x = value; },
+			get yaw () { return ctrls.yaw.rotation.y; },
+			set yaw (value) { return ctrls.yaw.rotation.y = value; }
+		}
+	},
 	requestMouse: function() {
 		this.controls.requestMouse();
+	},
+	releaseMouse: function() {
+		this.controls.releaseMouse();
 	},
 	onGrabMouse: function() {
 		if (this.parent.gamePaused)
@@ -55,7 +54,7 @@ Player.prototype = {
 			this.parent.showInventory();
 	},
 	onMouseDown: function(e) {
-		console.log("World Interaction Press");
+		
 	},
 	onMouseUp: function(e) {
 		
@@ -69,28 +68,18 @@ Player.prototype = {
 			this.controls.update();
 	},
 	update: function() {
-		this.selection.visible = false;
+		this.selection.hide();
 		this.raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-		var intersections = this.raycaster.intersectObjects(blocks.blocks);
-		//var intersections = [];
-		var lastInter = undefined;
-		intersections.some((obj)=>{
-			if (obj.object.realPosition instanceof THREE.Vector3) {
-				lastInter = obj;
-				return true;
+		var intersections = this.raycaster.intersectObjects(scene.children);
+		if (intersections[0] && intersections[0].object instanceof THREE.Mesh) {
+			let obj = intersections[0].object;
+			if (obj.blockInfo) {
+				this.selection.position.copy(intersections[0].object.blockInfo);
+				this.selection.show();
 			}
-			return false;
+			//console.log(intersections[0].object.rotation);
 		}
-		);
+		this.selection.show();
 		this.controls.update();
-		if (lastInter) {
-			this.selection.visible = true;
-			this.selection.position.copy(lastInter.object.realPosition);
-		}
-		if (typeof animator === "object" && animator.enabled && !animator.manualStep) {
-			animator.step();
-		} else if (typeof animator === "object" && animator.enabled) {
-			animator.updateCamera();
-		}
 	}
 }

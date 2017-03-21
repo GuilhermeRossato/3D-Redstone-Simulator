@@ -1,61 +1,73 @@
 var options = {
-	playerSpeed: {
-		horizontal: 0.085,
-		vertical: 0.105
+	camera: {
+		fov: 95,
+		adjustment: {
+			x: 0,
+			y: 0.625,
+			z: 0
+		}
+	},
+	keys: {
+		forward: "KeyW",
+		right: "KeyD",
+		back: "KeyS",
+		left: "KeyA",
+		up: "Space",
+		down: "ShiftLeft",
+		inventory: "KeyE",
+		debug: "KeyQ",
+		save: "KeyS",
+		load: "KeyO"
+	},
+	antialias: false,
+	player: {
+		showBoundingBox: false,
+		showCollisionDetection: {
+			x: false,
+			y: false,
+			z: false
+		},
+		ignoreCollision: false,
+		speed: {
+			horizontal: 0.085,
+			vertical: 0.105
+		},
+		collisionSize: {
+			x: 0.75,
+			y: 1.625,
+			z: 0.75
+		}
 	},
 	defaultPosition: {
-		x: 8,
+		x: 10,
 		y: 10,
-		z: 20
+		z: 10
 	},
 	defaultRotation: {
-		pitch: 0,
-		yaw: 0
+		pitch: -0.7,
+		yaw: 0.7
 	},
 	viewDistance: 100,
 	cookiesLastingDays: 40,
-	collisionBoundingRect: {
-		vertical: 0.46875,
-		horizontal: 0.46875
-	},
 	ignoreExcessiveLag: false,
-	ignoreCollision: false,
-	selectionBoundSpace: 1.005,
+	selectionBoundOffset: 0.0025,
 	lights: {
 		selected: 0,
 		profiles: [{
-			name: "Real",
+			name: "Realistic",
 			create: function(scene) {
-				[{
-					// Top
-					direction: new THREE.Vector3(0,1,0),
-					intensity: 2.935
-				}, {
-					// Front
-					direction: new THREE.Vector3(0,0,-1),
-					intensity: 2.382
-				}, {
-					// Back
-					direction: new THREE.Vector3(0,0,1),
-					intensity: 2.3548
-				}, {
-					// Left
-					direction: new THREE.Vector3(-1,0,0),
-					intensity: 1.7764
-				}, {
-					// Right
-					direction: new THREE.Vector3(1,0,0),
-					intensity: 1.7742
-				}, {
-					// Bottom
-					direction: new THREE.Vector3(0,-1,0),
-					intensity: 1.5161
-				}].forEach(obj=>{
-					let light = new THREE.DirectionalLight(0xffffff,obj.intensity);
-					light.position.copy(obj.direction);
+				function addLight(name, position, intensity) {
+					let light = new THREE.DirectionalLight(0xffffff,intensity);
+					light.position.copy(position);
+					light.name = name;
 					scene.add(light);
 				}
-				);
+				addLight("Top", { x: 0, y: 1, z: 0 }, 2.935);
+				addLight("Front", { x: 0, y: 0, z: -1 }, 2.382)
+				addLight("Back", { x: 0, y: 0, z: 1 }, 2.3548)
+				addLight("Left", { x: -1, y: 0, z: 0 }, 1.7764)
+				addLight("Right", { x: 1, y: 0, z: 0 }, 1.7742)
+				addLight("Bottom", { x: 0, y: -1, z: 0 }, 1.5161)
 			}
 		}, {
 			name: "Darker",
@@ -87,13 +99,13 @@ var options = {
 		},
 		placeInto: function(scene) {
 			if (typeof this.profiles[this.selected] !== "object")
-				throw "Option Profile Error: Selected light index invalid";
+				throw "Option Profile Error: Invalid index for light level";
 			if (typeof this.profiles[this.selected].create === "function") {
 				this.profiles[this.selected].create(scene);
 			} else {
 				this.profiles[this.selected].definition.forEach(obj=>{
 					let light = new THREE.DirectionalLight(0xffffff,obj.intensity);
-					light.position.copy(obj.position||obj.direction);
+					light.position.copy(obj.position || obj.direction);
 					scene.add(light);
 				}
 				)
@@ -108,8 +120,8 @@ var options = {
 	},
 	save: function() {
 		if (typeof setCookie === "function") {
-			setCookie("rs_collision", this.ignoreCollision?"1":"0");
-			setCookie("rs_excessiveLag", this.ignoreExcessiveLag?"1":"0");
+			setCookie("rs_collision", this.ignoreCollision ? "1" : "0");
+			setCookie("rs_excessiveLag", this.ignoreExcessiveLag ? "1" : "0");
 		}
 	}
 };
