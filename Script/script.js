@@ -1,19 +1,7 @@
-function repeat(n,f) {
-	for (let i = 0 ; i < n ; i ++)
-		f(i);
-}
-
-function range(a,b) {
-	if (a > b) return range(b, a).reverse();
-	var c = new Array(b-a);
-	for (let i = a ; i <= b; i++)
-		c[i-a] = i;
-	return c;
-}
-
 function getHeightAt(x, z) {
 	return (perlin(x / 30, z / 29) + 1) * 4.5;
 }
+
 function generateArea(pos, side) {
 	let i, j;
 	var map = new Uint8Array(side * side);
@@ -37,5 +25,3 @@ function placePlayer(x,y,z) {
 }
 
 world.generate();
-
-var safeFloats = range(31,1).map(number => number.toString(2)).map(str => str.split('').reverse()).map((chars) => { var a = 0; chars.forEach((char, i)=>{ if (char==="1") { a += Math.pow(2,-(1+i)); }}); return a;}).sort((a,b)=>(a>b)?-1:(a<b)?1:0);
