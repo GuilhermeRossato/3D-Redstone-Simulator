@@ -8,6 +8,7 @@ function WorldHandler(scene) {
 	this.textures = {};
 	this.generateGeometries();
 	this.textureLoader = new THREE.TextureLoader();
+	this.generate();
 }
 
 WorldHandler.prototype = {
@@ -60,6 +61,7 @@ WorldHandler.prototype = {
 	],
 	facesDisplacement: [[0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0]],
 	generate: function() {
+		let world = this;
 		let size = 20;
 		repeat(size, (i)=>{
 			repeat(size, (j)=>{
