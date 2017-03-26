@@ -8,13 +8,6 @@ function TextureStitcher(batchSize) {
 
 TextureStitcher.prototype = {
 	constructor: TextureStitcher,
-	forEachPropertyInObject(object, f) {
-		for (var property in object) {
-			if (object.hasOwnProperty(property)) {
-				f(property, object[property]);
-			}
-		}
-	},
 	initializeTextures: function() {
 		var tList, propertyType;
 		tList = [];
@@ -145,5 +138,12 @@ TextureStitcher.prototype = {
 		this.loaded = this.textureList.length;
 		this.result = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 		this.showCanvasResult();
+	},
+	forEachPropertyInObject: function(object, f) {
+		for (var property in object) {
+			if (object.hasOwnProperty(property)) {
+				f(property, object[property]);
+			}
+		}
 	}
 }
