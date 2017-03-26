@@ -4,6 +4,10 @@ var gui, stats;
 var inventory;
 
 function GUI(body) {
+	this.textureStitcher = new TextureStitcher(20);
+	setTimeout(() => {
+			this.textureStitcher.loadStep(0);
+	}, 100);
 	this.gamePaused = true;
 	this.body = body;
 	this.main = document.getElementById("main");
@@ -139,6 +143,8 @@ GUI.prototype = {
 	startLoop: function() {
 		gui = this;
 		stats = this.stats;
+		//window.requestAnimationFrame(simpleUpdate);
+		window.requestAnimationFrame(update);
 	},
 	setupThreejs: function() {
 		/* Render Setup */
