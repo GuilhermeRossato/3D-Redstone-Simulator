@@ -63,12 +63,11 @@ WorldHandler.prototype = {
 		let size = 20;
 		repeat(size, (i)=>{
 			repeat(size, (j)=>{
-				world.setBlock(i - size / 2, 0, j - size / 2, 98);
+				world.setBlock(i - size / 2, 0, j - size / 2, 1);
 			}
 			);
 		}
 		);
-		world.setBlock(3, 1, 6, 2);
 		world.setBlock(3, 2, 6, 6);
 		world.setBlock(3, 2, 7, 4);
 		world.setBlock(4, 2, 6, 4);
