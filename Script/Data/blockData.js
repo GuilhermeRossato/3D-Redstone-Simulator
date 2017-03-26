@@ -10,6 +10,20 @@ function isSolid(bd) {
 	return bd.type !== 1 && bd.type !== 2;
 }
 
+blockTypes = {
+	// Default is solid
+	"solid": undefined,
+	"sapling": 1,
+	"topSlab": 2,
+	"bottomSlab": 3,
+	"glass": 4,
+	"redstone": 5,
+	"wallRedstone": 6,
+	"transparent": 7
+}
+
+blockFade = ["side_base.png", "side_innerCorner.png", "side_outerCorner.png", "side_open.png","top_base.png", "top_hole.png", "top_innerCorner.png", "top_outerCorner.png", "top_open.png"];
+
 blockData = {
 	"1": {
 		texture: "stone.png"
@@ -37,6 +51,9 @@ blockData = {
 		texture: "sapling_oak.png",
 		type: 1,
 		transparent: true
+	},
+	"98": {
+		texture: "stonebrick.png"
 	},
 	"43": {
 		texture: {
@@ -73,9 +90,6 @@ blockData = {
 			bottom: "stone_slab_top.png"
 		},
 		transparent: true
-	},
-	"98": {
-		texture: "stonebrick.png"
 	}
 }
 
