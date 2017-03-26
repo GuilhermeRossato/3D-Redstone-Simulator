@@ -1,5 +1,11 @@
 var Settings = {
-	ignoreExcessiveLag: new BooleanSetting(false),
+	cookie: {
+		enabled: new BooleanSetting(true),
+		lastingDays: new IntegerSetting(1, 30, 365)
+	},
+	performance: {
+		ignoreExcessiveLag: new BooleanSetting(false)
+	},
 	rendering: {
 		antialiasing: new BooleanSetting(false),
 		particles: {
@@ -9,7 +15,9 @@ var Settings = {
 	},
 	camera: {
 		fov: new IntegerSetting(50, 95, 150),
-		adjustment: new VectorSetting(0, 0.625, 0)
+		adjustment: new VectorSetting(0, 0.625, 0),
+		sensitivityX: 1.2,
+		sensitivityY: 1.4
 	},
 	keys: {
 		movement: {
