@@ -3,9 +3,11 @@ var options = {
 		fov: 95,
 		adjustment: {
 			x: 0,
-			y: 0.625,
+			y: 0.65625,
 			z: 0
-		}
+		},
+		sensitivityX: 1.2,
+		sensitivityY: 1.4
 	},
 	keys: {
 		forward: "KeyW",
