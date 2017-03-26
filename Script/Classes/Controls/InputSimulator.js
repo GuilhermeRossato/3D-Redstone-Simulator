@@ -1,8 +1,5 @@
-function InputSimulator(frameRetriever) {
+function InputSimulator() {
 	this.type = this.types.load;
-	this.getFrame = ()=>{
-		return frameRetriever.frame;
-	}
 	document.addEventListener("keydown", (ev)=>this.onKeyDown(ev));
 	document.addEventListener("keyup", (ev)=>this.onKeyUp(ev));
 	this.events = [];
