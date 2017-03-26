@@ -68,18 +68,21 @@ Player.prototype = {
 			this.controls.update();
 	},
 	update: function() {
+		performance.mark("Player Update");
 		this.selection.hide();
 		this.raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
 		var intersections = this.raycaster.intersectObjects(scene.children);
 		if (intersections[0] && intersections[0].object instanceof THREE.Mesh) {
-			let obj = intersections[0].object;
+			/*let obj = intersections[0].object;
 			if (obj.blockInfo) {
 				this.selection.position.copy(intersections[0].object.blockInfo);
 				this.selection.show();
 			}
 			//console.log(intersections[0].object.rotation);
+			*/
 		}
-		this.selection.show();
+		//this.selection.show();
 		this.controls.update();
+		performance.mark("Player End Update");
 	}
 }
