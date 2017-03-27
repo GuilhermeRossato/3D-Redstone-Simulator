@@ -4,63 +4,40 @@ let lastTimeStamp = 0;
 let leftOver = 0;
 let lastLag = false;
 
-function pausedUpdate() {
-	if (!game.paused) {
-		return update();
-	}
-	statClick = false;
-    let thisTimeStamp = performance.now();
-    let difference = thisTimeStamp - lastTimeStamp + leftOver;
-	if (difference < 160) {
-		gui.stats.delta = difference;
-		gui.stats.normalStep();
-	} else {
-		gui.stats.delta = 160;
-		gui.stats.lagStep();
-	}
-	lastTimeStamp = thisTimeStamp;
-    game.render();
-    window.requestAnimationFrame(pausedUpdate);
-}
 
 function update() {
-	if (game.paused) {
-		return pausedUpdate();
-	}
 	statClick = false;
     let thisTimeStamp = performance.now();
     let difference = thisTimeStamp - lastTimeStamp + leftOver;
+    lastTimeStamp = thisTimeStamp;
     leftOver = 0;
-    if (difference > 1000) {
-    	game.pause();
-		gui.showPaused();
-    	game.render();
-		lastTimeStamp = thisTimeStamp;
-    	window.requestAnimationFrame(update);
-	}
-    if (difference > 160) {
-    	if (lastLag) {
-        	game.pause();
-			gui.showPaused();
-        	game.render();
-        	return;
-    	} else {
-    		lastLag = true;
-    		difference = 160;
-    	}
-    }
-	gui.stats.delta = difference;
-    if (difference > 112) {
-		gui.stats.lagStep();
-		difference = 16;
+    if (difference > 750) {
+		gui.stats.delta = Math.min(255, difference);
+    	difference = 0;
+    	if (!game.paused)
+    		game.pause();
+	} else if (difference > 160) {
+		if (lastLag) {
+			gui.stats.delta = Math.max(255, difference);
+			difference = 0;
+			if (!game.paused)
+				game.halt();
+		} else {
+			lastLag = true;
+			difference = 160;
+			gui.stats.delta = 160;
+		}
 	} else {
-		gui.stats.normalStep();
+		gui.stats.delta = difference;
 	}
+	if (difference > 112)
+		gui.stats.lagStep();
+	else
+		gui.stats.normalStep();
 	while (difference >= 16) {
 		difference -= 16;
 		game.update();
 	}
-	lastTimeStamp = thisTimeStamp;
 	leftOver = difference;
     game.render();
     window.requestAnimationFrame(update);
@@ -80,13 +57,18 @@ Game.prototype = {
 	constructor: Game,
 	update: function() {
 		this.player.update();
+		if (typeof testWorld === "object" && testWorld.update instanceof Function)
+			testWorld.update();
+	},
+	halt: function() {
+		this.paused = true;
+		this.gui.setState("halted");
 	},
 	pause: function() {
-		this.gui.stats.delta = 0;
 		this.paused = true;
+		this.gui.setState("paused");
 	},
 	resume: function() {
-		this.gui.stats.delta = 0;
 		this.paused = false;
 	},
 	generateDebugStimuly: function() {
@@ -98,11 +80,9 @@ Game.prototype = {
 		this.startMainLoop();
 	},
 	startMainLoop: function() {
-		if (gui.state !== "crosshair") {
-			this.paused = true;
-			pausedUpdate();
-		} else
-			update();
+		this.paused = true;
+		//this.gui.setState("help");
+		update();
 	},
 	setupWorld: function() {
 		this.world = new WorldHandler(this.gui.scene);
