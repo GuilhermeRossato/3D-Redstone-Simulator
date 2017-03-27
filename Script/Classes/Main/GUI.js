@@ -3,7 +3,6 @@ var logger, inventory;
 
 function GUI(parent) {
 	this.parent = parent;
-	this.gamePaused = true;
 	this.main = document.getElementById("main");
 	if (!(this.main instanceof HTMLDivElement)) {
 		console.log("Creating main div manually");
@@ -45,16 +44,16 @@ GUI.prototype = {
 		document.addEventListener("mousedown", (ev)=>this.onMouseDown(ev));
 	},
 	loadingFinished: function() {
-		this.showHelp();
+		this.setState("help");
 	},
 	onMouseDown: function(event) {
 		if (this.state === "crosshair") {
 			this.parent.player.onMouseDown(event);
-		} else if (this.state === "inventory") {
-			this.inventory.onClick(ev)
-		} else if (this.state === "pause" || this.state === "halt" || this.state === "help") {
+		//} else if (this.state === "inventory") {
+			//this.inventory.onClick(event)  He handles himself
+		} else if (this.state === "paused" || this.state === "halted" || this.state === "help") {
 			if (typeof statClick === "undefined" || !statClick) {
-				this.showCrosshair();
+				this.setState("crosshair");
 			}
 		}
 	},
@@ -89,16 +88,33 @@ GUI.prototype = {
 				ItemFunctions[data.name].onSelected();
 		}
 	},
-	onInventoryKeyDown: function(down) {
-		if (this.gamePaused) {
-			this.showCrosshair();
-		} else {
+	setState: function(state) {
+		this.state = state;
+		if (state === "inventory")
 			this.showInventory();
+		else if (state === "crosshair")
+			this.showCrosshair();
+		else if (state === "halted")
+			this.showHalted();
+		else if (state === "paused")
+			this.showPaused();
+		else if (state === "help")
+			this.showHelp();
+		else
+			console.warn("Invalid State!");
+	},
+	onInventoryKeyDown: function(down) {
+		if (this.state === "inventory") {
+			this.parent.paused = false;
+			this.setState("crosshair");
+		} else if (this.state === "crosshair" || this.state === "paused") {
+			this.setState("inventory");
+			this.parent.paused = true;
 		}
 	},
 	onDebugKeyDown: function() {
 		this.parent.player.releaseMouse();
-		setTimeout(()=>this.showCrosshair(true), 10);
+		setTimeout(()=>{this.state = "crosshair"; this.showCrosshair(true)}, 10);
 	},
 	setupThreejs: function() {
 		/* Render Setup */
@@ -143,7 +159,6 @@ GUI.prototype = {
 			while (this.secondary.firstChild)
 				this.secondary.removeChild(this.secondary.firstChild);
 		document.body.style.cursor = "default";
-		this.state = "none";
 		if (this.fill)
 			this.fill.style.backgroundColor = "transparent";
 		if (typeof logger === "object")
@@ -166,19 +181,33 @@ GUI.prototype = {
 	},
 	showPaused: function() {
 		this.clearInterface();
-		this.state = "paused";
-		this.gamePaused = true;
 		this.setFill("rgba(0,0,0,0.3)");
 		let str = "Click anywhere to resume\nGame Paused\n";
-		if (!options.ignoreExcessiveLag)
-			str += "Involuntary (and frequent) pausing indicates\nthat your computer can't keep up with the\n simulation due to performance problems.\nYou can disable auto-pausing with Ctrl + M.\nAlternatively, decrease the amount of blocks in your simulation.\n";
 		str.split("\n").forEach((text,i)=>{
 			let span = document.createElement("span");
 			span.style.display = "block";
 			span.style.fontWeight = (i === 0) ? "bold" : "normal";
 			span.style.fontSize = (i === 1) ? "48px" : "16px";
 			span.style.marginBottom = (i === 1) ? "10px" : "0px";
-			span.style.textAlign = (i < 2) ? "center" : "left";
+			span.style.textAlign = "center";
+			span.innerText = text;
+			this.main.appendChild(span);
+		}
+		);
+		document.body.style.cursor = "pointer";
+	},
+	showHalted: function() {
+		this.clearInterface();
+		this.setFill("rgba(0,0,0,0.3)");
+		let str = "Click anywhere to resume\nGame Paused\n";
+		str += "Involuntary (and frequent) pausing indicates\nthat your computer can't keep up with the\n simulation due to performance problems.\nYou can disable auto-pausing with Ctrl + M.\nAlternatively, decrease the amount of blocks in your simulation.\n";
+		str.split("\n").forEach((text,i)=>{
+			let span = document.createElement("span");
+			span.style.display = "block";
+			span.style.fontWeight = (i === 0) ? "bold" : "normal";
+			span.style.fontSize = (i === 1) ? "48px" : "16px";
+			span.style.marginBottom = (i === 1) ? "10px" : "0px";
+			span.style.textAlign = "center";
 			span.innerText = text;
 			this.main.appendChild(span);
 		}
@@ -187,8 +216,7 @@ GUI.prototype = {
 	},
 	showHelp: function() {
 		this.clearInterface();
-		this.state = "help";
-		this.gamePaused = true;
+		this.main.style.color = "#DDD";
 		this.setFill("rgba(0,0,0,0.4)");
 		let str = ("Click anywhere to start\nInstructions\n" + "[W, A, S, D] to move up, left, down, right\n" + "[Numeric Keys] to change selected block\n" + "[E, ESC, I] to open inventory\n" + "[Ctrl + B] to disable collision detection\n [Ctrl + M] to disable auto-pausing");
 		str.split("\n").forEach((text,i)=>{
@@ -205,8 +233,6 @@ GUI.prototype = {
 		document.body.style.cursor = "pointer";
 	},
 	showCrosshair: function(ignoreRequest) {
-		this.state = "crosshair";
-		this.gamePaused = false;
 		if (this.inventory.isShown()) {
 			this.inventory.hide();
 		}
@@ -220,8 +246,6 @@ GUI.prototype = {
 		this.parent.resume();
 	},
 	showInventory: function() {
-		this.state = "inventory";
-		this.gamePaused = true;
 		this.clearInterface();
 		this.parent.player.releaseMouse();
 		this.inventory.show();
