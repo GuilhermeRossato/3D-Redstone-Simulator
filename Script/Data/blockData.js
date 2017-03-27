@@ -22,7 +22,7 @@ blockTypes = {
 	"transparent": 7
 }
 
-blockFade = ["side_base.png", "side_innerCorner.png", "side_outerCorner.png", "side_open.png","top_base.png", "top_hole.png", "top_innerCorner.png", "top_outerCorner.png", "top_open.png"];
+blockFade = ["side_base_down.png", "side_outer_left.png", "side_outer_right.png", "top_base_down.png", "top_base_left.png", "top_base_right.png", "top_base_up.png", "top_hole.png", "top_inner_bottom_left.png", "top_inner_bottom_right.png", "top_inner_upper_left.png", "top_inner_upper_right.png", "top_open_down.png", "top_open_left.png", "top_open_right.png", "top_open_up.png", "top_outer_bottom_left.png", "top_outer_bottom_right.png", "top_outer_upper_left.png", "top_outer_upper_right.png"];
 
 blockData = {
 	"1": {
