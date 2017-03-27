@@ -4,10 +4,14 @@ function TextureStitcher(batchSize) {
 	this.batchSize = batchSize || 1;
 	this.parseTextures();
 	this.loadPrepare();
+	this.textureIds = {};
 }
 
 TextureStitcher.prototype = {
 	constructor: TextureStitcher,
+	assignTextureToPlane: function(texture, faceA, faceB, ao) {
+		var textureId = (this.textureIds[texture] || 0) + (ao || 0);
+	},
 	parseTextures: function() {
 		var tList, propertyType;
 		tList = [];
@@ -33,19 +37,29 @@ TextureStitcher.prototype = {
 	loadPrepare: function() {
 		this.loaded = 0;
 		this.canvas = document.createElement("canvas");
-		this.canvas.width = this.textureList.length * 16;
-		this.canvas.height = 16*10*4;
+		let totalTextures = this.textureList.length * blockFade.length;
+		for (var i = 16; i <= 512; i*=2) {
+			if (totalTextures < i*i) {
+				console.log("TextureSticher Size set to",i);
+				this.tilesHorizontally = i;
+				this.canvas.width = this.canvas.height = i*16;
+				break;
+			} else if (i === 512)
+				throw "Too Many Textures!";
+		}
 		this.ctx = this.canvas.getContext('2d');
+		//this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
+		console.log("canvas Size",this.canvas.width, this.canvas.height, this.tilesHorizontally);
 		this.images = [];
 		repeat(this.batchSize, i=>{
-			var img = document.createElement("img")
+			let img = document.createElement("img")
 			img.onload = (ev)=>this.onLoadImage.call(this, ev);
 			img.onerror = (ev)=>this.onErrorImage.call(this, ev);
 			this.images.push(img);
 		});
 		this.aoCount = blockFade.length;
 		this.aoFades = blockFade.map((fileName, i) => {
-			var img = document.createElement("img")
+			let img = document.createElement("img")
 			img.onload = (ev) => { this.aoCount--; };
 			img.src = "Images/AmbientOcclusion/" + fileName;
 			return img;
@@ -64,10 +78,23 @@ TextureStitcher.prototype = {
 			},
 			timeStamp: 0
 		}
+		this.drawnTextures = 0;
+	},
+	getXY: function(textureId) {
+		//width = this.tilesHorizontally;
+		return {x: textureId % this.tilesHorizontally, y: (textureId / this.tilesHorizontally)|0}
 	},
 	drawNewImage: function(image, id) {
-		repeat(10*4, height => {
-			this.ctx.drawImage(image, 0, 0, 16, 16, (id * 16), height*16, 16, 16);
+		var imageName = this.textureList[image.idNumber];
+		this.textureIds[imageName] = this.drawnTextures;
+		repeat(this.aoFades.length, i => {
+			var pos = this.getXY(this.drawnTextures);
+			console.log("pos",this.drawnTextures,"=",pos.x,pos.y);
+			this.ctx.drawImage(image, 0, 0, 16, 16, pos.x*16, pos.y*16, 16, 16);
+			if (i > 0) {
+				this.ctx.drawImage(this.aoFades[i-1], 0, 0, 16, 16, pos.x*16, pos.y*16, 16, 16);
+			}
+			this.drawnTextures++;
 		});
 	},
 	onLoadImage: function(ev) {
@@ -134,9 +161,19 @@ TextureStitcher.prototype = {
 		this.canvas.style.top = "0px";
 		document.body.appendChild(this.canvas);
 	},
+	loadFakeImageOverlay: function() {
+		var img = document.createElement("img");
+		img.src = "Images/AmbientOcclusion/full.png";
+		img.onload = () => {
+			this.ctx.drawImage(img, 0, 0);
+			this.result = this.canvas.toDataURL();
+		}
+	},
 	loadFinish: function() {
+		this.loadFakeImageOverlay();
 		this.loaded = this.textureList.length;
-		this.result = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+		//this.result = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+		this.result = this.canvas.toDataURL();
 		this.showCanvasResult();
 	},
 	forEachPropertyInObject: function(object, f) {
