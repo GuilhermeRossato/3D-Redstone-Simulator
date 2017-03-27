@@ -2,6 +2,8 @@
  * @author mrdoob / http://mrdoob.com/
  * Heavily edited by Guilherme Rossato
  */
+
+var statClick = false;
 var StatsEdited = function(recipient) {
 	var startsActive = false;
 	if ((typeof getCookie === "function") && (getCookie("rs_statsExtended") == '1'))
@@ -9,8 +11,8 @@ var StatsEdited = function(recipient) {
 	var container = document.createElement('div');
 	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
 	container.addEventListener('click', function(event) {
-		if (typeof menuClick === "boolean")
-			menuClick = true;
+		if (typeof statClick === "boolean")
+			statClick = true;
 		event.preventDefault();
 		container.children[0].toggle();
 	}, false);
@@ -22,8 +24,8 @@ var StatsEdited = function(recipient) {
 	  , prevTime = beginTime
 	  , frames = 0;
 	var msPanel = addPanel(new StatsEdited.Panel('MS','#0f0','#020', startsActive, 200));
-	if (typeof recipient !== "object")
-		logger.warn("Could not load milisecond tab due to incorrect recipient parameter");
+	if (typeof recipient !== "object" && typeof logger === "object")
+		logger.warn("Could not load milisecond tab due to invalid recipient parameter");
 	else
 		recipient.appendChild(container);
 	return {
@@ -32,11 +34,11 @@ var StatsEdited = function(recipient) {
 		addPanel: addPanel,
 		delta: 0,
 		begin: function() {
-			beginTime = (performance || Date).now();
+			beginTime = performance.now();
 		},
 		end: function() {
 			frames++;
-			var time = (performance || Date).now();
+			var time = performance.now();
 			this.delta += time - beginTime;
 			return time;
 		},
