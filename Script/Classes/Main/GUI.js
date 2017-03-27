@@ -1,96 +1,66 @@
 var camera, scene, renderer;
-var controls, player;
-var gui, stats;
-var inventory;
+var logger, inventory;
 
-function GUI(body) {
-	this.textureStitcher = new TextureStitcher(20);
-	setTimeout(() => {
-			this.textureStitcher.loadStep(0);
-	}, 100);
+function GUI(parent) {
+	this.parent = parent;
 	this.gamePaused = true;
-	this.body = body;
 	this.main = document.getElementById("main");
-	this.assert(this.main instanceof HTMLDivElement, "Main div not found");
+	if (!(this.main instanceof HTMLDivElement)) {
+		console.log("Creating main div manually");
+		if (this.main !== undefined && this.main.parentElement && this.main.parentElement.removeChild)
+			this.main.parentElement.removeChild(this.main);
+		var outter = document.createElement("div");
+		outter.style.zIndex = 10;
+		outter.style.position = "absolute";
+		outter.style.width = "100%";
+		outter.style.height = "100%";
+		outter.style.display = "flex";
+		outter.style.alignItems = "center";
+		outter.style.justifyContent = "center";
+		outter.style.fontFamily = "Verdana";
+		outter.style.color = "#333333";
+		this.main = document.createElement("div");
+		this.main.style.zIndex = "11";
+		this.main.style.textAlign = "center";
+	}
 	this.secondary = document.getElementById("secondary");
-	this.stats = new StatsEdited(body);
+	this.stats = new StatsEdited(document.body);
 	this.stats.begin();
 	this.preventDefaultBehaviours();
-	this.setupThreejs();
-	this.setupPlayer();
-	this.startLoop();
-	this.main.style.color = "#eeeeee";
-	this.showHelp();
-	this.inventory = new Inventory(this.main);
-	this.inventory.onItemSwitch = (a, b) => { this.onItemSwitch.call(this, a, b) };
-	this.hotbar = new Hotbar(this.inventory,this.main);
-	this.hotbar.onItemChange = (a, b) => { this.onItemChange.call(this, a, b) };
-	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, true), false);
-	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, false), false);
-
-	inventory = this.inventory;
-}
-
-function fullGameTick() {
-	gui.player.update();
-	world.update(gui.player.position);
-}
-
-function lightGameTick() {
-	gui.player.lightUpdate();
-	world.update(gui.player.position);
-}
-
-function simpleUpdate() {
-	stats.update();
-	menuClick = false;
-	stats.normalStep();
-	stats.delta = 0;
-	fullGameTick();
-	gui.renderer.render(gui.scene, gui.camera);
-	window.requestAnimationFrame(simpleUpdate);
-}
-
-function update() {
-	stats.update();
-	menuClick = false;
-	var delta = stats.delta;
-	if (delta >= 15 * 1) {
-		if (delta < 15 * 2) {
-			stats.normalStep();
-			stats.delta -= 15;
-			fullGameTick();
-		} else if (delta < 15 * 3) {
-			stats.normalStep();
-			stats.delta -= 15 * 2;
-			lightGameTick();
-			fullGameTick();
-		} else if (delta < 15 * 4) {
-			stats.normalStep();
-			stats.delta -= 15 * 3;
-			lightGameTick();
-			lightGameTick();
-			fullGameTick();
-		} else if (delta < 15 * 5) {
-			stats.lagStep();
-			lightGameTick();
-			lightGameTick();
-		} else {
-			stats.lagStep();
-			lightGameTick();
-			lightGameTick();
-			if (!gui.gamePaused && !options.ignoreExcessiveLag) {
-				this.player.releaseMouse();
-				gui.showPaused();
-			}
-		}
-	}
-	gui.renderer.render(gui.scene, gui.camera);
-	window.requestAnimationFrame(update);
+	this.logger = new Logger(this.secondary);
+	logger = this.logger;
 }
 
 GUI.prototype = {
 	constructor: GUI,
+	setupInventory: function() {
+		this.inventory = new Inventory(this.main);
+		this.inventory.onItemSwitch = (a, b) => { this.onItemSwitch.call(this, a, b) };
+		this.hotbar = new Hotbar(this.inventory,this.main);
+		this.hotbar.onItemChange = (a, b) => { this.onItemChange.call(this, a, b) };
+		Settings.keys.other.inventory.attachEvent("keydown",(event) => this.onInventoryKeyDown());
+		Settings.keys.other.debug.attachEvent("keydown",(event) => this.onDebugKeyDown());
+		inventory = this.inventory;
+		document.addEventListener("mouseup", (ev)=>this.onMouseUp(ev));
+		document.addEventListener("mousedown", (ev)=>this.onMouseDown(ev));
+	},
+	loadingFinished: function() {
+		this.showHelp();
+	},
+	onMouseDown: function(event) {
+		if (this.state === "crosshair") {
+			this.parent.player.onMouseDown(event);
+		} else if (this.state === "pause" || this.state === "halt" || this.state === "help") {
+			if (typeof statClick === "undefined" || !statClick) {
+				this.showCrosshair();
+			}
+		}
+	},
+	onMouseUp: function(event) {
+		if (this.state === "crosshair") {
+			this.parent.player.onMouseUp(event);
+		}
+	},
 	onItemSwitch: function(before, after) {
 		let data;
 		if (before.position === this.hotbar.selection) {
@@ -117,34 +87,16 @@ GUI.prototype = {
 				ItemFunctions[data.name].onSelected();
 		}
 	},
-	onKeyChange: function(code, down) {
-		if (down)
-			switch (code) {
-			case options.keys.inventory:
-				if (this.gamePaused) {
-					this.showCrosshair();
-				} else {
-					this.showInventory();
-				}
-				break;
-			case options.keys.debug:
-				this.player.releaseMouse();
-				setTimeout(()=>{
-					this.showCrosshair(true)
-				}
-				, 10);
-				break;
-			}
+	onInventoryKeyDown: function(down) {
+		if (this.gamePaused) {
+			this.showCrosshair();
+		} else {
+			this.showInventory();
+		}
 	},
-	onInventoryClick: function(ev) {
-		this.inventory.onClick(ev)
-	},
-	addBlocksInWorld: function(scene) {},
-	startLoop: function() {
-		gui = this;
-		stats = this.stats;
-		//window.requestAnimationFrame(simpleUpdate);
-		window.requestAnimationFrame(update);
+	onDebugKeyDown: function() {
+		this.parent.player.releaseMouse();
+		setTimeout(()=>this.showCrosshair(true), 10);
 	},
 	setupThreejs: function() {
 		/* Render Setup */
@@ -154,29 +106,27 @@ GUI.prototype = {
 		});
 		this.renderer.setClearColor(0x333333, 1);
 		this.renderer.domElement.style.position = "absolute";
-		this.body.appendChild(this.renderer.domElement);
+		this.renderer.domElement.style.display = "none";
+		document.body.appendChild(this.renderer.domElement);
 		/* Camera Setup*/
-		this.camera = new THREE.PerspectiveCamera(options.camera.fov,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
-		this.resize();
+		this.camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
+		Settings.camera.fov.attach(this.camera, "fov");
+		this.parent.camera = this.camera;
 		window.addEventListener('resize', (ev)=>this.resize(ev), false);
 		/* Scene Setup */
 		this.scene = new THREE.Scene();
 		options.lights.placeInto(this.scene);
-		/* Blocks Setup */
-		this.blocks = new BlockController(this.scene);
 		/* Definition of global variables */
-		blocks = this.blocks;
 		renderer = this.renderer;
 		scene = this.scene;
 		camera = this.camera;
 	},
-	setupPlayer: function() {
-		this.player = new Player(this.scene,this.camera,true);
-		this.player.parent = this;
-		this.player.controls.onRelease = ()=>{
-			this.showInventory();
-		}
-		player = this.player;
+	showRenderer: function() {
+		this.renderer.domElement.style.display = "";
+		this.resize();
+	},
+	onInventoryClick: function(ev) {
+		this.inventory.onClick(ev)
 	},
 	resize: function() {
 		if (this.camera) {
@@ -193,9 +143,8 @@ GUI.prototype = {
 		if (this.secondary instanceof HTMLDivElement)
 			while (this.secondary.firstChild)
 				this.secondary.removeChild(this.secondary.firstChild);
-		this.body.style.cursor = "default";
-		this.body.onmousedown = this.body.onmouseup = this.body.onclick = ()=>{}
-		;
+		document.body.style.cursor = "default";
+		this.state = "none";
 		if (this.fill)
 			this.fill.style.backgroundColor = "transparent";
 		if (typeof logger === "object")
@@ -210,15 +159,16 @@ GUI.prototype = {
 			this.fill.style.zIndex = "5";
 			let fillActive = true;
 			if (fillActive) {
-				this.body.style.backgroundColor = "#ffffff";
-				this.body.appendChild(this.fill);
+				document.body.style.backgroundColor = "#ffffff";
+				document.body.appendChild(this.fill);
 			}
 		}
 		this.fill.style.backgroundColor = color
 	},
 	showPaused: function() {
-		this.gamePaused = true;
 		this.clearInterface();
+		this.state = "paused";
+		this.gamePaused = true;
 		this.setFill("rgba(0,0,0,0.3)");
 		let str = "Click anywhere to resume\nGame Paused\n";
 		if (!options.ignoreExcessiveLag)
@@ -234,16 +184,12 @@ GUI.prototype = {
 			this.main.appendChild(span);
 		}
 		);
-		this.body.style.cursor = "pointer";
-		this.body.onclick = (ev)=>this.onSlowClick(ev);
-	},
-	onSlowClick: function(mouseEvent) {
-		this.assert(this.player, "Missing Component Error: Player not defined");
-		this.showCrosshair();
+		document.body.style.cursor = "pointer";
 	},
 	showHelp: function() {
-		this.gamePaused = true;
 		this.clearInterface();
+		this.state = "help";
+		this.gamePaused = true;
 		this.setFill("rgba(0,0,0,0.4)");
 		let str = ("Click anywhere to start\nInstructions\n" + "[W, A, S, D] to move up, left, down, right\n" + "[Numeric Keys] to change selected block\n" + "[E, ESC, I] to open inventory\n" + "[Ctrl + B] to disable collision detection\n [Ctrl + M] to disable auto-pausing");
 		str.split("\n").forEach((text,i)=>{
@@ -257,50 +203,34 @@ GUI.prototype = {
 			this.main.appendChild(span);
 		}
 		);
-		this.body.style.cursor = "pointer";
-		this.body.onclick = (event)=>{
-			if (!menuClick)
-				this.onHelpClick(event)
-			else
-				menuClick = false;
-		}
-		this.body.onmousedown = this.body.onmouseup = (event)=>{}
-	},
-	onHelpClick: function(mouseEvent) {
-		this.assert(this.player, "Missing Component Error: Player not defined");
-		mouseEvent.preventDefault();
-		this.showCrosshair();
+		document.body.style.cursor = "pointer";
 	},
 	showCrosshair: function(ignoreRequest) {
+		this.state = "crosshair";
 		this.gamePaused = false;
 		if (this.inventory.isShown()) {
 			this.inventory.hide();
 		}
 		this.clearInterface();
 		if (!ignoreRequest)
-			this.player.requestMouse();
-		this.body.onmousedown = (event)=>{
-			this.player.onMouseDown(event);
-		}
-		this.body.onmouseup = (event)=>{
-			this.player.onMouseUp(event);
-		}
+			this.parent.player.requestMouse();
 		let img = document.createElement("img");
 		img.src = "Images/crosshair.png";
 		this.main.appendChild(img);
 		this.hotbar.show();
+		this.parent.resume();
 	},
 	showInventory: function() {
+		this.state = "inventory";
 		this.gamePaused = true;
 		this.clearInterface();
-		this.player.releaseMouse();
-		this.body.onclick = this.body.onmousedown = this.body.onmouseup = (event)=>{}
+		this.parent.player.releaseMouse();
 		this.inventory.show();
 		this.setFill("rgba(0,0,0,0.5)");
 	},
 	preventDefaultBehaviours: function() {
-		this.body.style.userSelect = "none";
-		this.body.onselectionstart = this.body.ondragstart = function(e) {
+		document.body.style.userSelect = "none";
+		document.body.onselectionstart = document.body.ondragstart = function(e) {
 			e.preventDefault();
 			return false;
 		}
