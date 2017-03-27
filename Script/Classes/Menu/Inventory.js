@@ -125,7 +125,7 @@ function Inventory(centeredDiv) {
 	this.getOffsetTop = function() {
 		return img.offsetTop;
 	}
-	window.addEventListener("mousedown", (ev)=>{
+	addEventListener("mousedown", (ev)=>{
 		if (this.isShown()) {
 			let mx = ev.clientX - img.offsetLeft + window.scrollX;
 			let my = ev.clientY - img.offsetTop + window.scrollY;
@@ -133,7 +133,7 @@ function Inventory(centeredDiv) {
 		}
 	}
 	)
-	window.addEventListener("mousemove", (ev)=>{
+	addEventListener("mousemove", (ev)=>{
 		if (this.isShown()) {
 			let mx = ev.clientX - img.offsetLeft + window.scrollX;
 			let my = ev.clientY - img.offsetTop + window.scrollY;
@@ -141,7 +141,7 @@ function Inventory(centeredDiv) {
 		}
 	}
 	)
-	window.addEventListener("mouseup", (ev)=>{
+	addEventListener("mouseup", (ev)=>{
 		if (this.isShown()) {
 			let mx = ev.clientX - img.offsetLeft + window.scrollX;
 			let my = ev.clientY - img.offsetTop + window.scrollY;

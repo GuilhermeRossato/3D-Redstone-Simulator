@@ -50,6 +50,8 @@ GUI.prototype = {
 	onMouseDown: function(event) {
 		if (this.state === "crosshair") {
 			this.parent.player.onMouseDown(event);
+		} else if (this.state === "inventory") {
+			this.inventory.onClick(ev)
 		} else if (this.state === "pause" || this.state === "halt" || this.state === "help") {
 			if (typeof statClick === "undefined" || !statClick) {
 				this.showCrosshair();
@@ -112,7 +114,7 @@ GUI.prototype = {
 		this.camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
 		Settings.camera.fov.attach(this.camera, "fov");
 		this.parent.camera = this.camera;
-		window.addEventListener('resize', (ev)=>this.resize(ev), false);
+		addEventListener('resize', (ev)=>this.resize(ev), false);
 		/* Scene Setup */
 		this.scene = new THREE.Scene();
 		options.lights.placeInto(this.scene);
@@ -124,9 +126,6 @@ GUI.prototype = {
 	showRenderer: function() {
 		this.renderer.domElement.style.display = "";
 		this.resize();
-	},
-	onInventoryClick: function(ev) {
-		this.inventory.onClick(ev)
 	},
 	resize: function() {
 		if (this.camera) {

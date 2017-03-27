@@ -12,7 +12,7 @@ function InputListener() {
 	document.addEventListener("mouseup",(ev)=>{this.onRawMouseUp(ev)},false);
 	document.addEventListener("keydown",(ev)=>{this.onRawKeyDown(ev)},false);
 	document.addEventListener("keyup",(ev)=>{this.onRawKeyUp(ev)},false);
-	document.addEventListener("resize",(ev)=>{this.onRawResize(ev)},false);
+	window.addEventListener("resize",(ev)=>{this.onRawResize(ev)},false);
 	document.addEventListener('pointerlockchange', (ev)=>{this.onRawPointerlockChange(ev)}, false);
 	document.addEventListener('pointerlockerror', (ev)=>this.onRawPointerlockError(ev), false);
 	this.replaceDefaultEventListeners();
@@ -36,7 +36,7 @@ InputListener.prototype = {
 	},
 	replaceDefaultEventListeners: function() {
 		let unhandled = document.addEventListener;
-		addEventListener = document.addEventListener = (type, callback, unsafe) => {
+		addEventListener = window.addEventListener = document.addEventListener = (type, callback, unsafe) => {
 			if (type === "wheel")
 				this.events.onMouseScroll.attach(callback);
 			else if (type === "mousedown")
@@ -60,6 +60,9 @@ InputListener.prototype = {
 				unhandled(type, callback, unsafe);
 			}
 		}
+	},
+	onRawResize: function(event) {
+		this.events.onResize.listeners.forEach(f => f(event));
 	},
 	onRawMouseScroll: function(event) {
 		this.events.onMouseScroll.listeners.forEach(f => f(event));

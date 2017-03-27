@@ -41,7 +41,7 @@ function update() {
     if (difference > 160) {
     	if (lastLag) {
         	game.pause();
-			gui.showSlow();
+			gui.showPaused();
         	game.render();
         	return;
     	} else {
