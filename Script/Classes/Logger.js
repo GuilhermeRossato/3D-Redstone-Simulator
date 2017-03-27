@@ -1,7 +1,10 @@
 function Logger(recipient) {
 	this.domElement = document.createElement("div");
 	this.domElement.className = "logger";
-	recipient.appendChild(this.domElement);
+	if (recipient)
+		recipient.appendChild(this.domElement);
+	else
+		console.log("Logger recipient div element not found");
 	this.lineBreak = false;
 }
 Logger.prototype = {
