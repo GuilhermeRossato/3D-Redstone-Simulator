@@ -36,8 +36,8 @@ InputListener.prototype = {
 	},
 	replaceDefaultEventListeners: function() {
 		let unhandled = document.addEventListener;
-		document.addEventListener = (type, callback, unsafe) => {
-			if (type === "scroll")
+		addEventListener = document.addEventListener = (type, callback, unsafe) => {
+			if (type === "wheel")
 				this.events.onMouseScroll.attach(callback);
 			else if (type === "mousedown")
 				this.events.onMouseDown.attach(callback);
@@ -105,6 +105,7 @@ InputListener.prototype = {
 		this.keyCodes.push("");
 		this.keyObjects.push(keyObject);
 		keyObject.attach(this.keyCodes, index.toString());
+		this.keyCount++;
 	},
 	_recursiveParseKeys: function(object) {
 		if (object instanceof KeySetting) {
