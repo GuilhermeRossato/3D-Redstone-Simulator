@@ -7,6 +7,7 @@ function WorldHandler(scene) {
 	this.faces = [];
 	this.textures = {};
 	this.generateGeometries();
+	this.loadTexture();
 	this.textureLoader = new THREE.TextureLoader();
 	this.generate();
 }
@@ -27,6 +28,11 @@ WorldHandler.prototype = {
 			this.z = z;
 			this.id = id;
 		}
+	},
+	loadTexture: function() {
+		var texture = new THREE.Texture();
+		//var loader = new THREE.ImageLoader(this.textureLoader.manager);
+		//loader.load();
 	},
 	generateGeometries: function() {
 		this.geometries = {
@@ -70,6 +76,13 @@ WorldHandler.prototype = {
 			);
 		}
 		);
+		world.setBlock(0,0,0,0);
+		world.setBlock(0,1,0,0);
+		world.setBlock(1,0,0,0);
+		world.setBlock(-1,0,0,0);
+		world.setBlock(0,0,1,0);
+		world.setBlock(0,0,-1,0);
+		world.setBlock(0,0,0,0);
 		world.setBlock(3, 2, 6, 6);
 		world.setBlock(3, 2, 7, 4);
 		world.setBlock(4, 2, 6, 4);
