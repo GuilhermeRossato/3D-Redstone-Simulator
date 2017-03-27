@@ -41,13 +41,17 @@ function Setting(defaultValue, processFunc) {
 	}
 }
 
-function FloatSetting(min, value, max) {
+function FloatSetting(min, max, value) {
+	if ((min !== max) && (min > max || value > max || value < min))
+		console.warn("Your parameter order is wrong.");
 	this.min = min;
 	this.max = max;
 	Setting.call(this, value);
 }
 
-function IntegerSetting(min, value, max) {
+function IntegerSetting(min, max, value) {
+	if ((min !== max) && (min > max || value > max || value < min))
+		console.warn("Your parameter order is wrong.");
 	this.min = min;
 	this.max = max;
 	Setting.call(this, value, (value) => value|0);
@@ -90,9 +94,9 @@ function KeySetting(value) {
 function VectorSetting(x, y, z, distance) {
 	let listeners = [];
 	distance = Math.abs(distance||2.5);
-	this.x = new FloatSetting(x-distance, x, x+distance);
-	this.y = new FloatSetting(y-distance, y, y+distance);
-	this.z = new FloatSetting(y-distance, z, z+distance);
+	this.x = new FloatSetting(x-distance, x+distance, x);
+	this.y = new FloatSetting(y-distance, y+distance, y);
+	this.z = new FloatSetting(y-distance, z+distance, z);
 	this.set = (x, y, z) => {
 		this.x.value = x;
 		this.y.value = y;
