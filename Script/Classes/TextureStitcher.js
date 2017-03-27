@@ -2,13 +2,13 @@
 
 function TextureStitcher(batchSize) {
 	this.batchSize = batchSize || 1;
-	this.initializeTextures();
+	this.parseTextures();
 	this.loadPrepare();
 }
 
 TextureStitcher.prototype = {
 	constructor: TextureStitcher,
-	initializeTextures: function() {
+	parseTextures: function() {
 		var tList, propertyType;
 		tList = [];
 		function addUniqueTexture(fileName) {
