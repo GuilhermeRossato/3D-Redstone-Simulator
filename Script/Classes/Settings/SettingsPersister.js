@@ -2,7 +2,7 @@ function SettingsPersister() {
 	Settings.cookie.lastingDays.attach(this, "cookiesLast");
 	Settings.cookie.enabled.attach(this, "cookiesEnabled");
 	this.loadSettingState();
-	this.startTimer();
+	this.startSaverTimer();
 }
 
 SettingsPersister.prototype = {
@@ -11,7 +11,7 @@ SettingsPersister.prototype = {
 		if (this.cookiesEnabled)
 			this.saveSettingsState();
 	},
-	startTimer: function() {
+	startSaverTimer: function() {
 		this.timer = setInterval(this.update, 5000);
 	},
 	stopTimer: function() {
