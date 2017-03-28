@@ -40,7 +40,7 @@ WorldSaver.prototype = {
 		let blocksNear = [];
 		let blocksFar = [];
 		this.world.getBlockList().forEach(obj=>{
-			if (obj.id > 0) {
+			if (obj && obj.id > 0) {
 				if (this.isWithinArea(obj))
 					blocksNear.push(obj);
 				else
