@@ -9,8 +9,9 @@ function TextureStitcher(batchSize) {
 
 TextureStitcher.prototype = {
 	constructor: TextureStitcher,
-	assignTextureToPlane: function(texture, faceA, faceB, ao) {
+	getTexturePosition: function(texture, ao) {
 		var textureId = (this.textureIds[texture] || 0) + (ao || 0);
+		return this.getXY(textureId);
 	},
 	parseTextures: function() {
 		var tList, propertyType;
@@ -89,7 +90,6 @@ TextureStitcher.prototype = {
 		this.textureIds[imageName] = this.drawnTextures;
 		repeat(this.aoFades.length, i => {
 			var pos = this.getXY(this.drawnTextures);
-			console.log("pos",this.drawnTextures,"=",pos.x,pos.y);
 			this.ctx.drawImage(image, 0, 0, 16, 16, pos.x*16, pos.y*16, 16, 16);
 			if (i > 0) {
 				this.ctx.drawImage(this.aoFades[i-1], 0, 0, 16, 16, pos.x*16, pos.y*16, 16, 16);
