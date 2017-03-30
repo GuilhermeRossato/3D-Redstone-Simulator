@@ -1,9 +1,14 @@
-var testWorld = {
+/*var testWorld = {
 	count: 0,
 	init: function() {
 
 		this.world = new WorldHandler2(scene, game.textureStitcher);
-		setTimeout(()=>this.world.setBlock(0,0,0,2), 1000);
+		setTimeout(()=>{this.world.setBlock(1,1,1,4);this.world.setBlock(1,3,1,2)}, 1000);
+		setTimeout(()=>this.world.setBlock(2,1,2,4), 1600);
+		//setTimeout(()=>this.world.setBlock(0,0,0,1), 1010);
+		setTimeout(()=>this.world.setBlock(-1,1,-1,2), 1500);
+		//setTimeout(()=>this.world.setBlock(0,2,0,3), 1400);
+		//setTimeout(()=>this.world.setBlock(1,3,1,2), 1600);
 
 		var texture = new THREE.Texture();
 		texture.magFilter = THREE.NearestFilter;
@@ -104,11 +109,13 @@ var testWorld = {
 		this.setBoth(geometry, geometry.faceVertexUvs[0][0], geometry.faceVertexUvs[0][1], 0, 0);
 		mesh.position.y = 3;
 		this.chunk.addMesh(mesh);
-		this.setBoth(geometry, geometry.faceVertexUvs[0][0], geometry.faceVertexUvs[0][1], 1, 0);
+		
+		this.setBoth(mesh.geometry, mesh.geometry.faceVertexUvs[0][0], geometry.faceVertexUvs[0][1], 1, 0);
 		mesh.position.y = 4;
 		this.chunk.addMesh(mesh);
+		setTimeout(() => {
 
-		geometry = new THREE.PlaneGeometry(1,1,1,1);
+		}, 1000);
 		//this.setUv([0.5,1,0,0,1,1]);
 		//var _y = 16/16, _h = 1/16, _w = 1/16; testWorld.setUv([0,_h+_y,0,_y,_w,_h+_y])
 		//geometry.faceVertexUvs[0][0][2].y = 0.5;
@@ -140,7 +147,7 @@ var testWorld = {
 			this.setTile(14,0);
 
 	}
-}
+}*/
 
 function placePlayer(x, y, z) {
 	x = x || -32;
@@ -150,4 +157,18 @@ function placePlayer(x, y, z) {
 	player.controls.player.position.set(x, y, z);
 	player.controls.player.rotation.y = -0.772;
 	player.controls.player.children[0].rotation.x = -0.523
+}
+
+function createBaseIntoScene() {
+	var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+
+	for ( var i = 0; i < geometry.faces.length; i += 2 ) {
+		var hex = Math.random() * 0xffffff;
+		geometry.faces[ i ].color.setHex( hex );
+		geometry.faces[ i + 1 ].color.setHex( hex );
+	}
+	var material = new THREE.MeshBasicMaterial( { vertexColors: THREE.FaceColors, overdraw: 0.5 } );
+	var cube = new THREE.Mesh( geometry, material );
+	cube.position.y = 0;
+	scene.add( cube );
 }
