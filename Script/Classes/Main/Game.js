@@ -85,7 +85,7 @@ Game.prototype = {
 		update();
 	},
 	setupWorld: function() {
-		this.world = new WorldHandler(this.gui.scene);
+		this.world = new WorldHandler(this.gui.scene, this.textureStitcher);
 		world = this.world;
 	},
 	setupPlayer: function() {
