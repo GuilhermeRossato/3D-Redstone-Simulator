@@ -4,6 +4,7 @@ function LoadingProgresser(parent, interface, onFinished) {
 	this.callback = onFinished;
 	this.progress = 0;
 	this.sync = Settings.performance.syncLoading.value;
+	this.delayed = Settings.performance.delayedLoading.value;
 	this.begin();
 }
 
@@ -15,7 +16,7 @@ LoadingProgresser.prototype = {
 		this.state = id;
 	},
 	processState: function(id) {
-		if (id ===0) {
+		if (id === 0) {
 			this.setText("Initializing TextureStitcher");
 			this.parent.setupTextureStitcher();
 			this.setState(1);
@@ -25,7 +26,7 @@ LoadingProgresser.prototype = {
 			if (this.lastStatus.percent >= 1) {
 				this.setState(2);
 			} else {
-				this.progress = 0.25*this.lastStatus.percent;
+				this.progress = interpolation.add(0, 0).add(9, 1).at(1 + this.lastStatus.percent);
 			}
 		} else if (id === 2) {
 			this.setText("Initializing Threejs");
@@ -44,22 +45,25 @@ LoadingProgresser.prototype = {
 			this.parent.setupWorld();
 			this.setState(6);
 		} else if (id === 6) {
+			this.lastStatus = this.parent.world.loadStep(this.lastTimeStamp);
+			this.setText(this.lastStatus.title + " > " + this.lastStatus.description);
+			if (this.lastStatus.percent >= 1) {
+				this.setState(7);
+			} else {
+				this.progress = interpolation.add(0, 0).add(9, 1).at(6 + this.lastStatus.percent);
+			}
+		} else if (id === 7) {
 			this.setText("Rendering World");
 			this.parent.render();
-			this.setState(7);
-		} else if (id === 7) {
+			this.setState(8);
+		} else if (id === 8) {
 			this.setText("Getting Ready");
 			this.interface.showRenderer();
-			this.setState(8);
+			this.setState(9);
 		}
 	},
 	setProgressByState: function(id) {
-		if (id === 0)
-			this.progress = 0;
-		else if (id != 1 && id < 8)
-			this.progress = interpolation.add(2, 0.25).add(7, 0.99).at(id);
-		else if (id === 8)
-			this.progress = 1;
+		this.progress = (id === 9) ? 1 : interpolation.add(0, 0).add(9, 1).at(id);
 	},
 	setText: function(text) {
 		this.labels[1].innerText = text;
@@ -78,16 +82,22 @@ LoadingProgresser.prototype = {
 		this.step();
 	},
 	step: function() {
+		let thisMS = performance.now();
 		this.processState(this.state);
 		this.setProgressByState(this.state);
-		this.labels[2].innerText = (this.progress*100|0).toString()+"%";
-		//var moment = performance.now();
+		this.labels[2].innerText = (this.progress * 100 | 0).toString() + "%";
 		if (this.progress < 1) {
-			if (this.sync)
-				this.step();
-			else {
-				//setTimeout(()=>this.step(),1000);
-				requestAnimationFrame(()=>this.step());
+			if (this.delayed) {
+				this.lastMS = thisMS;
+				setTimeout(()=>this.step(), 1000);
+			} else {
+				if (this.sync && this.lastMS !== thisMS) {
+					this.lastMS = thisMS;
+					this.step();
+				} else {
+					this.lastMS = thisMS;
+					requestAnimationFrame(()=>this.step());
+				}
 			}
 		} else
 			this.callback.call(this.parent);
