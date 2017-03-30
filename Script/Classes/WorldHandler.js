@@ -1,13 +1,13 @@
-function WorldHandler(scene) {
+function WorldHandler(scene, textureStitcher) {
 	this.loader = new WorldLoader(this);
 	this.saver = new WorldSaver(this);
+	this.textureStitcher = textureStitcher;
 	this.scene = scene;
 	this.blocks = [];
 	this.allFaces = [];
 	this.faces = [];
 	this.textures = {};
 	this.generateGeometries();
-	this.loadTexture();
 	this.textureLoader = new THREE.TextureLoader();
 	this.generate();
 }
@@ -29,10 +29,51 @@ WorldHandler.prototype = {
 			this.id = id;
 		}
 	},
+	loadPrepare: function() {
+		this.loadTexture();
+	},
+	loadStep: function(timeStamp) {
+		if (this.material) {
+			this.loadFinish();
+			return new LoadStatus("WorldHandler","Done",1);
+		} else if (this.texture) {
+			return new LoadStatus("WorldHandler","Creating Material",0.5);
+		} else {
+			this.loadTexture();
+			return new LoadStatus("WorldHandler", "Loading Texture", 0)
+		}
+	},
+	loadFinish: function() {
+		this.generate();
+	},
+	createMaterial: function(texture, image) {
+		texture.format = THREE.RGBAFormat;
+		texture.magFilter = THREE.NearestFilter;
+		texture.minFilter = THREE.LinearMipMapLinearFilter;
+		texture.image = image;
+		texture.needsUpdate = true;
+		this.material = new THREE.MeshLambertMaterial({
+			map: texture,
+			color: 0x555555
+		});
+	},
 	loadTexture: function() {
-		var texture = new THREE.Texture();
-		//var loader = new THREE.ImageLoader(this.textureLoader.manager);
-		//loader.load();
+		let texture = new THREE.Texture();
+		texture.magFilter = THREE.NearestFilter;
+		texture.minFilter = THREE.LinearFilter;
+		var loader = new THREE.ImageLoader(this.textureLoader.manager);
+		loader.setCrossOrigin(this.textureLoader.crossOrigin);
+		loader.setWithCredentials(this.textureLoader.withCredentials);
+		loader.setPath(this.textureLoader.path);
+		function onError(err) {
+			console.error("Error loading texture: ", err);
+		}
+		var url = game.textureStitcher.result;
+		if (url)
+			loader.load(url, (image)=>this.createMaterial(texture, image), undefined, onError);
+		else
+			this.material = null;
+		this.texture = texture;
 	},
 	generateGeometries: function() {
 		this.geometries = {
@@ -40,9 +81,6 @@ WorldHandler.prototype = {
 			half: new THREE.PlaneGeometry(1,0.5,1,1),
 			quarter: new THREE.PlaneGeometry(1,0.25,1,1)
 		}
-		this.geometries.half.faceVertexUvs[0][1][2].set(1, 0.5);
-		this.geometries.half.faceVertexUvs[0][0][2].set(1, 0.5);
-		this.geometries.half.faceVertexUvs[0][0][0].set(0, 0.5);
 	},
 	getBlockList: function() {
 		var allBlocks = [];
@@ -63,7 +101,7 @@ WorldHandler.prototype = {
 	["x", 0.5, "y", 0.5], // Right (2)
 	["x", -0.5, "y", -0.5], // Left (3)
 	["y", 0.5, "x", -0.5], // Top (4)
-	["y", -0.5, "x", 0.5]// Down (5)
+	["y", -0.5, "x", 0.5]// Bottom (5)
 	],
 	facesDisplacement: [[0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0]],
 	generate: function() {
@@ -76,13 +114,13 @@ WorldHandler.prototype = {
 			);
 		}
 		);
-		world.setBlock(0,0,0,0);
-		world.setBlock(0,1,0,0);
-		world.setBlock(1,0,0,0);
-		world.setBlock(-1,0,0,0);
-		world.setBlock(0,0,1,0);
-		world.setBlock(0,0,-1,0);
-		world.setBlock(0,0,0,0);
+		world.setBlock(0, 0, 0, 0);
+		world.setBlock(0, 1, 0, 0);
+		world.setBlock(1, 0, 0, 0);
+		world.setBlock(-1, 0, 0, 0);
+		world.setBlock(0, 0, 1, 0);
+		world.setBlock(0, 0, -1, 0);
+		world.setBlock(0, 0, 0, 0);
 		world.setBlock(3, 2, 6, 6);
 		world.setBlock(3, 2, 7, 4);
 		world.setBlock(4, 2, 6, 4);
@@ -121,6 +159,28 @@ WorldHandler.prototype = {
 	showTouchingFaces: function(x, y, z, ownFaces) {
 		this.setTouchingFacesVisibility(x, y, z, ownFaces, true);
 	},
+	positionFaces: function(x, y, z, faces, data) {
+		//if (data.type === undefined) {
+		this.sidesDisplacement.forEach((cmd,i)=>{
+			faces[i].position.set(x, y, z);
+			faces[i].position[cmd[0]] += cmd[1];
+			faces[i].rotation[cmd[2]] = cmd[3] * Math.PI;
+		}
+		);
+		//}
+	},
+	generateFaces: function(data) {
+		//if (data.type === undefined) {
+		let geometries = [];
+		repeat(6, ()=>geometries.push(new THREE.PlaneGeometry(1,1,1,1)));
+		if (typeof data.texture === "string") {
+			geometries.forEach(geo=>this.textureStitcher.putTextureInFace(geo, data.texture, 0));
+		} else {
+			["front", "back", "right", "left", "top", "bottom"].forEach((side,i)=>this.textureStitcher.putTextureInFace(geometries[i], data.texture[side], 0));
+		}
+		return geometries;
+		//}
+	},
 	setBlock: function(x, y, z, id) {
 		if (!this.lastBlockDetails.match(x, y, z, id)) {
 			this.lastBlockDetails.set(x, y, z, id);
@@ -131,24 +191,24 @@ WorldHandler.prototype = {
 				return
 			let bd = blockData[id];
 			if (bd) {
-				let blockInfo = {
-					blockData: bd,
-					id: id,
-					x: x,
-					y: y,
-					z: z
-				}
-				let faces = this.generateFaces(x, y, z, id, bd);
-				faces.forEach(face=>face.blockInfo = blockInfo);
-				if (!bd.transparent) {
-					this.hideTouchingFaces(x, y, z, faces);
+				let facesGeometries = this.generateFaces(bd);
+				if (facesGeometries) {
+					let faceMeshes = facesGeometries.map(geometry=>new THREE.Mesh(geometry,this.material));
+					this.positionFaces(x, y, z, faceMeshes, bd);
+					if (bd.type === blockTypes.glass || bd.type === blockTypes.sapling || bd.type === blockTypes.topSlab || bd.type === blockTypes.bottomSlab) {
+						faceMeshes.forEach(mesh=>mesh.transparent = true);
+					} else {
+						this.hideTouchingFaces(x, y, z, faceMeshes);
+					}
+					this.putFacesIntoWorld(x, y, z, faceMeshes);
+					let blockInfo = {
+						id: id,
+						faces: faceMeshes
+					};
+					this.putBlockInfo(x, y, z, blockInfo);
 				} else {
-					faces.forEach(face=>face.transparent = true);
-					blockInfo.transparent = true;
+					logger.warn("No face setup for block id " + id.toString());
 				}
-				this.putFacesIntoWorld(x, y, z, faces);
-				blockInfo.faces = faces;
-				this.putBlockInfo(x, y, z, blockInfo);
 			} else {
 				logger.warn("No render info for block id " + id.toString());
 			}
@@ -171,115 +231,31 @@ WorldHandler.prototype = {
 		if (this.faces[y] && this.faces[y][x] && this.faces[y][x][z])
 			return this.faces[y][x][z][side];
 	},
-	generateFaces: function(x, y, z, id, data) {
-		if (data.type === 6 || data.type === 7) {
-			let faces = this.generateFaces(x, y, z, id, {
-				type: 0,
-				texture: data.texture
-			});
-			faces.forEach((obj,i)=>{
-				if (i < 4) {
-					obj.geometry = this.geometries.half;
-					obj.position.y += (data.type === 7) ? 0.25 : -0.25;
-				} else if (i === 4 && data.type === 6) {
-					obj.position.y -= 0.5;
-				} else if (i === 5 && data.type === 7) {
-					obj.position.y += 0.5;
-				}
-			}
-			);
-			return faces;
-		} else if (data.type === 1) {
-			if (typeof data.texture === "string") {
-				/* Normal saplings with one texture */
-				let texture = this.getSimpleTexture(data.texture, true);
-				texture.side = THREE.DoubleSide;
-				let meshes = [new THREE.Mesh(this.geometries.plane,texture), new THREE.Mesh(this.geometries.plane,texture)];
-				meshes[0].rotation.y = Math.PI / 4;
-				meshes[1].rotation.y = -Math.PI / 4;
-				meshes.forEach(mesh=>{
-					mesh.position.add({
-						x: x,
-						y: y,
-						z: z
-					});
-					mesh.updateMatrix();
-				}
-				);
-				return meshes;
-			} else {
-				logger.warn("Unhandled creation of special block of Type 1 (Sapling Style), block id " + id.toString);
-			}
-		} else {
-			/* Normal solid cube (type 0) */
-			let meshes = [];
-			if (typeof data.texture === "string") {
-				let texture = this.getSimpleTexture(data.texture);
-				for (let i = 0; i < 6; i++)
-					meshes.push(new THREE.Mesh(this.geometries.plane,texture));
-			} else {
-				let textures = [this.getSimpleTexture(data.texture.front), this.getSimpleTexture(data.texture.back), this.getSimpleTexture(data.texture.left), this.getSimpleTexture(data.texture.right), this.getSimpleTexture(data.texture.top), this.getSimpleTexture(data.texture.bottom)];
-				for (let i = 0; i < 6; i++)
-					meshes.push(new THREE.Mesh(this.geometries.plane,textures[i]));
-			}
-			this.sidesDisplacement.map((info,i)=>{
-				let mesh = meshes[i];
-				mesh.position[info[0]] = info[1];
-				mesh.rotation[info[2]] = info[3] * Math.PI;
-				return mesh;
-			}
-			);
-
-			meshes.forEach(mesh=>{
-				mesh.position.add({
-					x: x,
-					y: y,
-					z: z
-				});
-				mesh.updateMatrix();
-			}
-			);
-			return meshes;
-		}
-	},
-	getSimpleTexture: function(filename, transparent) {
-		if (!this.textures[filename]) {
-			let texture = this.textureLoader.load("Images/Textures/" + filename);
-			texture.magFilter = THREE.NearestFilter;
-			texture.minFilter = THREE.LinearMipMapLinearFilter;
-			//texture.anisotropy = 0; // Proven to be unnecessary at the time
-			let material = new THREE.MeshLambertMaterial({
-				map: texture,
-				transparent: transparent ? true : false,
-				color: 0x555555
-			});
-			this.textures[filename] = material;
-		}
-		return this.textures[filename];
-	},
 	removeBlock: function(x, y, z) {
 		let blockInfo = this.getBlockInfo(x, y, z);
 		if (blockInfo) {
 			this.showTouchingFaces(x, y, z);
-			let id = this.scene.children.indexOf(blockInfo.faces[0]);
-			let id2 = this.allFaces.indexOf(blockInfo.faces[0]);
-			if (id !== -1) {
+			let sceneIndex = this.scene.children.indexOf(blockInfo.faces[0]);
+			let facesIndex = this.allFaces.indexOf(blockInfo.faces[0]);
+			if (sceneIndex !== -1) {
 				let splices = 6;
+				/*
 				let type = blockData[blockInfo.id].type;
 				if (type === 1)
 					splices = 2;
 				else if (type === 2)
 					splices = 1;
-
-				this.scene.children.splice(id, splices).forEach(spliced=>spliced.parent = null);
-				if (id2 !== -1)
-					this.allFaces.splice(id, splices);
-				this.blocks[y][x][z] = null;
-				this.faces[y][x][z] = null;
+				*/
+				this.scene.children.splice(sceneIndex, splices).forEach(spliced=>spliced.parent = null);
+				if (facesIndex !== -1)
+					this.allFaces.splice(facesIndex, splices);
+				blockInfo.faces = undefined;
+				this.blocks[y][x][z] = undefined;
+				this.faces[y][x][z] = undefined;
 			} else {
-				logger.warn("Unable to remove block because it was not found in scene");
+				blockInfo.faces = undefined;
+				logger.warn("Unable to remove block because it was not found in the world");
 			}
-			blockInfo.faces = null;
 		}
 	},
 	getBlockInfo: function(x, y, z) {
