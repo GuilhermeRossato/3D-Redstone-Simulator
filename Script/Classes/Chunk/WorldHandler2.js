@@ -1,7 +1,6 @@
 function WorldHandler2(scene, textureStitcher) {
 	this.scene = scene;
 	this.textureStitcher = textureStitcher;
-	this.textureSize = textureStitcher.tilesHorizontally;
 	this.loadTexture();
 	this.fullMesh = new THREE.Mesh(new THREE.PlaneGeometry(1,1,1,1));
 	this.halfMesh = new THREE.Mesh(new THREE.PlaneGeometry(1,0.5,1,1));
@@ -44,9 +43,9 @@ WorldHandler2.prototype = {
 		this.texture = texture;
 	},
 	getValidChunk: function(x, y, z) {
-		x = x / 16 | 0;
-		y = y / 16 | 0;
-		z = z / 16 | 0;
+		x = x < 0 ? -(1-x / 8 | 0) : (x / 8 | 0);
+		y = y < 0 ? -(1-y / 8 | 0) : (y / 8 | 0);
+		z = z < 0 ? -(1-z / 8 | 0) : (z / 8 | 0);
 		if (!this.chunks[y])
 			this.chunks[y] = [];
 		if (!this.chunks[y][x])
@@ -59,7 +58,7 @@ WorldHandler2.prototype = {
 		mesh.position.set(x, y, z);
 		mesh.position[sideData[0]] += sideData[1];
 		mesh.rotation.set(0, 0, 0);
-		mesh.rotation[sideData[2]] = sideData[3]*Math.PI;
+		mesh.rotation[sideData[2]] = sideData[3] * Math.PI;
 	},
 	setFaceTexture: function(mesh, vec, type) {
 		/* Remember: to draw things like slabs and crucibles, face texture must be set differently! */
@@ -82,7 +81,7 @@ WorldHandler2.prototype = {
 			faceVertex1[0].y = 1 - (y + 1) / size;
 			// (size+2-y)/size;
 			faceVertex1[1].x = (1 + x) / size;
-			faceVertex1[1].y = (15 - y) / size;
+			faceVertex1[1].y = ((size-1) - y) / size;
 			faceVertex1[2].x = 1 / size + x / size;
 			faceVertex1[2].y = 1 / size + (1 - (y + 1) / size);
 		}
@@ -102,15 +101,17 @@ WorldHandler2.prototype = {
 					this.positionFace(this.fullMesh, sideData, x, y, z);
 					this.setFaceTexture(this.fullMesh, texturePosition, data.type);
 					chunk.addMesh(this.fullMesh);
-				});
+				}
+				);
 
 			} else if (textureType === "object") {
-				let texturePositions = ["front", "back", "right", "left", "top", "bottom"].map((textureName)=>this.textureStitcher.getTexturePosition(textureName));
+				let texturePositions = ["front", "back", "right", "left", "top", "bottom"].map((textureName)=>this.textureStitcher.getTexturePosition(data.texture[textureName]));
 				this.sidesDisplacement.forEach((sideData,i)=>{
 					this.positionFace(this.fullMesh, sideData, x, y, z);
 					this.setFaceTexture(this.fullMesh, texturePositions[i], data.type);
 					chunk.addMesh(this.fullMesh);
-				});
+				}
+				);
 			}
 		}
 	},
