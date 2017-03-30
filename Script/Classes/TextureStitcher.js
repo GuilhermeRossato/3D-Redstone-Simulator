@@ -9,6 +9,30 @@ function TextureStitcher(batchSize) {
 
 TextureStitcher.prototype = {
 	constructor: TextureStitcher,
+	putTextureInFace: function(geometry, texture, ao) {
+		//var _x = (x)/16, _y = 1-((y+1)/16), _h = 1/16, _w = 1/16;
+		//this.setUv0([_x,_h+_y,_x,_y,_w+_x,_h+_y])
+		let vec = this.getTexturePosition(texture, ao);
+		let faceVertex0 = geometry.faceVertexUvs[0][0]
+		  , faceVertex1 = geometry.faceVertexUvs[0][1]
+		  , x = vec.x
+		  , y = vec.y
+		  , size = this.tilesHorizontally;
+		faceVertex0[0].x = x / size;
+		faceVertex0[0].y = 1 / size + (1 - ((y + 1) / size));
+		// (size+2-y)/size;
+		faceVertex0[1].x = x / size;
+		faceVertex0[1].y = 1 - ((y + 1) / size);
+		faceVertex0[2].x = (1 + x) / size;
+		faceVertex0[2].y = 1 / size + (1 - (y + 1) / size);
+		faceVertex1[0].x = x / size;
+		faceVertex1[0].y = 1 - (y + 1) / size;
+		// (size+2-y)/size;
+		faceVertex1[1].x = (1 + x) / size;
+		faceVertex1[1].y = ((size-1) - y) / size;
+		faceVertex1[2].x = 1 / size + x / size;
+		faceVertex1[2].y = 1 / size + (1 - (y + 1) / size);
+	},
 	getTexturePosition: function(texture, ao) {
 		var textureId = (this.textureIds[texture] || 0) + (ao || 0);
 		return this.getXY(textureId);
@@ -127,6 +151,7 @@ TextureStitcher.prototype = {
 	},
 	loadStep: function(timeStamp) {
 		if (this.aoCount === 0 && this.stepState.waiting.count === 0 || this.stepState.timeStamp - timeStamp > 5000) {
+			
 			if (this.stepState.waiting.instances.length > 0) {
 				this.log.timeOut.push(...this.stepState.waiting.instances);
 			}
@@ -134,6 +159,7 @@ TextureStitcher.prototype = {
 			this.stepState.timeStamp = timeStamp;
 			this.stepState.waiting.instances = [];
 			this.stepState.waiting.count = Math.min(this.batchSize, this.textureList.length - this.loaded);
+			
 			repeat(this.stepState.waiting.count, i=>{
 				this.images[i].idNumber = this.loaded;
 				this.images[i].fileName = this.textureList[this.loaded];
@@ -170,10 +196,14 @@ TextureStitcher.prototype = {
 		}
 	},
 	loadFinish: function() {
-		this.loadFakeImageOverlay();
+		//this.loadFakeImageOverlay();
 		this.loaded = this.textureList.length;
 		//this.result = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-		this.result = this.canvas.toDataURL();
+		try {
+			this.result = this.canvas.toDataURL();
+		} catch (err) {
+			console.log("unable to do anything");
+		}
 		this.showCanvasResult();
 	},
 	forEachPropertyInObject: function(object, f) {
