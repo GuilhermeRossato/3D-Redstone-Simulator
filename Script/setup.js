@@ -7,6 +7,6 @@ var world = new WorldHandler(interface.scene);
 window.requestAnimationFrame(simpleUpdate);
 
 // Stimuly for debug:
-interface.showCrosshair();
+//interface.showCrosshair();
 //interface.showInventory();
 
