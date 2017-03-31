@@ -203,8 +203,10 @@ WorldHandler.prototype = {
 					this.putFacesIntoWorld(x, y, z, faceMeshes);
 					let blockInfo = {
 						id: id,
+						blockData: bd,
 						faces: faceMeshes
 					};
+					faceMeshes.forEach(face => face.blockInfo = blockInfo);
 					this.putBlockInfo(x, y, z, blockInfo);
 				} else {
 					logger.warn("No face setup for block id " + id.toString());
