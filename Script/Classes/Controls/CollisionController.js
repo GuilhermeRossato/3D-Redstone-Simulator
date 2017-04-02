@@ -54,6 +54,10 @@ CollisionController.prototype = {
 		if (this.boundingBox)
 			this.boundingBox.position.copy(position);
 		let velocity = new THREE.Vector3(direction.x * speed.x,direction.y * speed.y,direction.z * speed.z);
+		if (!Settings.player.collision.enabled.value) {
+			position.add(velocity);
+			return;
+		}
 		if (direction.x !== 0) {
 			let midSize = this.size.x / 2 * ((direction.x < 0) ? -1 : 1);
 			let collidingFace, origin;
