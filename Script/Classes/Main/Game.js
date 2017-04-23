@@ -4,63 +4,57 @@ let lastTimeStamp = 0;
 let leftOver = 0;
 let lastLag = false;
 
-
 function update() {
 	statClick = false;
     let thisTimeStamp = performance.now();
     let difference = thisTimeStamp - lastTimeStamp + leftOver;
     lastTimeStamp = thisTimeStamp;
     leftOver = 0;
-    if (difference > 750) {
-		gui.stats.delta = Math.min(255, difference);
-    	difference = 0;
+    if (difference < 750) {
+    	if (difference > 240) {
+    		if (lastLag) {
+				if (!game.paused)
+					game.halt();
+				difference = 0;
+    		} else {
+    			lastLag = true;
+    			difference = 160;
+    		}
+    	} else {
+    		lastLag = false;
+    	}
+    	gui.stats.delta = difference;
+		if (difference > 112)
+			gui.stats.lagStep();
+		else
+			gui.stats.normalStep();
+		while (difference >= 16) {
+			difference -= 16;
+			game.player.update();
+		}
+    } else {
     	if (!game.paused)
     		game.pause();
-	} else if (difference > 160) {
-		if (lastLag) {
-			gui.stats.delta = Math.max(255, difference);
-			difference = 0;
-			if (!game.paused)
-				game.halt();
-		} else {
-			lastLag = true;
-			difference = 160;
-			gui.stats.delta = 160;
-		}
-	} else {
-		gui.stats.delta = difference;
-	}
-	if (difference > 112)
-		gui.stats.lagStep();
-	else
-		gui.stats.normalStep();
-	while (difference >= 16) {
-		difference -= 16;
-		game.update();
-	}
-	leftOver = difference;
+    	game.player.update();
+    }
     game.render();
     window.requestAnimationFrame(update);
 }
 
-function Game() {
-	var persister = new SettingsPersister();
+function Game(input, settings) {
+	this.input = input;
 	this.gui = new GUI(this);
-
 	gui = this.gui;
-
-	setTimeout(1000,()=>this.generateDebugStimuly());
-	this.loading = new LoadingProgresser(this, this.gui, this.loadingFinished);
+	Settings.performance.ignoreExcessiveLag.attach(this, "ignoreLag");
+	LoadingProgresser.setDelayed(Settings.performance.delayedLoading.value);
+	LoadingProgresser.setGame(this).setGUI(this.gui).begin().then(()=>this.loadingFinished());
 }
 
 Game.prototype = {
 	constructor: Game,
-	update: function() {
-		this.player.update();
-		if (typeof testWorld === "object" && testWorld.update instanceof Function)
-			testWorld.update();
-	},
 	halt: function() {
+		if (this.ignoreLag)
+			return;
 		this.paused = true;
 		this.gui.setState("halted");
 	},
@@ -76,12 +70,12 @@ Game.prototype = {
 		//this.gui.showInventory();
 	},
 	loadingFinished: function() {
-		this.gui.loadingFinished();
+		this.generateDebugStimuly();
+		this.paused = true;
+		this.gui.setState("help");
 		this.startMainLoop();
 	},
 	startMainLoop: function() {
-		this.paused = true;
-		//this.gui.setState("help");
 		update();
 	},
 	setupWorld: function() {
@@ -98,8 +92,5 @@ Game.prototype = {
 	},
 	render: function() {
 		this.gui.renderer.render(this.gui.scene, this.camera);
-	},
-	setupTextureStitcher: function() {
-		this.textureStitcher = new TextureStitcher(Settings.performance.textureBatchSize.value);
 	}
 }
