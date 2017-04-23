@@ -1,7 +1,7 @@
 function SettingsPersister() {
 	Settings.cookie.lastingDays.attach(this, "cookiesLast");
 	Settings.cookie.enabled.attach(this, "cookiesEnabled");
-	this.loadSettingState();
+	this.loadSettingsState();
 	this.startSaverTimer();
 }
 
@@ -12,6 +12,7 @@ SettingsPersister.prototype = {
 			this.saveSettingsState();
 	},
 	startSaverTimer: function() {
+		//console.log("Settings persist timer activated");
 		this.timer = setInterval(this.update, 5000);
 	},
 	stopTimer: function() {
@@ -27,7 +28,7 @@ SettingsPersister.prototype = {
 			}
 		}
 	},
-	loadSettingState: function() {
+	loadSettingsState: function() {
 		if (typeof getCookie === "function") {
 			this._recursiveLoad("rs", Settings);
 		}
