@@ -147,7 +147,7 @@
 			this.setTile(14,0);
 
 	}
-}*/
+}
 
 function placePlayer(x, y, z) {
 	x = x || -32;
@@ -158,6 +158,9 @@ function placePlayer(x, y, z) {
 	player.controls.player.rotation.y = -0.772;
 	player.controls.player.children[0].rotation.x = -0.523
 }
+
+
+setTimeout(()=>testWorld.init(),1000);*/
 
 function createBaseIntoScene() {
 	var geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -172,3 +175,5 @@ function createBaseIntoScene() {
 	cube.position.y = 0;
 	scene.add( cube );
 }
+
+setTimeout(createBaseIntoScene,1000);

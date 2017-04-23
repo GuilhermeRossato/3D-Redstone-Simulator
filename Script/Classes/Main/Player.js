@@ -13,7 +13,7 @@ function Player(scene, camera, self) {
 		this.selection = new MinecraftSelection(scene);
 		this.selection.show();
 		/* Spacial Selection */
-		this.spacialSelection = new SpacialSelection(scene);
+		//this.spacialSelection = new SpacialSelection(scene);
 		/* Definition of global variables for production only */
 		controls = this.controls;
 		selection = this.selection;
