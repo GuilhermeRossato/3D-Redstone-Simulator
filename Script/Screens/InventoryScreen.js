@@ -1,0 +1,5 @@
+const InventoryScreen = {
+	init: function() {
+		
+	}
+}

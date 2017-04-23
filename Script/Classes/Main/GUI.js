@@ -3,54 +3,43 @@ var logger, inventory;
 
 function GUI(parent) {
 	this.parent = parent;
-	this.main = document.getElementById("main");
-	if (!(this.main instanceof HTMLDivElement)) {
-		console.log("Creating main div manually");
-		if (this.main !== undefined && this.main.parentElement && this.main.parentElement.removeChild)
-			this.main.parentElement.removeChild(this.main);
-		var outter = document.createElement("div");
-		outter.style.zIndex = 10;
-		outter.style.position = "absolute";
-		outter.style.width = "100%";
-		outter.style.height = "100%";
-		outter.style.display = "flex";
-		outter.style.alignItems = "center";
-		outter.style.justifyContent = "center";
-		outter.style.fontFamily = "Verdana";
-		outter.style.color = "#333333";
-		this.main = document.createElement("div");
-		this.main.style.zIndex = "11";
-		this.main.style.textAlign = "center";
-	}
-	this.secondary = document.getElementById("secondary");
-	this.stats = new StatsEdited(document.body);
-	this.stats.begin();
-	this.preventDefaultBehaviours();
-	this.logger = new Logger(this.secondary);
-	logger = this.logger;
 }
 
 GUI.prototype = {
 	constructor: GUI,
-	setupInventory: function() {
-		this.inventory = new Inventory(this.main);
-		this.inventory.onItemSwitch = (a, b) => { this.onItemSwitch.call(this, a, b) };
-		this.hotbar = new Hotbar(this.inventory,this.main);
-		this.hotbar.onItemChange = (a, b) => { this.onItemChange.call(this, a, b) };
-		Settings.keys.other.inventory.attachEvent("keydown",(event) => this.onInventoryKeyDown());
-		Settings.keys.other.debug.attachEvent("keydown",(event) => this.onDebugKeyDown());
-		inventory = this.inventory;
-		document.addEventListener("mouseup", (ev)=>this.onMouseUp(ev));
-		document.addEventListener("mousedown", (ev)=>this.onMouseDown(ev));
+	loadBegin: function() {
+		this.primary = document.getElementById("primary");
+		this.secondary = document.getElementById("secondary");
+		(!this.primary || !this.secondary) && console.warn("Primary and Secondary element should already exist!");
+		this.loadCount = 0;
 	},
-	loadingFinished: function() {
-		this.setState("help");
+	loadStep: function() {
+		if (this.loadCount === 0) {
+			this.loadCount = 1;
+			this.stats = new StatsEdited(document.body);
+			this.stats.begin();
+			this.preventDefaultBehaviours();
+			this.logger = new Logger(this.secondary);
+			this.primary = document.getElementById("primary");
+			this.secondary = document.getElementById("secondary");
+			logger = this.logger;
+			InstructionScreen.init();
+			MessageScreen.init();
+			return new LoadStatus("Graphical User Interface", "three.js Setup", 0.5);
+		} else if (this.loadCount === 1) {
+			this.loadCount = 2;
+			if (this.setupThreejs()) {
+				return new LoadStatus("Graphical User Interface", "Adding Events", 1);
+			} else {
+				return new LoadStatus("Graphical User Interface", "Error: Unable to initialize renderer", 0);
+			}
+		}
 	},
 	onMouseDown: function(event) {
 		if (this.state === "crosshair") {
 			this.parent.player.onMouseDown(event);
-		//} else if (this.state === "inventory") {
-			//this.inventory.onClick(event)  He handles himself
+		} else if (this.state === "inventory") {
+			this.inventory.onMouseDown(event);
 		} else if (this.state === "paused" || this.state === "halted" || this.state === "help") {
 			if (typeof statClick === "undefined" || !statClick) {
 				this.setState("crosshair");
@@ -118,26 +107,44 @@ GUI.prototype = {
 	},
 	setupThreejs: function() {
 		/* Render Setup */
-		this.renderer = new THREE.WebGLRenderer({
-			antialias: options.antialias,
-			alpha: false
-		});
+		try {
+			this.renderer = new THREE.WebGLRenderer({
+				antialias: options.antialias,
+				alpha: false
+			});
+		} catch (err) {
+			return false;
+		}
 		this.renderer.setClearColor(0x333333, 1);
 		this.renderer.domElement.style.position = "absolute";
 		this.renderer.domElement.style.display = "none";
 		document.body.appendChild(this.renderer.domElement);
+		this.canvas = this.renderer.domElement;
 		/* Camera Setup*/
 		this.camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
 		Settings.camera.fov.attach(this.camera, "fov");
 		this.parent.camera = this.camera;
 		addEventListener('resize', (ev)=>this.resize(ev), false);
-		/* Scene Setup */
-		this.scene = new THREE.Scene();
-		options.lights.placeInto(this.scene);
+		/* Scene and Light Setup */
+		let scene = new THREE.Scene();
+		function addLight(name, position, intensity) {
+			let light = new THREE.DirectionalLight(0xffffff, intensity);
+			light.position.copy(position);
+			light.name = name;
+			scene.add(light);
+		}
+		addLight("Top", { x: 0, y: 1, z: 0 }, 2.935);
+		addLight("Front", { x: 0, y: 0, z: -1 }, 2.382);
+		addLight("Back", { x: 0, y: 0, z: 1 }, 2.3548);
+		addLight("Left", { x: -1, y: 0, z: 0 }, 1.7764);
+		addLight("Right", { x: 1, y: 0, z: 0 }, 1.7742);
+		addLight("Bottom", { x: 0, y: -1, z: 0 }, 1.5161);
+		this.scene = scene;
 		/* Definition of global variables */
 		renderer = this.renderer;
 		scene = this.scene;
 		camera = this.camera;
+		return true;
 	},
 	showRenderer: function() {
 		this.renderer.domElement.style.display = "";
@@ -153,84 +160,70 @@ GUI.prototype = {
 		}
 	},
 	clearInterface: function() {
-		while (this.main.firstChild)
-			this.main.removeChild(this.main.firstChild);
+		while (this.primary.firstChild)
+			this.primary.removeChild(this.primary.firstChild);
 		if (this.secondary instanceof HTMLDivElement)
 			while (this.secondary.firstChild)
 				this.secondary.removeChild(this.secondary.firstChild);
-		document.body.style.cursor = "default";
+		this.canvas.style.cursor = "default";
 		if (this.fill)
 			this.fill.style.backgroundColor = "transparent";
 		if (typeof logger === "object")
 			this.secondary.appendChild(logger.domElement);
 	},
-	setFill: function(color) {
-		if (!this.fill) {
-			this.fill = document.createElement("div");
-			this.fill.style.position = "absolute";
-			this.fill.style.width = "100%";
-			this.fill.style.height = "100%";
-			this.fill.style.zIndex = "5";
-			let fillActive = true;
-			if (fillActive) {
-				document.body.style.backgroundColor = "#ffffff";
-				document.body.appendChild(this.fill);
-			}
+	createFill: function() {
+		this.fill = document.createElement("div");
+		this.fill.style.position = "absolute";
+		this.fill.style.width = "100%";
+		this.fill.style.height = "100%";
+		this.fill.style.zIndex = "5";
+		let fillActive = true;
+		if (fillActive) {
+			document.body.style.backgroundColor = "#ffffff";
+			document.body.appendChild(this.fill);
 		}
+	},
+	setFill: function(color) {
+		if (!this.fill)
+			this.createFill();
 		this.fill.style.backgroundColor = color
 	},
 	showPaused: function() {
 		this.clearInterface();
+		MessageScreen.setAttributes([{
+			innerText: "Click anywhere to resume",
+			style: "font-size:12px;"
+		}, {
+			innerText: "Game Paused",
+			style: "font-size:48px;"
+		}]);
+		MessageScreen.show();
 		this.setFill("rgba(0,0,0,0.3)");
-		let str = "Click anywhere to resume\nGame Paused\n";
-		str.split("\n").forEach((text,i)=>{
-			let span = document.createElement("span");
-			span.style.display = "block";
-			span.style.fontWeight = (i === 0) ? "bold" : "normal";
-			span.style.fontSize = (i === 1) ? "48px" : "16px";
-			span.style.marginBottom = (i === 1) ? "10px" : "0px";
-			span.style.textAlign = "center";
-			span.innerText = text;
-			this.main.appendChild(span);
-		}
-		);
-		document.body.style.cursor = "pointer";
+		this.fill.style.cursor = "pointer";
 	},
 	showHalted: function() {
 		this.clearInterface();
+		MessageScreen.setAttributes([{
+			innerText: "Click anywhere to resume",
+			style: "font-size:12px;"
+		}, {
+			innerText: "Game Halted",
+			style: "font-size:48px;"
+		}, {
+			innerText: "It seems that your computer can't keep up with",
+			style: "font-size:12px;background-color:red;"
+		}, {
+			innerText: "with the simulation due to performance problems.",
+			style: "font-size:12px;"
+		}]);
+		MessageScreen.show();
 		this.setFill("rgba(0,0,0,0.3)");
-		let str = "Click anywhere to resume\nGame Paused\n";
-		str += "Involuntary (and frequent) pausing indicates\nthat your computer can't keep up with the\n simulation due to performance problems.\nYou can disable auto-pausing with Ctrl + M.\nAlternatively, decrease the amount of blocks in your simulation.\n";
-		str.split("\n").forEach((text,i)=>{
-			let span = document.createElement("span");
-			span.style.display = "block";
-			span.style.fontWeight = (i === 0) ? "bold" : "normal";
-			span.style.fontSize = (i === 1) ? "48px" : "16px";
-			span.style.marginBottom = (i === 1) ? "10px" : "0px";
-			span.style.textAlign = "center";
-			span.innerText = text;
-			this.main.appendChild(span);
-		}
-		);
-		document.body.style.cursor = "pointer";
+		this.fill.style.cursor = "pointer";
 	},
 	showHelp: function() {
 		this.clearInterface();
-		this.main.style.color = "#DDD";
-		this.setFill("rgba(0,0,0,0.4)");
-		let str = ("Click anywhere to start\nInstructions\n" + "[W, A, S, D] to move up, left, down, right\n" + "[Numeric Keys] to change selected block\n" + "[E, ESC, I] to open inventory\n" + "[Ctrl + B] to disable collision detection\n [Ctrl + M] to disable auto-pausing");
-		str.split("\n").forEach((text,i)=>{
-			let span = document.createElement("span");
-			span.style.display = "block";
-			span.style.fontWeight = (i === 0) ? "bold" : "normal";
-			span.style.fontSize = (i === 1) ? "48px" : "16px";
-			span.style.marginBottom = (i === 1) ? "10px" : "0px";
-			span.style.textAlign = (i < 2) ? "center" : "left";
-			span.innerText = text;
-			this.main.appendChild(span);
-		}
-		);
-		document.body.style.cursor = "pointer";
+		InstructionScreen.show();
+		this.canvas.style.cursor = "pointer";
 	},
 	showCrosshair: function(ignoreRequest) {
 		if (this.inventory.isShown()) {
@@ -252,7 +245,6 @@ GUI.prototype = {
 		this.setFill("rgba(0,0,0,0.5)");
 	},
 	preventDefaultBehaviours: function() {
-		document.body.style.userSelect = "none";
 		document.body.onselectionstart = document.body.ondragstart = function(e) {
 			e.preventDefault();
 			return false;
