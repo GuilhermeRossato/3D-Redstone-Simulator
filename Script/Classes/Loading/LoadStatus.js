@@ -1,7 +1,7 @@
-function LoadStatus(title, description, percent, debug) {
+function LoadStatus(title, description, progress, debug) {
 	this.title = title;
 	this.description = description;
-	this.percent = percent;
+	this.progress = progress;
 	this.debug = debug;
 }
 

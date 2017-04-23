@@ -123,7 +123,7 @@ TextureStitcher.prototype = {
 	},
 	onLoadImage: function(ev) {
 		var fileName = ev.target.fileName;
-		var index = this.stepState.waiting.instances.indexOf(fileName)
+		var index = this.stepState.waiting.instances.indexOf(fileName);
 		if (index !== -1) {
 			if (ev.target.width === 0 || ev.target.height === 0)
 				this.log.unknownFormat.push(ev.target.fileName);
