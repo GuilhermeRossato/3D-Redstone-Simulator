@@ -37,7 +37,7 @@ function Setting(defaultValue, processFunc) {
 		}
 	}
 	this.dispose = function() {
-		listeners = [];
+		listeners = undefined;
 	}
 }
 

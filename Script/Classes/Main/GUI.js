@@ -2,6 +2,10 @@ var camera, scene, renderer;
 var logger, inventory;
 
 function GUI(parent) {
+	this.performancer = new Performancer(Settings.performance.compactPerformancer.value, 20);
+	this.performancer.onCompactChange = function(value) {
+		Settings.performance.compactPerformancer.set(value)
+	}
 	this.parent = parent;
 }
 
@@ -16,8 +20,6 @@ GUI.prototype = {
 	loadStep: function() {
 		if (this.loadCount === 0) {
 			this.loadCount = 1;
-			this.stats = new StatsEdited(document.body);
-			this.stats.begin();
 			this.preventDefaultBehaviours();
 			this.logger = new Logger(this.secondary);
 			this.primary = document.getElementById("primary");
@@ -25,6 +27,7 @@ GUI.prototype = {
 			logger = this.logger;
 			InstructionScreen.init();
 			MessageScreen.init();
+			this.performancer.attach(document.body);
 			return new LoadStatus("Graphical User Interface", "three.js Setup", 0.5);
 		} else if (this.loadCount === 1) {
 			this.loadCount = 2;
@@ -36,6 +39,7 @@ GUI.prototype = {
 		}
 	},
 	onMouseDown: function(event) {
+		/*
 		if (this.state === "crosshair") {
 			this.parent.player.onMouseDown(event);
 		} else if (this.state === "inventory") {
@@ -44,12 +48,10 @@ GUI.prototype = {
 			if (typeof statClick === "undefined" || !statClick) {
 				this.setState("crosshair");
 			}
-		}
+		}*/
 	},
 	onMouseUp: function(event) {
-		if (this.state === "crosshair") {
-			this.parent.player.onMouseUp(event);
-		}
+
 	},
 	onItemSwitch: function(before, after) {
 		let data;
@@ -88,9 +90,15 @@ GUI.prototype = {
 		else if (state === "paused")
 			this.showPaused();
 		else if (state === "help")
-			this.showHelp();
+			this.showInstructions();
 		else
 			console.warn("Invalid State!");
+	},
+	onKeyDown: function() {
+
+	},
+	onKeyUp: function() {
+
 	},
 	onInventoryKeyDown: function(down) {
 		if (this.state === "inventory") {
@@ -126,7 +134,7 @@ GUI.prototype = {
 		this.parent.camera = this.camera;
 		addEventListener('resize', (ev)=>this.resize(ev), false);
 		/* Scene and Light Setup */
-		let scene = new THREE.Scene();
+		scene = new THREE.Scene();
 		function addLight(name, position, intensity) {
 			let light = new THREE.DirectionalLight(0xffffff, intensity);
 			light.position.copy(position);
@@ -179,7 +187,7 @@ GUI.prototype = {
 		this.fill.style.zIndex = "5";
 		let fillActive = true;
 		if (fillActive) {
-			document.body.style.backgroundColor = "#ffffff";
+			//document.body.style.backgroundColor = "#ffffff";
 			document.body.appendChild(this.fill);
 		}
 	},
@@ -203,7 +211,7 @@ GUI.prototype = {
 	},
 	showHalted: function() {
 		this.clearInterface();
-		MessageScreen.setAttributes([{
+		MessageScreen.setAttributes({
 			innerText: "Click anywhere to resume",
 			style: "font-size:12px;"
 		}, {
@@ -215,15 +223,16 @@ GUI.prototype = {
 		}, {
 			innerText: "with the simulation due to performance problems.",
 			style: "font-size:12px;"
-		}]);
+		});
 		MessageScreen.show();
 		this.setFill("rgba(0,0,0,0.3)");
 		this.fill.style.cursor = "pointer";
 	},
-	showHelp: function() {
+	showInstructions: function() {
 		this.clearInterface();
+		this.setFill("rgba(0,0,0,0.1)");
 		InstructionScreen.show();
-		this.canvas.style.cursor = "pointer";
+		document.body.style.cursor = "pointer";
 	},
 	showCrosshair: function(ignoreRequest) {
 		if (this.inventory.isShown()) {

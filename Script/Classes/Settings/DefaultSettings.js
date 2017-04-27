@@ -7,6 +7,7 @@ var Settings = {
 		lastingDays: new IntegerSetting(1,365,30)
 	},
 	performance: {
+		compactPerformancer: new BooleanSetting(true),
 		delayedLoading: new BooleanSetting(false),
 		ignoreExcessiveLag: new BooleanSetting(false)
 	},
