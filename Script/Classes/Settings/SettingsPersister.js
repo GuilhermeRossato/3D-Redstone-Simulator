@@ -1,8 +1,7 @@
 function SettingsPersister() {
 	Settings.cookie.lastingDays.attach(this, "cookiesLast");
 	Settings.cookie.enabled.attach(this, "cookiesEnabled");
-	this.loadSettingsState();
-	this.startSaverTimer();
+	this.parseSettings();
 }
 
 SettingsPersister.prototype = {
@@ -11,16 +10,6 @@ SettingsPersister.prototype = {
 		if (this.cookiesEnabled)
 			this.saveSettingsState();
 	},
-	startSaverTimer: function() {
-		//console.log("Settings persist timer activated");
-		this.timer = setInterval(this.update, 5000);
-	},
-	stopTimer: function() {
-		if (this.timer !== undefined) {
-			clearInterval(this.timer);
-			this.timer = undefined;
-		}
-	},
 	forEachPropertyInObject: function(object, f) {
 		for (var property in object) {
 			if (object.hasOwnProperty(property)) {
@@ -28,18 +17,15 @@ SettingsPersister.prototype = {
 			}
 		}
 	},
-	loadSettingsState: function() {
+	parseSettings: function() {
 		if (typeof getCookie === "function") {
-			this._recursiveLoad("rs", Settings);
+			this._recursiveParse("rs", Settings);
 		}
 	},
 	saveSettingsState: function() {
 		if (typeof setCookie === "function") {
 			this._recursiveSave("rs", Settings);
 		}
-	},
-	_recursiveParse: function(last, object) {
-		object.parent = last;
 	},
 	_loadBooleanSetting: function(cookieName, setting) {
 		var cookieData = getCookie(cookieName)
@@ -72,22 +58,22 @@ SettingsPersister.prototype = {
 				setting.set(cookieData[0], cookieData[1], cookieData[2]);
 		}
 	},
-	_recursiveLoad: function(past, object) {
-		if (object instanceof BooleanSetting)
+	_recursiveParse: function(past, object) {
+		if (object instanceof BooleanSetting) {
 			this._loadBooleanSetting(past, object)
-		else if (object instanceof FloatSetting)
+		} else if (object instanceof FloatSetting) {
 			this._loadFloatSetting(past, object);
-		else if (object instanceof IntegerSetting)
+		} else if (object instanceof IntegerSetting) {
 			this._loadIntegerSetting(past, object);
-		else if (object instanceof VectorSetting)
+		} else if (object instanceof VectorSetting) {
 			this._loadVectorSetting(past, object);
-		else if (object instanceof Array)
+		} else if (object instanceof Array)
 			object.forEach((subObject,i)=>{
-				this._recursiveLoad(past + i, subObject);
+				this._recursiveParse(past + i, subObject);
 			});
 		else if (typeof object === "object")
 			this.forEachPropertyInObject(object, (property,subObject)=>{
-				this._recursiveLoad(past + "." + property, subObject);
+				this._recursiveParse(past + "." + property, subObject);
 			});
 	},
 	_saveBooleanSetting: function(cookieName, setting) {
