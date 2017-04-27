@@ -163,6 +163,8 @@ function placePlayer(x, y, z) {
 setTimeout(()=>testWorld.init(),1000);*/
 
 function createBaseIntoScene() {
+	if (!scene)
+		return
 	var geometry = new THREE.BoxGeometry( 1, 1, 1 );
 
 	for ( var i = 0; i < geometry.faces.length; i += 2 ) {
