@@ -14,7 +14,7 @@ const MessageScreen = {
 		this.primary = document.getElementById("primary");
 		if (!this.primary)
 			throw "Missing Error: Base element not found (id='primary')";
-		this.spans = [];
+		this.labels = [];
 		this.shown = false;
 	},
 	isShown: function() {
@@ -22,11 +22,11 @@ const MessageScreen = {
 	},
 	show: function() {
 		this.shown = true;
-		this.spans.forEach(span => this.primary.appendChild(span));
+		this.labels.forEach(span => this.primary.appendChild(span));
 	},
 	hide: function() {
 		this.shown = false;
-		this.spans.forEach(span => this.primary.removeChild(span));
+		this.labels.forEach(span => this.primary.removeChild(span));
 	},
 	setMinimumLabelCount: function(size) {
 		if (this.labels.length < size) {
@@ -36,7 +36,7 @@ const MessageScreen = {
 		}
 	},
 	setAttributes: function(...formats) {
-		setMinimumLabelCount(formats.length);
+		this.setMinimumLabelCount(formats.length);
 		formats.forEach((format,i)=>this.setLabelData(this.labels[i], format));
 	},
 	setText: function(...texts) {
