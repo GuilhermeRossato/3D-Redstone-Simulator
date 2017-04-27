@@ -80,7 +80,7 @@ LoadingProgresser = (function() {
 	function processState(id) {
 		if (id === 0) {
 			setText("Initializing Graphical User Interface");
-			gui.loadBegin && gui.loadBegin();
+			(gui.loadBegin && gui.loadBegin());
 			InstructionScreen.init();
 			InventoryScreen.init();
 			MenuScreen.init();
@@ -109,8 +109,6 @@ LoadingProgresser = (function() {
 		} else if (id === 5) {
 			gui.showRenderer();
 			game.render();
-			gui.primary.style.color = "#EEEEEE";
-			//document.body.setAttribute("style", "width:100%;height:100%;background-color:#999;margin:0px;padding:0px;overflow:hidden;user-select: none;")
 			setState(6);
 		}
 	}
