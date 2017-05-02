@@ -8,7 +8,7 @@
 *
 */
 
-function Performancer(compact = false, zIndex = 0) {
+function Performancer(compact, zIndex) {
 	/* Document Elements */
 	let wrapper = document.createElement("div");
 	let span = document.createElement("span");
@@ -32,6 +32,7 @@ function Performancer(compact = false, zIndex = 0) {
 		if (this.onCompactChange)
 			this.onCompactChange(compactDisplay);
 	}
+	wrapper.onclick();
 
 	let ctx = canvas.getContext("2d");
 	let index = 0;
