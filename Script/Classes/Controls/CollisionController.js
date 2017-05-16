@@ -75,14 +75,14 @@ CollisionController.prototype = {
 					this.collisionDisplay.x[i][1].show();
 				}
 				let face = world.getFace(origin.x | 0, origin.y | 0, origin.z | 0, ((direction.x < 0) ? 2 : 3));
-				if (face && isSolid(face.blockInfo.id, face.blockInfo.type)) {
+				if (face && isSolid(face.blockId)) {
 					if (!collidingFace)
 						collidingFace = face;
 					else if (direction.x > 0) {
-						if ((collidingFace.position.x < face.position.x)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.x < face.position.x)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					} else if (direction.x < 0) {
-						if ((collidingFace.position.x > face.position.x)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.x > face.position.x)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					}
 				}
@@ -92,7 +92,9 @@ CollisionController.prototype = {
 				let stop = false;
 				let facePos = collidingFace.position.x - midSize;
 				if ((position.x + velocity.x <= facePos && position.x >= facePos) || (position.x + velocity.x >= facePos && position.x <= facePos)) {
-					if (collidingFace.blockInfo.blockData.type === 6) {
+					velocity.x = 0;
+					position.x = facePos;
+					/*if (collidingFace.blockInfo.blockData.type === 6) {
 						let heightSlab = 0 - collidingFace.position.y - this.size.y / 2 + 0.25 + position.y;
 						if (heightSlab >= 0 && heightSlab <= 0.5) {
 							// Raise player
@@ -109,7 +111,7 @@ CollisionController.prototype = {
 							velocity.x = 0;
 							position.x = facePos;
 						}
-					}
+					}*/
 				}
 			}
 		} else if (this.collisionDisplay) {
@@ -135,14 +137,14 @@ CollisionController.prototype = {
 					this.collisionDisplay.z[i][1].show();
 				}
 				let face = world.getFace(origin.x | 0, origin.y | 0, origin.z | 0, ((direction.z < 0) ? 0 : 1));
-				if (face && isSolid(face.blockInfo.blockData)) {
+				if (face && isSolid(face.blockId)) {
 					if (!collidingFace)
 						collidingFace = face;
 					else if (direction.z > 0) {
-						if ((collidingFace.position.z < face.position.z)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.z < face.position.z)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					} else if (direction.z < 0) {
-						if ((collidingFace.position.z > face.position.z)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.z > face.position.z)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					}
 				}
@@ -152,7 +154,9 @@ CollisionController.prototype = {
 				let stop = false;
 				let facePos = collidingFace.position.z - midSize;
 				if ((position.z + velocity.z <= facePos && position.z >= facePos) || (position.z + velocity.z >= facePos && position.z <= facePos)) {
-					if (collidingFace.blockInfo.blockData.type === 6) {
+					velocity.z = 0;
+					position.z = facePos;
+					/*if (collidingFace.blockInfo.blockData.type === 6) {
 						let heightSlab = 0 - collidingFace.position.y - this.size.y / 2 + 0.25 + position.y;
 						if (heightSlab >= 0 && heightSlab <= 0.5) {
 							position.y += 0.5 - heightSlab;
@@ -168,7 +172,7 @@ CollisionController.prototype = {
 							velocity.z = 0;
 							position.z = facePos;
 						}
-					}
+					}*/
 				}
 			}
 		} else if (this.collisionDisplay) {
@@ -194,7 +198,7 @@ CollisionController.prototype = {
 					this.collisionDisplay.y[i][1].show();
 				}
 				let face = world.getFace(origin.x | 0, origin.y | 0, origin.z | 0, (direction.y < 0) ? 4 : 5);
-				if (face && isSolid(face.blockInfo.id, face.blockInfo.type)) {
+				if (face && isSolid(face.blockId)) {
 					if (!collidingFace || (direction.y > 0 && collidingFace && collidingFace.position.y > face.position.y) || (direction.y < 0 && collidingFace && collidingFace.position.y < face.position.y))
 						collidingFace = face;
 				}
