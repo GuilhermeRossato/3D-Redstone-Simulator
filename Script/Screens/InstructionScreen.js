@@ -18,7 +18,7 @@ const InstructionScreen = {
 		return span;
 	},
 	updateSpanText: function() {
-		let keys = [Settings.keys.movement.forward.value, Settings.keys.movement.left.value, Settings.keys.movement.back.value, Settings.keys.movement.right.value];
+		let keys = [Settings.keys.movement.forward.value, Settings.keys.movement.left.value, Settings.keys.movement.backward.value, Settings.keys.movement.right.value];
 		keys = keys.map(key => (key.substr(0,3) === "Key")?key.substr(3):key);
 		this.spans[2].innerText = `[${keys[0]}, ${keys[1]}, ${keys[2]}, ${keys[3]}] to move forward, left, back, right`;
 		keys = Settings.keys.other.inventory.value;

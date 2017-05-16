@@ -28,7 +28,7 @@ var Settings = {
 		movement: {
 			forward: new KeySetting("KeyW"),
 			right: new KeySetting("KeyD"),
-			back: new KeySetting("KeyS"),
+			backward: new KeySetting("KeyS"),
 			left: new KeySetting("KeyA"),
 			up: new KeySetting("Space"),
 			down: new KeySetting("ShiftLeft")
@@ -57,7 +57,7 @@ var Settings = {
 			yaw: new FloatSetting(0,0,0.7)
 		},
 		collision: {
-			enabled: new BooleanSetting(false),
+			enabled: new BooleanSetting(true),
 			size: new VectorSetting(0.75,1.625,0.75),
 			showBoundingBox: new BooleanSetting(false)
 		}
