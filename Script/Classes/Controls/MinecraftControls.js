@@ -1,4 +1,4 @@
-function MinecraftControls(parent, scene, camera) {
+function MinecraftControls(parent, scene, camera, input) {
 	this.onRelease = undefined;
 	this.onStart = undefined;
 	if (!(scene instanceof THREE.Scene && camera instanceof THREE.Camera))
@@ -8,9 +8,34 @@ function MinecraftControls(parent, scene, camera) {
 	this.generatePointerlock(scene);
 	this.loadPlayerState();
 	this.direction = new THREE.Vector3();
-	this.speed = new THREE.Vector3(options.player.speed.horizontal,options.player.speed.vertical,options.player.speed.horizontal);
+	this.speed = {};
+	if (Settings) {
+		Settings.player.speed.horizontal.attach(this.speed, "x");
+		Settings.player.speed.vertical.attach(this.speed, "y");
+		Settings.player.speed.horizontal.attach(this.speed, "z");
+		let collisionSize = {};
+		Settings.player.collision.size.x.attach(collisionSize, "x");
+		Settings.player.collision.size.y.attach(collisionSize, "y");
+		Settings.player.collision.size.z.attach(collisionSize, "z");
+		Settings.keys.movement.forward.attachEvent("down", ()=>this.moveForward = 1);
+		Settings.keys.movement.forward.attachEvent("up", ()=>this.moveForward = 0);
+		Settings.keys.movement.backward.attachEvent("down", ()=>this.moveBackward = 1);
+		Settings.keys.movement.backward.attachEvent("up", ()=>this.moveBackward = 0);
+		Settings.keys.movement.left.attachEvent("down", ()=>this.moveLeft = 1);
+		Settings.keys.movement.left.attachEvent("up", ()=>this.moveLeft = 0);
+		Settings.keys.movement.right.attachEvent("down", ()=>this.moveRight = 1);
+		Settings.keys.movement.right.attachEvent("up", ()=>this.moveRight = 0);
+		Settings.keys.movement.up.attachEvent("down", ()=>this.vertical = 1);
+		Settings.keys.movement.up.attachEvent("up", ()=>this.vertical = 0);
+		Settings.keys.movement.down.attachEvent("down", ()=>this.vertical = -1);
+		Settings.keys.movement.down.attachEvent("up", ()=>this.vertical = 0);
+		this.collision = new CollisionController(this, scene, collisionSize);
+	} else {
+		this.speed = {x:0.085, y:0.105, z:0.085};
+		let collisionSize = {x:0.75, y:1.625, z:0.75};
+		this.collision = new CollisionController(this, scene, collisionSize);
+	}
 	this.velocity = new THREE.Vector3();
-	this.collision = new CollisionController(this,scene,options.player.collisionSize);
 
 	this.moveForward = false;
 	this.moveLeft = false;
@@ -20,10 +45,9 @@ function MinecraftControls(parent, scene, camera) {
 	this.moveDown = false;
 	this.vertical = 0;
 
+
 	document.addEventListener('pointerlockchange', (event)=>this.onPointerlockChange(event), false)
 	document.addEventListener('pointerlockerror', (event)=>this.onPointerlockError(event), false);
-	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, 1, event.ctrlKey, event.shiftKey), false);
-	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, 0, event.ctrlKey, event.shiftKey), false);
 }
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
@@ -34,7 +58,14 @@ MinecraftControls.prototype = {
 		this.pitch = this.yaw.children[0];
 		this.yaw.name = "Camera Yaw";
 		this.pitch.name = "Camera Pitch";
-		this.pitch.position.add(options.camera.adjustment);
+
+		if (Settings && Settings.camera) {
+			Settings.camera.adjustment.x.attach(this.pitch.position, "x");
+			Settings.camera.adjustment.y.attach(this.pitch.position, "y");
+			Settings.camera.adjustment.z.attach(this.pitch.position, "z");
+		} else {
+			this.pitch.position.set(0,0.625,0);
+		}
 		scene.add(this.yaw);
 	},
 	onPointerlockChange: function() {
@@ -51,35 +82,6 @@ MinecraftControls.prototype = {
 	},
 	onPointerlockError: function() {
 		this.releaseMouse();
-	},
-	onKeyChange: function(code, down, ctrlKey, shiftKey) {
-		if (!ctrlKey)
-			switch (code) {
-			case options.keys.forward:
-				this.moveForward = down;
-				break;
-			case options.keys.left:
-				this.moveLeft = down;
-				break;
-			case options.keys.back:
-				this.moveBackward = down;
-				break;
-			case options.keys.right:
-				this.moveRight = down;
-				break;
-			case options.keys.up:
-				if (down)
-					this.vertical = 1;
-				else if (this.vertical === 1)
-					this.vertical = 0;
-				break;
-			case options.keys.down:
-				if (down)
-					this.vertical = -1;
-				else if (this.vertical === -1)
-					this.vertical = 0;
-				break;
-			}
 	},
 	update: function() {
 		this.setupDirection();
@@ -109,27 +111,33 @@ MinecraftControls.prototype = {
 		this.direction.applyQuaternion(this.yaw.quaternion);
 	},
 	loadPlayerState: function() {
-		if (typeof getCookie === "function") {
+		if (Settings) {
+			this.yaw.position.set(Settings.player.position.x.value, Settings.player.position.y.value, Settings.player.position.z.value)
+			this.pitch.rotation.x = Settings.player.rotation.pitch.value;
+			this.yaw.rotation.y = Settings.player.rotation.yaw.value;
+		} else if (typeof getCookie === "function") {
 			var x = getCookie("rs_posX")
 			  , y = getCookie("rs_posY")
 			  , z = getCookie("rs_posZ")
 			  , pitch = getCookie("rs_rotX")
 			  , yaw = getCookie("rs_rotY");
-			if (x&&y&&z&&x != "" && y != "" && z != "") {
+			if (x&&y&&z&&(!isNaN(parseFloat(x)))&&(!isNaN(parseFloat(y)))&&(!isNaN(parseFloat(z)))) {
 				this.yaw.position.set(parseFloat(x), parseFloat(y), parseFloat(z));
 			} else {
-				this.yaw.position.set(options.defaultPosition.x, options.defaultPosition.y, options.defaultPosition.z);
+				this.yaw.position.set(10,10,10);
 			}
-			if (pitch && yaw) {
-				this.pitch.rotation.set(parseFloat(pitch), 0, 0);
-				this.yaw.rotation.set(0, parseFloat(yaw), 0);
+			if (pitch && yaw && (!isNaN(parseFloat(pitch))) && (!isNaN(parseFloat(yaw)))) {
+				this.pitch.rotation.x = parseFloat(pitch);
+				this.yaw.rotation.y = parseFloat(yaw);
 			} else {
-				this.pitch.rotation.x = options.defaultRotation.pitch;
-				this.yaw.rotation.y = options.defaultRotation.yaw;
+				this.pitch.rotation.x = -0.7;
+				this.yaw.rotation.y = 0.7;
 			}
 		}
 	},
 	savePlayerState: function() {
+		if (Settings)
+			return;
 		if (typeof setCookie === "function") {
 			var d = options.cookiesLastingDays;
 			setCookie("rs_posX", this.yaw.position.x, d);

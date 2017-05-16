@@ -1,9 +1,9 @@
 var controls, selection;
 
-function Player(scene, camera, self) {
+function Player(scene, camera, self, input) {
 	if (self) {
 		/* Controls */
-		this.controls = new MinecraftControls(this, scene, camera);
+		this.controls = new MinecraftControls(this, scene, camera, input);
 		this.defineVirtualProperties();
 		this.controls.onPause = () => this.parent.showPaused();
 		this.controls.onEnter = () => this.onGrabMouse();
@@ -13,7 +13,7 @@ function Player(scene, camera, self) {
 		this.selection = new MinecraftSelection(scene);
 		this.selection.show();
 		/* Spacial Selection */
-		this.spacialSelection = new SpacialSelection(scene);
+		//this.spacialSelection = new SpacialSelection(scene);
 		/* Definition of global variables for production only */
 		controls = this.controls;
 		selection = this.selection;
@@ -48,27 +48,28 @@ Player.prototype = {
 			this.parent.showCrosshair();
 	},
 	onReleaseMouse: function() {
-		if (this.parent.stats && ((performance || Date).now() - this.parent.stats.getLastUpdate() > 160))
+		if (this.parent.stats && ((performance || Date).now() - this.parent.stats.getLastUpdate() > 160)) {
 			this.parent.showPaused();
-		else if (!this.parent.gamePaused) 
+		} else if (!this.parent.gamePaused) {
 			this.parent.showInventory();
+		}
 	},
 	onMouseDown: function(e) {
-		
 	},
 	onMouseUp: function(e) {
-		
 	},
 	lightUpdate: function() {
 		if (this.selection.visible) {
 			this.selection.visible = false;
 			this.controls.update();
 			this.selection.visible = true;
-		} else 
+		} else {
 			this.controls.update();
+		}
 	},
 	update: function() {
 		this.selection.hide();
+		/*
 		this.raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
 		var intersections = this.raycaster.intersectObjects(scene.children);
 		if (intersections[0] && intersections[0].object instanceof THREE.Mesh) {
@@ -77,9 +78,9 @@ Player.prototype = {
 				this.selection.position.copy(intersections[0].object.blockInfo);
 				this.selection.show();
 			}
-			//console.log(intersections[0].object.rotation);
 		}
 		this.selection.show();
+		*/
 		this.controls.update();
 	}
 }

@@ -1,12 +1,9 @@
-var menuClick = false;
-var interface = new GUI(document.body);
-var logger = new Logger(interface.secondary);
-options.init();
-var world = new WorldHandler(interface.scene);
+var input, persister;
 
-window.requestAnimationFrame(simpleUpdate);
+function onLoad() {
+	input = new InputListener();
+	persister = new SettingsPersister();
+	Application.init(input);
+}
 
-// Stimuly for debug:
-//interface.showCrosshair();
-//interface.showInventory();
-
+window.addEventListener("load", onLoad);

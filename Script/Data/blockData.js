@@ -6,9 +6,24 @@
 7 : Top Slab
 */
 
-function isSolid(bd) {
+function isSolid(id) {
+	bd = blockData[id];
 	return bd.type !== 1 && bd.type !== 2;
 }
+
+blockTypes = {
+	// Default is solid
+	"solid": undefined,
+	"sapling": 1,
+	"topSlab": 2,
+	"bottomSlab": 3,
+	"glass": 4,
+	"redstone": 5,
+	"wallRedstone": 6,
+	"transparent": 7
+}
+
+blockFade = ["side_base_down.png", "side_outer_left.png", "side_outer_right.png", "top_base_down.png", "top_base_left.png", "top_base_right.png", "top_base_up.png", "top_hole.png", "top_inner_bottom_left.png", "top_inner_bottom_right.png", "top_inner_upper_left.png", "top_inner_upper_right.png", "top_open_down.png", "top_open_left.png", "top_open_right.png", "top_open_up.png", "top_outer_bottom_left.png", "top_outer_bottom_right.png", "top_outer_upper_left.png", "top_outer_upper_right.png"];
 
 blockData = {
 	"1": {
@@ -37,6 +52,9 @@ blockData = {
 		texture: "sapling_oak.png",
 		type: 1,
 		transparent: true
+	},
+	"98": {
+		texture: "stonebrick.png"
 	},
 	"43": {
 		texture: {
@@ -73,9 +91,6 @@ blockData = {
 			bottom: "stone_slab_top.png"
 		},
 		transparent: true
-	},
-	"98": {
-		texture: "stonebrick.png"
 	}
 }
 

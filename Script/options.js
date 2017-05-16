@@ -1,56 +1,4 @@
 var options = {
-	camera: {
-		fov: 95,
-		adjustment: {
-			x: 0,
-			y: 0.625,
-			z: 0
-		}
-	},
-	keys: {
-		forward: "KeyW",
-		right: "KeyD",
-		back: "KeyS",
-		left: "KeyA",
-		up: "Space",
-		down: "ShiftLeft",
-		inventory: "KeyE",
-		debug: "KeyQ",
-		save: "KeyS",
-		load: "KeyO"
-	},
-	antialias: false,
-	player: {
-		showBoundingBox: false,
-		showCollisionDetection: {
-			x: false,
-			y: false,
-			z: false
-		},
-		ignoreCollision: false,
-		speed: {
-			horizontal: 0.085,
-			vertical: 0.105
-		},
-		collisionSize: {
-			x: 0.75,
-			y: 1.625,
-			z: 0.75
-		}
-	},
-	defaultPosition: {
-		x: 10,
-		y: 10,
-		z: 10
-	},
-	defaultRotation: {
-		pitch: -0.7,
-		yaw: 0.7
-	},
-	viewDistance: 100,
-	cookiesLastingDays: 40,
-	ignoreExcessiveLag: false,
-	selectionBoundOffset: 0.0025,
 	lights: {
 		selected: 0,
 		profiles: [{
@@ -72,8 +20,8 @@ var options = {
 		}, {
 			name: "Darker",
 			create: function(scene) {
-				let light1 = new THREE.DirectionalLight(0xffffff,4)
-				  , light2 = new THREE.DirectionalLight(0xffffff,3.2);
+				let light1 = new THREE.DirectionalLight(0xffffff, 4)
+				  , light2 = new THREE.DirectionalLight(0xffffff, 3.2);
 				light1.position.set(3, 4, 2);
 				light2.position.set(-4, -2, -3);
 				scene.add(light1);
@@ -110,18 +58,6 @@ var options = {
 				}
 				)
 			}
-		}
-	},
-	init: function() {
-		if (typeof getCookie === "function" && getCookie("rs_collision") === "1")
-			this.ignoreCollision = true;
-		if (typeof getCookie === "function" && getCookie("rs_excessiveLag") === "1")
-			this.ignoreExcessiveLag = true;
-	},
-	save: function() {
-		if (typeof setCookie === "function") {
-			setCookie("rs_collision", this.ignoreCollision ? "1" : "0");
-			setCookie("rs_excessiveLag", this.ignoreExcessiveLag ? "1" : "0");
 		}
 	}
 };

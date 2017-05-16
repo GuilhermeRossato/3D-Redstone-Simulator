@@ -4,30 +4,31 @@ function CollisionController(parent, scene, size) {
 	this.size = size;
 	this.enabled = true;
 	this.updateCollisionBoundingRect();
-	if (options.player.showBoundingBox)
+	if (Settings && Settings.player.collision.showBoundingBox.value) {
 		this.showBoundingBox();
-	let c_options = [options.player.showCollisionDetection.x, options.player.showCollisionDetection.y, options.player.showCollisionDetection.z];
-	if (c_options.some(m=>m)) {
-		this.collisionDisplay = { x: [], y: [], z: [] }
-		var colors = [];
-		colors.push(c_options[0]?0xDDDDDD:false, c_options[0]?0xDB7D3E:false, c_options[0]?0xB350BC:false, c_options[0]?0x6B8AC9:false, c_options[0]?0xB1A627:false, c_options[0]?0x41AE38:false);
-		colors.push(c_options[2]?0xD08499:false, c_options[2]?0x404040:false, c_options[2]?0x9AA1A1:false, c_options[2]?0x2E6E89:false, c_options[2]?0x7E3DB5:false, c_options[2]?0x2E388D:false);
-		colors.push(c_options[1]?0x4F321F:false, c_options[1]?0x35461B:false, c_options[1]?0x963430:false, c_options[1]?0x191616:false);
-		colors.forEach((color, i) => {
-			if (color !== false) {
-				let sh = new SpacialHighlight(scene, color, 0.1);
-				sh.hide();
-				let sp = new MinecraftSelection(scene,color);
-				sp.setSize(1.04, 1.04, 1.04);
-				sp.hide();
-				if (i < 6)
-					this.collisionDisplay.x.push([sh, sp]);
-				else if (i < 12)
-					this.collisionDisplay.z.push([sh, sp]);
-				else
-					this.collisionDisplay.y.push([sh, sp]);
-			}
-		});
+		let c_options = [true, false, false];
+		if (c_options.some(m=>m)) {
+			this.collisionDisplay = { x: [], y: [], z: [] }
+			var colors = [];
+			colors.push(c_options[0]?0xDDDDDD:false, c_options[0]?0xDB7D3E:false, c_options[0]?0xB350BC:false, c_options[0]?0x6B8AC9:false, c_options[0]?0xB1A627:false, c_options[0]?0x41AE38:false);
+			colors.push(c_options[2]?0xD08499:false, c_options[2]?0x404040:false, c_options[2]?0x9AA1A1:false, c_options[2]?0x2E6E89:false, c_options[2]?0x7E3DB5:false, c_options[2]?0x2E388D:false);
+			colors.push(c_options[1]?0x4F321F:false, c_options[1]?0x35461B:false, c_options[1]?0x963430:false, c_options[1]?0x191616:false);
+			colors.forEach((color, i) => {
+				if (color !== false) {
+					let sh = new SpacialHighlight(scene, color, 0.1);
+					sh.hide();
+					let sp = new MinecraftSelection(scene,color);
+					sp.setSize(1.04, 1.04, 1.04);
+					sp.hide();
+					if (i < 6)
+						this.collisionDisplay.x.push([sh, sp]);
+					else if (i < 12)
+						this.collisionDisplay.z.push([sh, sp]);
+					else
+						this.collisionDisplay.y.push([sh, sp]);
+				}
+			});
+		}
 	}
 }
 
@@ -54,6 +55,10 @@ CollisionController.prototype = {
 		if (this.boundingBox)
 			this.boundingBox.position.copy(position);
 		let velocity = new THREE.Vector3(direction.x * speed.x,direction.y * speed.y,direction.z * speed.z);
+		if (Settings && !Settings.player.collision.enabled.value) {
+			position.add(velocity);
+			return;
+		}
 		if (direction.x !== 0) {
 			let midSize = this.size.x / 2 * ((direction.x < 0) ? -1 : 1);
 			let collidingFace, origin;
@@ -70,14 +75,14 @@ CollisionController.prototype = {
 					this.collisionDisplay.x[i][1].show();
 				}
 				let face = world.getFace(origin.x | 0, origin.y | 0, origin.z | 0, ((direction.x < 0) ? 2 : 3));
-				if (face && isSolid(face.blockInfo.id, face.blockInfo.type)) {
+				if (face && isSolid(face.blockId)) {
 					if (!collidingFace)
 						collidingFace = face;
 					else if (direction.x > 0) {
-						if ((collidingFace.position.x < face.position.x)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.x < face.position.x)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					} else if (direction.x < 0) {
-						if ((collidingFace.position.x > face.position.x)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.x > face.position.x)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					}
 				}
@@ -87,7 +92,9 @@ CollisionController.prototype = {
 				let stop = false;
 				let facePos = collidingFace.position.x - midSize;
 				if ((position.x + velocity.x <= facePos && position.x >= facePos) || (position.x + velocity.x >= facePos && position.x <= facePos)) {
-					if (collidingFace.blockInfo.blockData.type === 6) {
+					velocity.x = 0;
+					position.x = facePos;
+					/*if (collidingFace.blockInfo.blockData.type === 6) {
 						let heightSlab = 0 - collidingFace.position.y - this.size.y / 2 + 0.25 + position.y;
 						if (heightSlab >= 0 && heightSlab <= 0.5) {
 							// Raise player
@@ -104,7 +111,7 @@ CollisionController.prototype = {
 							velocity.x = 0;
 							position.x = facePos;
 						}
-					}
+					}*/
 				}
 			}
 		} else if (this.collisionDisplay) {
@@ -130,14 +137,14 @@ CollisionController.prototype = {
 					this.collisionDisplay.z[i][1].show();
 				}
 				let face = world.getFace(origin.x | 0, origin.y | 0, origin.z | 0, ((direction.z < 0) ? 0 : 1));
-				if (face && isSolid(face.blockInfo.blockData)) {
+				if (face && isSolid(face.blockId)) {
 					if (!collidingFace)
 						collidingFace = face;
 					else if (direction.z > 0) {
-						if ((collidingFace.position.z < face.position.z)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.z < face.position.z)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					} else if (direction.z < 0) {
-						if ((collidingFace.position.z > face.position.z)||(collidingFace.blockInfo.blockData.type === undefined)||(collidingFace.position.y < face.position.y))
+						if ((collidingFace.position.z > face.position.z)||(collidingFace.position.y < face.position.y))
 							collidingFace = face;
 					}
 				}
@@ -147,7 +154,9 @@ CollisionController.prototype = {
 				let stop = false;
 				let facePos = collidingFace.position.z - midSize;
 				if ((position.z + velocity.z <= facePos && position.z >= facePos) || (position.z + velocity.z >= facePos && position.z <= facePos)) {
-					if (collidingFace.blockInfo.blockData.type === 6) {
+					velocity.z = 0;
+					position.z = facePos;
+					/*if (collidingFace.blockInfo.blockData.type === 6) {
 						let heightSlab = 0 - collidingFace.position.y - this.size.y / 2 + 0.25 + position.y;
 						if (heightSlab >= 0 && heightSlab <= 0.5) {
 							position.y += 0.5 - heightSlab;
@@ -163,7 +172,7 @@ CollisionController.prototype = {
 							velocity.z = 0;
 							position.z = facePos;
 						}
-					}
+					}*/
 				}
 			}
 		} else if (this.collisionDisplay) {
@@ -189,7 +198,7 @@ CollisionController.prototype = {
 					this.collisionDisplay.y[i][1].show();
 				}
 				let face = world.getFace(origin.x | 0, origin.y | 0, origin.z | 0, (direction.y < 0) ? 4 : 5);
-				if (face && isSolid(face.blockInfo.id, face.blockInfo.type)) {
+				if (face && isSolid(face.blockId)) {
 					if (!collidingFace || (direction.y > 0 && collidingFace && collidingFace.position.y > face.position.y) || (direction.y < 0 && collidingFace && collidingFace.position.y < face.position.y))
 						collidingFace = face;
 				}

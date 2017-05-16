@@ -1,92 +1,65 @@
 var camera, scene, renderer;
-var controls, player;
-var gui, stats;
-var inventory;
+var logger, inventory;
 
-function GUI(body) {
-	this.gamePaused = true;
-	this.body = body;
-	this.main = document.getElementById("main");
-	this.assert(this.main instanceof HTMLDivElement, "Main div not found");
-	this.secondary = document.getElementById("secondary");
-	this.stats = new StatsEdited(body);
-	this.stats.begin();
-	this.preventDefaultBehaviours();
-	this.setupThreejs();
-	this.setupPlayer();
-	this.startLoop();
-	this.main.style.color = "#eeeeee";
-	this.showHelp();
-	this.inventory = new Inventory(this.main);
-	this.inventory.onItemSwitch = (a, b) => { this.onItemSwitch.call(this, a, b) };
-	this.hotbar = new Hotbar(this.inventory,this.main);
-	this.hotbar.onItemChange = (a, b) => { this.onItemChange.call(this, a, b) };
-	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, true), false);
-	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, false), false);
-
-	inventory = this.inventory;
-}
-
-function fullGameTick() {
-	gui.player.update();
-	world.update(gui.player.position);
-}
-
-function lightGameTick() {
-	gui.player.lightUpdate();
-	world.update(gui.player.position);
-}
-
-function simpleUpdate() {
-	stats.update();
-	menuClick = false;
-	stats.normalStep();
-	stats.delta = 0;
-	fullGameTick();
-	gui.renderer.render(gui.scene, gui.camera);
-	window.requestAnimationFrame(simpleUpdate);
-}
-
-function update() {
-	stats.update();
-	menuClick = false;
-	var delta = stats.delta;
-	if (delta >= 15 * 1) {
-		if (delta < 15 * 2) {
-			stats.normalStep();
-			stats.delta -= 15;
-			fullGameTick();
-		} else if (delta < 15 * 3) {
-			stats.normalStep();
-			stats.delta -= 15 * 2;
-			lightGameTick();
-			fullGameTick();
-		} else if (delta < 15 * 4) {
-			stats.normalStep();
-			stats.delta -= 15 * 3;
-			lightGameTick();
-			lightGameTick();
-			fullGameTick();
-		} else if (delta < 15 * 5) {
-			stats.lagStep();
-			lightGameTick();
-			lightGameTick();
-		} else {
-			stats.lagStep();
-			lightGameTick();
-			lightGameTick();
-			if (!gui.gamePaused && !options.ignoreExcessiveLag) {
-				this.player.releaseMouse();
-				gui.showPaused();
-			}
-		}
+function GUI(parent, input) {
+	this.performancer = new Performancer(Settings.performance.compactPerformancer.value, 20);
+	this.performancer.onCompactChange = function(value) {
+		Settings.performance.compactPerformancer.set(value)
 	}
-	gui.renderer.render(gui.scene, gui.camera);
-	window.requestAnimationFrame(update);
+	this.parent = parent;
 }
 
 GUI.prototype = {
 	constructor: GUI,
+	loadBegin: function() {
+		this.primary = document.getElementById("primary");
+		this.secondary = document.getElementById("secondary");
+		(!this.primary || !this.secondary) && console.warn("Primary and Secondary element should already exist!");
+		this.loadCount = 0;
+	},
+	loadStep: function() {
+		if (this.loadCount === 0) {
+			this.loadCount = 1;
+			this.preventDefaultBehaviours();
+			this.logger = new Logger(this.secondary);
+			this.primary = document.getElementById("primary");
+			this.secondary = document.getElementById("secondary");
+			logger = this.logger;
+			InstructionScreen.init();
+			MessageScreen.init();
+			this.performancer.attach(document.body);
+			return new LoadStatus("Graphical User Interface", "three.js Setup", 0.5);
+		} else if (this.loadCount === 1) {
+			this.loadCount = 2;
+			if (this.setupThreejs()) {
+				return new LoadStatus("Graphical User Interface", "Adding Events", 1);
+			} else {
+				return new LoadStatus("Graphical User Interface", "Error: Unable to initialize renderer", 0);
+			}
+		}
+	},
+	onMouseDown: function(event) {
+		if (this.state === "help" || this.state === "inventory")
+			this.setState("crosshair");
+		else if (this.state === "crosshair") {
+			this.parent.player.onMouseDown(event);
+		} else if (this.state === "inventory") {
+			this.inventory.onMouseDown(event);
+		} else if (this.state === "paused" || this.state === "halted" || this.state === "help") {
+			if (typeof statClick === "undefined" || !statClick) {
+				this.setState("crosshair");
+			}
+		}
+	},
+	onMouseUp: function(event) {
+
+	},
+	onTouchDown: function() {
+	},
+	onTouchMove: function() {
+	},
+	onTouchUp: function() {
+	},
 	onItemSwitch: function(before, after) {
 		let data;
 		if (before.position === this.hotbar.selection) {
@@ -113,64 +86,84 @@ GUI.prototype = {
 				ItemFunctions[data.name].onSelected();
 		}
 	},
-	onKeyChange: function(code, down) {
-		if (down)
-			switch (code) {
-			case options.keys.inventory:
-				if (this.gamePaused) {
-					this.showCrosshair();
-				} else {
-					this.showInventory();
-				}
-				break;
-			case options.keys.debug:
-				this.player.releaseMouse();
-				setTimeout(()=>{
-					this.showCrosshair(true)
-				}
-				, 10);
-				break;
-			}
+	setState: function(state) {
+		this.state = state;
+		if (state === "inventory")
+			this.showInventory();
+		else if (state === "crosshair")
+			this.showCrosshair();
+		else if (state === "halted")
+			this.showHalted();
+		else if (state === "paused")
+			this.showPaused();
+		else if (state === "help")
+			this.showInstructions();
+		else
+			console.warn("Invalid State!");
 	},
-	onInventoryClick: function(ev) {
-		this.inventory.onClick(ev)
+	onKeyDown: function() {
+
 	},
-	addBlocksInWorld: function(scene) {},
-	startLoop: function() {
-		gui = this;
-		stats = this.stats;
+	onKeyUp: function() {
+
+	},
+	onInventoryKeyDown: function(down) {
+		if (this.state === "inventory") {
+			this.parent.paused = false;
+			this.setState("crosshair");
+		} else if (this.state === "crosshair" || this.state === "paused") {
+			this.setState("inventory");
+			this.parent.paused = true;
+		}
+	},
+	onDebugKeyDown: function() {
+		this.parent.player.releaseMouse();
+		setTimeout(()=>{this.state = "crosshair"; this.showCrosshair(true)}, 10);
 	},
 	setupThreejs: function() {
 		/* Render Setup */
-		this.renderer = new THREE.WebGLRenderer({
-			antialias: options.antialias,
-			alpha: false
-		});
+		try {
+			this.renderer = new THREE.WebGLRenderer({
+				antialias: options.antialias,
+				alpha: false
+			});
+		} catch (err) {
+			return false;
+		}
 		this.renderer.setClearColor(0x333333, 1);
 		this.renderer.domElement.style.position = "absolute";
-		this.body.appendChild(this.renderer.domElement);
+		this.renderer.domElement.style.display = "none";
+		document.body.appendChild(this.renderer.domElement);
+		this.canvas = this.renderer.domElement;
 		/* Camera Setup*/
-		this.camera = new THREE.PerspectiveCamera(options.camera.fov,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
-		this.resize();
-		window.addEventListener('resize', (ev)=>this.resize(ev), false);
-		/* Scene Setup */
-		this.scene = new THREE.Scene();
-		options.lights.placeInto(this.scene);
-		/* Blocks Setup */
-		this.blocks = new BlockController(this.scene);
+		this.camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.2,options.viewDistance);
+		Settings.camera.fov.attach(this.camera, "fov");
+		this.parent.camera = this.camera;
+		addEventListener('resize', (ev)=>this.resize(ev), false);
+		/* Scene and Light Setup */
+		scene = new THREE.Scene();
+		function addLight(name, position, intensity) {
+			let light = new THREE.DirectionalLight(0xffffff, intensity);
+			light.position.copy(position);
+			light.name = name;
+			scene.add(light);
+		}
+		addLight("Top", { x: 0, y: 1, z: 0 }, 2.935);
+		addLight("Front", { x: 0, y: 0, z: -1 }, 2.382);
+		addLight("Back", { x: 0, y: 0, z: 1 }, 2.3548);
+		addLight("Left", { x: -1, y: 0, z: 0 }, 1.7764);
+		addLight("Right", { x: 1, y: 0, z: 0 }, 1.7742);
+		addLight("Bottom", { x: 0, y: -1, z: 0 }, 1.5161);
+		this.scene = scene;
 		/* Definition of global variables */
-		blocks = this.blocks;
 		renderer = this.renderer;
 		scene = this.scene;
 		camera = this.camera;
+		return true;
 	},
-	setupPlayer: function() {
-		this.player = new Player(this.scene,this.camera,true);
-		this.player.parent = this;
-		this.player.controls.onRelease = ()=>{
-			this.showInventory();
-		}
-		player = this.player;
+	showRenderer: function() {
+		this.renderer.domElement.style.display = "";
+		this.resize();
 	},
 	resize: function() {
 		if (this.camera) {
@@ -182,119 +175,89 @@ GUI.prototype = {
 		}
 	},
 	clearInterface: function() {
-		while (this.main.firstChild)
-			this.main.removeChild(this.main.firstChild);
+		while (this.primary.firstChild)
+			this.primary.removeChild(this.primary.firstChild);
 		if (this.secondary instanceof HTMLDivElement)
 			while (this.secondary.firstChild)
 				this.secondary.removeChild(this.secondary.firstChild);
-		this.body.style.cursor = "default";
-		this.body.onmousedown = this.body.onmouseup = this.body.onclick = ()=>{}
-		;
+		this.canvas.style.cursor = "default";
 		if (this.fill)
 			this.fill.style.backgroundColor = "transparent";
 		if (typeof logger === "object")
 			this.secondary.appendChild(logger.domElement);
 	},
-	setFill: function(color) {
-		if (!this.fill) {
-			this.fill = document.createElement("div");
-			this.fill.style.position = "absolute";
-			this.fill.style.width = "100%";
-			this.fill.style.height = "100%";
-			this.fill.style.zIndex = "5";
-			let fillActive = true;
-			if (fillActive) {
-				this.body.style.backgroundColor = "#ffffff";
-				this.body.appendChild(this.fill);
-			}
+	createFill: function() {
+		this.fill = document.createElement("div");
+		this.fill.style.position = "absolute";
+		this.fill.style.width = "100%";
+		this.fill.style.height = "100%";
+		this.fill.style.zIndex = "5";
+		let fillActive = true;
+		if (fillActive) {
+			//document.body.style.backgroundColor = "#ffffff";
+			document.body.appendChild(this.fill);
 		}
+	},
+	setFill: function(color) {
+		if (!this.fill)
+			this.createFill();
 		this.fill.style.backgroundColor = color
 	},
 	showPaused: function() {
-		this.gamePaused = true;
 		this.clearInterface();
+		MessageScreen.setAttributes([{
+			innerText: "Click anywhere to resume",
+			style: "font-size:12px;"
+		}, {
+			innerText: "Game Paused",
+			style: "font-size:48px;"
+		}]);
+		MessageScreen.show();
 		this.setFill("rgba(0,0,0,0.3)");
-		let str = "Click anywhere to resume\nGame Paused\n";
-		if (!options.ignoreExcessiveLag)
-			str += "Involuntary (and frequent) pausing indicates\nthat your computer can't keep up with the\n simulation due to performance problems.\nYou can disable auto-pausing with Ctrl + M.\nAlternatively, decrease the amount of blocks in your simulation.\n";
-		str.split("\n").forEach((text,i)=>{
-			let span = document.createElement("span");
-			span.style.display = "block";
-			span.style.fontWeight = (i === 0) ? "bold" : "normal";
-			span.style.fontSize = (i === 1) ? "48px" : "16px";
-			span.style.marginBottom = (i === 1) ? "10px" : "0px";
-			span.style.textAlign = (i < 2) ? "center" : "left";
-			span.innerText = text;
-			this.main.appendChild(span);
-		}
-		);
-		this.body.style.cursor = "pointer";
-		this.body.onclick = (ev)=>this.onSlowClick(ev);
+		this.fill.style.cursor = "pointer";
 	},
-	onSlowClick: function(mouseEvent) {
-		this.assert(this.player, "Missing Component Error: Player not defined");
-		this.showCrosshair();
-	},
-	showHelp: function() {
-		this.gamePaused = true;
+	showHalted: function() {
 		this.clearInterface();
-		this.setFill("rgba(0,0,0,0.4)");
-		let str = ("Click anywhere to start\nInstructions\n" + "[W, A, S, D] to move up, left, down, right\n" + "[Numeric Keys] to change selected block\n" + "[E, ESC, I] to open inventory\n" + "[Ctrl + B] to disable collision detection\n [Ctrl + M] to disable auto-pausing");
-		str.split("\n").forEach((text,i)=>{
-			let span = document.createElement("span");
-			span.style.display = "block";
-			span.style.fontWeight = (i === 0) ? "bold" : "normal";
-			span.style.fontSize = (i === 1) ? "48px" : "16px";
-			span.style.marginBottom = (i === 1) ? "10px" : "0px";
-			span.style.textAlign = (i < 2) ? "center" : "left";
-			span.innerText = text;
-			this.main.appendChild(span);
-		}
-		);
-		this.body.style.cursor = "pointer";
-		this.body.onclick = (event)=>{
-			if (!menuClick)
-				this.onHelpClick(event)
-			else
-				menuClick = false;
-		}
-		this.body.onmousedown = this.body.onmouseup = (event)=>{}
+		MessageScreen.setAttributes({
+			innerText: "Click anywhere to resume",
+			style: "font-size:12px;"
+		}, {
+			innerText: "Game Halted",
+			style: "font-size:48px;"
+		}, {
+			innerText: "It seems that your computer can't keep up with",
+			style: "font-size:12px;background-color:red;"
+		}, {
+			innerText: "with the simulation due to performance problems.",
+			style: "font-size:12px;"
+		});
+		MessageScreen.show();
+		this.setFill("rgba(0,0,0,0.3)");
+		this.fill.style.cursor = "pointer";
 	},
-	onHelpClick: function(mouseEvent) {
-		this.assert(this.player, "Missing Component Error: Player not defined");
-		mouseEvent.preventDefault();
-		this.showCrosshair();
+	showInstructions: function() {
+		this.clearInterface();
+		this.setFill("rgba(0,0,0,0.1)");
+		InstructionScreen.show();
+		document.body.style.cursor = "pointer";
 	},
 	showCrosshair: function(ignoreRequest) {
-		this.gamePaused = false;
-		if (this.inventory.isShown()) {
-			this.inventory.hide();
-		}
 		this.clearInterface();
 		if (!ignoreRequest)
-			this.player.requestMouse();
-		this.body.onmousedown = (event)=>{
-			this.player.onMouseDown(event);
-		}
-		this.body.onmouseup = (event)=>{
-			this.player.onMouseUp(event);
-		}
+			this.parent.player.requestMouse();
 		let img = document.createElement("img");
 		img.src = "Images/crosshair.png";
-		this.main.appendChild(img);
-		this.hotbar.show();
+		this.primary.appendChild(img);
+		this.parent.resume();
 	},
 	showInventory: function() {
-		this.gamePaused = true;
 		this.clearInterface();
-		this.player.releaseMouse();
-		this.body.onclick = this.body.onmousedown = this.body.onmouseup = (event)=>{}
-		this.inventory.show();
-		this.setFill("rgba(0,0,0,0.5)");
+		this.parent.pause();
+		InventoryScreen.show();
+		this.setFill("rgba(0,0,0,0.65)");
 	},
 	preventDefaultBehaviours: function() {
-		this.body.style.userSelect = "none";
-		this.body.onselectionstart = this.body.ondragstart = function(e) {
+		document.body.onselectionstart = document.body.ondragstart = function(e) {
 			e.preventDefault();
 			return false;
 		}

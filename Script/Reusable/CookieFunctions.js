@@ -11,12 +11,22 @@ function setCookie(cname, cvalue, exdays) {
     }
 }
 
+var _lastCookieCache = { data: [], timeStamp:-250 };
+
 function getCookie(name) {
     if (location.hostname == "") {
         return localStorage.getItem(name);
     } else {
         name = name + "=";
-        var ca = document.cookie.split(';');
+        var moment = + new Date();
+        var ca;
+        if (moment - _lastCookieCache.timeStamp >= 250) {
+        	ca = _lastCookieCache.data;
+        } else {
+        	ca = document.cookie.split(';');
+        	_lastCookieCache.timeStamp = moment;
+        	_lastCookieCache.data = ca;
+        }
         for(var i=0; i<ca.length; i++) {
             var c = ca[i];
             while (c.charAt(0)==' ') c = c.substring(1);

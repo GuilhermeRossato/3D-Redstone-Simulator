@@ -9,7 +9,7 @@ WorldSaver.prototype = {
 	constructor: WorldSaver,
 	onKeyDown: function(event, code, ctrlKey) {
 		if (window.File && window.FileReader && window.FileList && window.Blob) {
-			if (ctrlKey && code === options.keys.save) {
+			if (ctrlKey && code === Settings.keys.file.save.value) {
 				this.save(true);
 				event.preventDefault();
 			}
@@ -40,7 +40,7 @@ WorldSaver.prototype = {
 		let blocksNear = [];
 		let blocksFar = [];
 		this.world.getBlockList().forEach(obj=>{
-			if (obj.id > 0) {
+			if (obj && obj.id > 0) {
 				if (this.isWithinArea(obj))
 					blocksNear.push(obj);
 				else

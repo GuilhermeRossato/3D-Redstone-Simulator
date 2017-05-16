@@ -19,6 +19,8 @@ Object.defineProperty(window, "interpolation", { get: function() {
 				return b(b(pts[0][1], pts[1][1], ib(pts[0][0], pts[1][0], x)), b(pts[1][1], pts[2][1], ib(pts[1][0], pts[2][0], x)), ib(pts[0][0], pts[2][0], x));
 			else if (pts.length === 4)
 				return b(b(b(pts[0][1], pts[1][1], ib(pts[0][0], pts[1][0], x)), b(pts[1][1], pts[2][1], ib(pts[1][0], pts[2][0], x)), ib(pts[0][0], pts[2][0], x)), b(b(pts[1][1], pts[2][1], ib(pts[1][0], pts[2][0], x)), b(pts[2][1], pts[3][1], ib(pts[2][0], pts[3][0], x)), ib(pts[1][0], pts[3][0], x)), ib(pts[0][0], pts[3][0], x));
+			else if (pts.length === 5)
+				return b(b(b(b(pts[0][1], pts[1][1], ib(pts[0][0], pts[1][0], x)), b(pts[1][1], pts[2][1], ib(pts[1][0], pts[2][0], x)), ib(pts[0][0], pts[2][0], x)), b(b(pts[1][1], pts[2][1], ib(pts[1][0], pts[2][0], x)), b(pts[2][1], pts[3][1], ib(pts[2][0], pts[3][0], x)), ib(pts[1][0], pts[3][0], x)), ib(pts[0][0], pts[3][0], x)),b(b(b(pts[1][1], pts[2][1], ib(pts[1][0], pts[2][0], x)), b(pts[2][1], pts[3][1], ib(pts[2][0], pts[3][0], x)), ib(pts[1][0], pts[3][0], x)), b(b(pts[2][1], pts[3][1], ib(pts[2][0], pts[3][0], x)), b(pts[3][1], pts[4][1], ib(pts[3][0], pts[4][0], x)), ib(pts[2][0], pts[4][0], x)), ib(pts[1][0], pts[4][0], x)),ib(pts[0][0], pts[4][0], x));
 			else {
 				this.warn();
 				return 0;

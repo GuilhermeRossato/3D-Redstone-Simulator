@@ -1,3 +1,10 @@
+/*
+ * This class handles block placement in the world, handling visibility and assiging textures, materials and geometry to faces.
+ *
+ * @TextureLoader
+ * @author: Guilherme Rossato
+ *
+*/
 function WorldHandler(scene) {
 	this.loader = new WorldLoader(this);
 	this.saver = new WorldSaver(this);
@@ -5,13 +12,22 @@ function WorldHandler(scene) {
 	this.blocks = [];
 	this.allFaces = [];
 	this.faces = [];
-	this.textures = {};
-	this.generateGeometries();
-	this.textureLoader = new THREE.TextureLoader();
 }
 
 WorldHandler.prototype = {
 	constructor: WorldHandler,
+	loadBegin: function() {
+		this.textures = new TextureHandler(this);
+		this.textures.parseBlockList(blockData);
+	},
+	loadStep: function() {
+		let p = this.textures.getProgress();
+		return new LoadStatus("TextureHandler", "Loading Textures", Math.min(p, 1));
+	},
+	loadEnd: function() {
+		this.generateGeometries();
+		this.generate();
+	},
 	lastBlockDetails: {
 		x: 0,
 		y: 0,
@@ -33,9 +49,6 @@ WorldHandler.prototype = {
 			half: new THREE.PlaneGeometry(1,0.5,1,1),
 			quarter: new THREE.PlaneGeometry(1,0.25,1,1)
 		}
-		this.geometries.half.faceVertexUvs[0][1][2].set(1, 0.5);
-		this.geometries.half.faceVertexUvs[0][0][2].set(1, 0.5);
-		this.geometries.half.faceVertexUvs[0][0][0].set(0, 0.5);
 	},
 	getBlockList: function() {
 		var allBlocks = [];
@@ -51,24 +64,32 @@ WorldHandler.prototype = {
 		);
 		return allBlocks;
 	},
-	sidesDisplacement: [["z", 0.5, "y", 0], // Front (0)
-	["z", -0.5, "y", 1], // Back (1)
-	["x", 0.5, "y", 0.5], // Right (2)
-	["x", -0.5, "y", -0.5], // Left (3)
-	["y", 0.5, "x", -0.5], // Top (4)
-	["y", -0.5, "x", 0.5]// Down (5)
+	sidesDisplacement: [
+		["z", 0.5, "y", 0],		// 0 Front
+		["z", -0.5, "y", 1],	// 1 Back
+		["x", 0.5, "y", 0.5],	// 2 Right
+		["x", -0.5, "y", -0.5],	// 3 Left
+		["y", 0.5, "x", -0.5],	// 4 Top
+		["y", -0.5, "x", 0.5]	// 5 Bottom
 	],
 	facesDisplacement: [[0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0]],
 	generate: function() {
+		let world = this;
 		let size = 20;
 		repeat(size, (i)=>{
 			repeat(size, (j)=>{
-				world.setBlock(i - size / 2, 0, j - size / 2, 98);
+				world.setBlock(i - size / 2, 0, j - size / 2, 1);
 			}
 			);
 		}
 		);
-		world.setBlock(3, 1, 6, 2);
+		world.setBlock(0, 0, 0, 0);
+		world.setBlock(0, 1, 0, 0);
+		world.setBlock(1, 0, 0, 0);
+		world.setBlock(-1, 0, 0, 0);
+		world.setBlock(0, 0, 1, 0);
+		world.setBlock(0, 0, -1, 0);
+		world.setBlock(0, 0, 0, 0);
 		world.setBlock(3, 2, 6, 6);
 		world.setBlock(3, 2, 7, 4);
 		world.setBlock(4, 2, 6, 4);
@@ -107,58 +128,22 @@ WorldHandler.prototype = {
 	showTouchingFaces: function(x, y, z, ownFaces) {
 		this.setTouchingFacesVisibility(x, y, z, ownFaces, true);
 	},
-	setBlock: function(x, y, z, id) {
-		if (!this.lastBlockDetails.match(x, y, z, id)) {
-			this.lastBlockDetails.set(x, y, z, id);
-			if (this.getBlockId(x, y, z)) {
-				this.removeBlock(x, y, z);
-			}
-			if (id === 0)
-				return
-			let bd = blockData[id];
-			if (bd) {
-				let blockInfo = {
-					blockData: bd,
-					id: id,
-					x: x,
-					y: y,
-					z: z
-				}
-				let faces = this.generateFaces(x, y, z, id, bd);
-				faces.forEach(face=>face.blockInfo = blockInfo);
-				if (!bd.transparent) {
-					this.hideTouchingFaces(x, y, z, faces);
-				} else {
-					faces.forEach(face=>face.transparent = true);
-					blockInfo.transparent = true;
-				}
-				this.putFacesIntoWorld(x, y, z, faces);
-				blockInfo.faces = faces;
-				this.putBlockInfo(x, y, z, blockInfo);
-			} else {
-				logger.warn("No render info for block id " + id.toString());
-			}
-		}
-	},
-	putFacesIntoWorld: function(x, y, z, faces) {
-		if (!this.faces[y])
-			this.faces[y] = [];
-		if (!this.faces[y][x])
-			this.faces[y][x] = [];
-		this.faces[y][x][z] = faces;
-		faces.forEach((face,i)=>{
-			face.direction = i;
-			this.allFaces.push(face);
-			this.scene.add(face);
+	positionFaces: function(x, y, z, faces, data) {
+		this.sidesDisplacement.forEach((cmd,i)=>{
+			faces[i].position.set(x, y, z);
+			faces[i].position[cmd[0]] += cmd[1];
+			faces[i].rotation[cmd[2]] = cmd[3] * Math.PI;
 		}
 		);
 	},
-	getFace: function(x, y, z, side) {
-		if (this.faces[y] && this.faces[y][x] && this.faces[y][x][z])
-			return this.faces[y][x][z][side];
+	getSimpleTexture: function(fileName, transparent) {
+		let texture = this.textures.getTexture(fileName);
+		if (transparent)
+			texture.transparent = true;
+		return texture;
 	},
 	generateFaces: function(x, y, z, id, data) {
-		if (data.type === 6 || data.type === 7) {
+		if (data.type === blockTypes.topSlab || data.type === blockTypes.bottomSlab) {
 			let faces = this.generateFaces(x, y, z, id, {
 				type: 0,
 				texture: data.texture
@@ -166,16 +151,16 @@ WorldHandler.prototype = {
 			faces.forEach((obj,i)=>{
 				if (i < 4) {
 					obj.geometry = this.geometries.half;
-					obj.position.y += (data.type === 7) ? 0.25 : -0.25;
-				} else if (i === 4 && data.type === 6) {
+					obj.position.y += (data.type === blockTypes.topSlab) ? 0.25 : -0.25;
+				} else if (i === 4 && data.type !== blockTypes.topSlab) {
 					obj.position.y -= 0.5;
-				} else if (i === 5 && data.type === 7) {
+				} else if (i === 5 && data.type === blockTypes.topSlab) {
 					obj.position.y += 0.5;
 				}
 			}
 			);
 			return faces;
-		} else if (data.type === 1) {
+		} else if (data.type === blockTypes.sapling) {
 			if (typeof data.texture === "string") {
 				/* Normal saplings with one texture */
 				let texture = this.getSimpleTexture(data.texture, true);
@@ -228,44 +213,77 @@ WorldHandler.prototype = {
 			return meshes;
 		}
 	},
-	getSimpleTexture: function(filename, transparent) {
-		if (!this.textures[filename]) {
-			let texture = this.textureLoader.load("Images/Textures/" + filename);
-			texture.magFilter = THREE.NearestFilter;
-			texture.minFilter = THREE.LinearMipMapLinearFilter;
-			//texture.anisotropy = 0; // Proven to be unnecessary at the time
-			let material = new THREE.MeshLambertMaterial({
-				map: texture,
-				transparent: transparent ? true : false,
-				color: 0x555555
-			});
-			this.textures[filename] = material;
+	setBlock: function(x, y, z, id) {
+		if (!this.lastBlockDetails.match(x, y, z, id)) {
+			this.lastBlockDetails.set(x, y, z, id);
+			if (this.getBlockId(x, y, z)) {
+				this.removeBlock(x, y, z);
+			}
+			if (id === 0)
+				return
+			let bd = blockData[id];
+			if (bd) {
+				let faceMeshes = this.generateFaces(x, y, z, id, bd);
+				if (bd.type === blockTypes.glass || bd.type === blockTypes.sapling || bd.type === blockTypes.topSlab || bd.type === blockTypes.bottomSlab) {
+					faceMeshes.forEach(mesh=>mesh.transparent = true);
+				} else {
+					this.hideTouchingFaces(x, y, z, faceMeshes);
+				}
+				this.putFacesIntoWorld(x, y, z, faceMeshes);
+				let blockInfo = {
+					id: id,
+					blockData: bd,
+					faces: faceMeshes
+				};
+				faceMeshes.forEach(face => face.blockId = id);
+				this.putBlockInfo(x, y, z, blockInfo);
+			} else {
+				logger.warn("No render info for block id " + id.toString());
+			}
 		}
-		return this.textures[filename];
+	},
+	putFacesIntoWorld: function(x, y, z, faces) {
+		if (!this.faces[y])
+			this.faces[y] = [];
+		if (!this.faces[y][x])
+			this.faces[y][x] = [];
+		this.faces[y][x][z] = faces;
+		faces.forEach((face,i)=>{
+			face.direction = i;
+			this.allFaces.push(face);
+			this.scene.add(face);
+		}
+		);
+	},
+	getFace: function(x, y, z, side) {
+		if (this.faces[y] && this.faces[y][x] && this.faces[y][x][z])
+			return this.faces[y][x][z][side];
 	},
 	removeBlock: function(x, y, z) {
 		let blockInfo = this.getBlockInfo(x, y, z);
-		if (blockInfo) {
+		if (blockInfo && blockInfo.faces) {
 			this.showTouchingFaces(x, y, z);
-			let id = this.scene.children.indexOf(blockInfo.faces[0]);
-			let id2 = this.allFaces.indexOf(blockInfo.faces[0]);
-			if (id !== -1) {
+			let sceneIndex = this.scene.children.indexOf(blockInfo.faces[0]);
+			let facesIndex = this.allFaces.indexOf(blockInfo.faces[0]);
+			if (sceneIndex !== -1) {
 				let splices = 6;
+				/*
 				let type = blockData[blockInfo.id].type;
 				if (type === 1)
 					splices = 2;
 				else if (type === 2)
 					splices = 1;
-
-				this.scene.children.splice(id, splices).forEach(spliced=>spliced.parent = null);
-				if (id2 !== -1)
-					this.allFaces.splice(id, splices);
-				this.blocks[y][x][z] = null;
-				this.faces[y][x][z] = null;
+				*/
+				this.scene.children.splice(sceneIndex, splices).forEach(spliced=>spliced.parent = null);
+				if (facesIndex !== -1)
+					this.allFaces.splice(facesIndex, splices);
+				blockInfo.faces = undefined;
+				this.blocks[y][x][z] = undefined;
+				this.faces[y][x][z] = undefined;
 			} else {
-				logger.warn("Unable to remove block because it was not found in scene");
+				blockInfo.faces = undefined;
+				logger.warn("Unable to remove face, it was not found in the world");
 			}
-			blockInfo.faces = null;
 		}
 	},
 	getBlockInfo: function(x, y, z) {
