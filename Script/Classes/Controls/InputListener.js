@@ -15,16 +15,41 @@ function InputListener() {
 	window.addEventListener("resize",(ev)=>{this.onRawResize(ev)},false);
 	document.addEventListener('pointerlockchange', (ev)=>{this.onRawPointerlockChange(ev)}, false);
 	document.addEventListener('pointerlockerror', (ev)=>this.onRawPointerlockError(ev), false);
-	this.replaceDefaultEventListeners();
+	document.body.addEventListener('touchstart', (ev)=>this.onRawTouchDown(ev), false);
+	document.body.addEventListener('touchmove', (ev)=>this.onRawTouchMove(ev), false);
+	document.body.addEventListener('touchEnd', (ev)=>this.onRawTouchUp(ev), false);
+	//this.replaceDefaultEventListeners();
 
 	this.relay = new InputSimulator(this);
 }
 
 InputListener.prototype = {
 	constructor: InputListener,
+	addEventListener: function(type, func) {
+		if (type === "wheel")
+			this.events.onMouseScroll.attach(func);
+		else if (type === "mousedown")
+			this.events.onMouseDown.attach(func);
+		else if (type === "mousemove")
+			this.events.onMouseMove.attach(func);
+		else if (type === "mouseup")
+			this.events.onMouseUp.attach(func);
+		else if (type === "keydown")
+			this.events.onKeyDown.attach(func);
+		else if (type === "keyup")
+			this.events.onKeyUp.attach(func);
+		else if (type === "resize")
+			this.events.onResize.attach(func);
+		else if (type === "pointerlockchange")
+			this.events.onPointerlockChange.attach(func);
+		else if (type === "pointerlockerror")
+			this.events.onPointerlockError.attach(func);
+		else
+			console.warn("Unhandled: \""+type+"\"");
+	},
 	setupEvents: function() {
 		this.events = {};
-		["onMouseScroll", "onMouseDown", "onMouseMove", "onMouseUp", "onKeyDown", "onKeyUp", "onResize", "onPointerlockChange", "onPointerlockError"].forEach((eventName)=>{
+		["onMouseScroll", "onMouseDown", "onMouseMove", "onMouseUp", "onKeyDown", "onKeyUp", "onResize", "onPointerlockChange", "onPointerlockError", "onRawTouchDown", "onRawTouchMove", "onRawTouchUp"].forEach((eventName)=>{
 			this.events[eventName] = {
 				listeners: [],
 				attach: function(f) {
@@ -103,6 +128,15 @@ InputListener.prototype = {
 	},
 	onRawPointerlockError: function(event) {
 		this.events.onPointerlockError.listeners.forEach(f => f(event));
+	},
+	onRawTouchDown: function(event) {
+		this.events.onRawTouchDown.listeners.forEach(f => f(event));
+	},
+	onRawTouchMove: function(event) {
+		this.events.onRawTouchMove.listeners.forEach(f => f(event));
+	},
+	onRawTouchUp: function(event) {
+		this.events.onRawTouchUp.listeners.forEach(f => f(event));
 	},
 	addKey: function(keyObject, index) {
 		this.keyCodes.push("");
