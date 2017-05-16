@@ -7,7 +7,7 @@ WorldLoader.prototype = {
 	constructor: WorldLoader,
 	onKeyDown: function(event, code, ctrlKey) {
 		if (window.File && window.FileReader && window.FileList && window.Blob) {
-			if (ctrlKey && code === options.keys.load) {
+			if (ctrlKey && code === Settings.keys.file.load.value) {
 				this.loadFromDialog();
 				event.preventDefault();
 			}
@@ -19,7 +19,7 @@ WorldLoader.prototype = {
 		var output = [];
 		if (file.size > 100000)
 			logger.log("Cannot load file due to size limit");
-		else if (file.size > 60000)
+		else if (file.size > 70000)
 			logger.warn("Warning: This file is approaching the file size limit!");
 		var fileReader = new FileReader();
 		fileReader.onloadend = (e) => this.handleFileLoaderResult(e.target.result);

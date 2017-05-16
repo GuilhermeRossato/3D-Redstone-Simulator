@@ -9,7 +9,7 @@ WorldSaver.prototype = {
 	constructor: WorldSaver,
 	onKeyDown: function(event, code, ctrlKey) {
 		if (window.File && window.FileReader && window.FileList && window.Blob) {
-			if (ctrlKey && code === options.keys.save) {
+			if (ctrlKey && code === Settings.keys.file.save.value) {
 				this.save(true);
 				event.preventDefault();
 			}
