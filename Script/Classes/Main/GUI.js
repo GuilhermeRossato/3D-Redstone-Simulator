@@ -1,7 +1,7 @@
 var camera, scene, renderer;
 var logger, inventory;
 
-function GUI(parent) {
+function GUI(parent, input) {
 	this.performancer = new Performancer(Settings.performance.compactPerformancer.value, 20);
 	this.performancer.onCompactChange = function(value) {
 		Settings.performance.compactPerformancer.set(value)
@@ -39,8 +39,9 @@ GUI.prototype = {
 		}
 	},
 	onMouseDown: function(event) {
-		/*
-		if (this.state === "crosshair") {
+		if (this.state === "help" || this.state === "inventory")
+			this.setState("crosshair");
+		else if (this.state === "crosshair") {
 			this.parent.player.onMouseDown(event);
 		} else if (this.state === "inventory") {
 			this.inventory.onMouseDown(event);
@@ -48,10 +49,16 @@ GUI.prototype = {
 			if (typeof statClick === "undefined" || !statClick) {
 				this.setState("crosshair");
 			}
-		}*/
+		}
 	},
 	onMouseUp: function(event) {
 
+	},
+	onTouchDown: function() {
+	},
+	onTouchMove: function() {
+	},
+	onTouchUp: function() {
 	},
 	onItemSwitch: function(before, after) {
 		let data;
@@ -235,23 +242,19 @@ GUI.prototype = {
 		document.body.style.cursor = "pointer";
 	},
 	showCrosshair: function(ignoreRequest) {
-		if (this.inventory.isShown()) {
-			this.inventory.hide();
-		}
 		this.clearInterface();
 		if (!ignoreRequest)
 			this.parent.player.requestMouse();
 		let img = document.createElement("img");
 		img.src = "Images/crosshair.png";
-		this.main.appendChild(img);
-		this.hotbar.show();
+		this.primary.appendChild(img);
 		this.parent.resume();
 	},
 	showInventory: function() {
 		this.clearInterface();
-		this.parent.player.releaseMouse();
-		this.inventory.show();
-		this.setFill("rgba(0,0,0,0.5)");
+		this.parent.pause();
+		InventoryScreen.show();
+		this.setFill("rgba(0,0,0,0.65)");
 	},
 	preventDefaultBehaviours: function() {
 		document.body.onselectionstart = document.body.ondragstart = function(e) {

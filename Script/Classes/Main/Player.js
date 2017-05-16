@@ -1,9 +1,9 @@
 var controls, selection;
 
-function Player(scene, camera, self) {
+function Player(scene, camera, self, input) {
 	if (self) {
 		/* Controls */
-		this.controls = new MinecraftControls(this, scene, camera);
+		this.controls = new MinecraftControls(this, scene, camera, input);
 		this.defineVirtualProperties();
 		this.controls.onPause = () => this.parent.showPaused();
 		this.controls.onEnter = () => this.onGrabMouse();

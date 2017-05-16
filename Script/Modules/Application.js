@@ -7,6 +7,7 @@ const Application = (function() {
 	let lagCount = 0;
 	let paused = true;
 	let config = {};
+	let input;
 
 	function loadFinish() {
 		paused = true;
@@ -15,7 +16,7 @@ const Application = (function() {
 	}
 
 	function setup() {
-		gui = new GUI(this);
+		gui = new GUI(this, input);
 		Settings.performance.ignoreExcessiveLag.attach(config, "ignoreLag");
 		LoadingProgresser.setDelayed(Settings.performance.delayedLoading.value);
 		LoadingProgresser.setGame(this).setGUI(gui).begin().then(()=>loadFinish.call(this));
@@ -71,12 +72,6 @@ const Application = (function() {
 		gui.onMouseUp(ev);
 	}
 
-	function parseInput(input) {
-		window.addEventListener("mousedown", onMouseDown);
-		window.addEventListener("mousemove", onMouseMove);
-		window.addEventListener("mouseup", onMouseUp);
-	}
-
 	return {
 		pause: function() {
 			return (paused = true);
@@ -84,8 +79,11 @@ const Application = (function() {
 		resume: function() {
 			return (paused = false);
 		},
-		init: function(input) {
-			parseInput(input);
+		init: function(inputPar) {
+			input = inputPar;
+			input.addEventListener("mousedown", onMouseDown);
+			input.addEventListener("mousemove", onMouseMove);
+			input.addEventListener("mouseup", onMouseUp);
 			setup.call(this);
 			this.init = undefined;
 		},
@@ -94,11 +92,14 @@ const Application = (function() {
 			world = this.world;
 		},
 		setupPlayer: function() {
-			player = new Player(gui.scene, gui.camera, true);
+			player = new Player(gui.scene, gui.camera, true, input);
 			player.parent = this;
 			player.controls.onRelease = () => {
-				gui.showInventory();
+				if (gui.state === "crosshair") {
+					gui.setState("inventory");
+				}
 			}
+			this.player = player;
 		},
 		render: function() {
 			gui.renderer.render(gui.scene, gui.camera);

@@ -1,4 +1,4 @@
-function MinecraftControls(parent, scene, camera) {
+function MinecraftControls(parent, scene, camera, input) {
 	this.onRelease = undefined;
 	this.onStart = undefined;
 	if (!(scene instanceof THREE.Scene && camera instanceof THREE.Camera))
@@ -17,10 +17,22 @@ function MinecraftControls(parent, scene, camera) {
 		Settings.player.collision.size.x.attach(collisionSize, "x");
 		Settings.player.collision.size.y.attach(collisionSize, "y");
 		Settings.player.collision.size.z.attach(collisionSize, "z");
+		Settings.keys.movement.forward.attachEvent("down", ()=>this.moveForward = 1);
+		Settings.keys.movement.forward.attachEvent("up", ()=>this.moveForward = 0);
+		Settings.keys.movement.backward.attachEvent("down", ()=>this.moveBackward = 1);
+		Settings.keys.movement.backward.attachEvent("up", ()=>this.moveBackward = 0);
+		Settings.keys.movement.left.attachEvent("down", ()=>this.moveLeft = 1);
+		Settings.keys.movement.left.attachEvent("up", ()=>this.moveLeft = 0);
+		Settings.keys.movement.right.attachEvent("down", ()=>this.moveRight = 1);
+		Settings.keys.movement.right.attachEvent("up", ()=>this.moveRight = 0);
+		Settings.keys.movement.up.attachEvent("down", ()=>this.vertical = 1);
+		Settings.keys.movement.up.attachEvent("up", ()=>this.vertical = 0);
+		Settings.keys.movement.down.attachEvent("down", ()=>this.vertical = -1);
+		Settings.keys.movement.down.attachEvent("up", ()=>this.vertical = 0);
 		this.collision = new CollisionController(this, scene, collisionSize);
 	} else {
 		this.speed = {x:0.085, y:0.105, z:0.085};
-		let collisionSize = {x:0.75, y:1.625, z:0.75}
+		let collisionSize = {x:0.75, y:1.625, z:0.75};
 		this.collision = new CollisionController(this, scene, collisionSize);
 	}
 	this.velocity = new THREE.Vector3();
@@ -33,10 +45,9 @@ function MinecraftControls(parent, scene, camera) {
 	this.moveDown = false;
 	this.vertical = 0;
 
-	/*document.addEventListener('pointerlockchange', (event)=>this.onPointerlockChange(event), false)
+
+	document.addEventListener('pointerlockchange', (event)=>this.onPointerlockChange(event), false)
 	document.addEventListener('pointerlockerror', (event)=>this.onPointerlockError(event), false);
-	document.addEventListener('keydown', (event)=>this.onKeyChange(event.code, 1, event.ctrlKey, event.shiftKey), false);
-	document.addEventListener('keyup', (event)=>this.onKeyChange(event.code, 0, event.ctrlKey, event.shiftKey), false);*/
 }
 MinecraftControls.prototype = {
 	constructor: MinecraftControls,
