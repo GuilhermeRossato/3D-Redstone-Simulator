@@ -6,7 +6,8 @@
 7 : Top Slab
 */
 
-function isSolid(bd) {
+function isSolid(id) {
+	bd = blockData[id];
 	return bd.type !== 1 && bd.type !== 2;
 }
 
