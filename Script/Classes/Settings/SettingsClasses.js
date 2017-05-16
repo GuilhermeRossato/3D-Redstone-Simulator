@@ -65,9 +65,9 @@ function KeySetting(value) {
 	let listeners = {down: [], up: []};
 	this.attachEvent = (type, callback) => {
 		if (callback instanceof Function) {
-			if (type === "keyup" || type == "onkeyup")
+			if (type === "keyup" || type == "onkeyup" || type == "up")
 				listeners.up.push(callback);
-			else if (type === "keydown" || type == "onkeydown")
+			else if (type === "keydown" || type == "onkeydown" || type == "down")
 				listeners.down.push(callback);
 			else
 				console.warn("Invalid event type");
