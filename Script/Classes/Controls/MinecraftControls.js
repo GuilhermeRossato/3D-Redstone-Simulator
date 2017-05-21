@@ -136,9 +136,13 @@ MinecraftControls.prototype = {
 		}
 	},
 	savePlayerState: function() {
-		if (Settings)
-			return;
-		if (typeof setCookie === "function") {
+		if (Settings) {
+			Settings.player.position.x.value = this.yaw.position.x;
+			Settings.player.position.y.value = this.yaw.position.y;
+			Settings.player.position.z.value = this.yaw.position.z;
+			Settings.player.rotation.yaw.value = this.yaw.rotation.y;
+			Settings.player.rotation.pitch.value = this.pitch.rotation.x;
+		} else if (typeof setCookie === "function") {
 			var d = options.cookiesLastingDays;
 			setCookie("rs_posX", this.yaw.position.x, d);
 			setCookie("rs_posY", this.yaw.position.y, d);
