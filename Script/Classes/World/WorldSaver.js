@@ -10,7 +10,7 @@ WorldSaver.prototype = {
 	onKeyDown: function(event, code, ctrlKey) {
 		if (window.File && window.FileReader && window.FileList && window.Blob) {
 			if (ctrlKey && code === Settings.keys.file.save.value) {
-				this.save(true);
+				this.save(false);
 				event.preventDefault();
 			}
 		} else {
@@ -18,7 +18,7 @@ WorldSaver.prototype = {
 		}
 	},
 	isWithinArea: function(obj) {
-		return ( obj.x > -127 && obj.x < 128 && obj.y > -128 && obj.y < 128 && obj.z > -127 && obj.z < 128 && obj.id < 256) ;
+		return ( obj.x >= -127 && obj.x < 128 && obj.y >= -127 && obj.y < 128 && obj.z >= -127 && obj.z < 128 && obj.id < 256) ;
 	},
 	getDataSize: function(blocksNear, blocksFar) {
 		return blocksNear * 4 + 4 + (blocksFar) * 8;
@@ -31,10 +31,56 @@ WorldSaver.prototype = {
 		}
 	},
 	saveLarge: function() {
+		let data = this.getUncompressedData();
+		if (typeof saveAs === "function") {
+			let blob = new Blob(data);
+			globy = blob;
+			saveAs(blob, "world.rmc", false);
+			return blob;
+		} else {
+			console.warn("Warning: no saving mechanism!")
+			return data;
+		}
+	},
+	getUncompressedData: function() {
 		let type = "mcworld-js";
 		let typeSize = type.length;
+		let blocksNear = [];
+		let blocksFar = [];
+		this.world.getBlockList().forEach(obj=>{
+			if (obj && obj.id > 0) {
+				if (this.isWithinArea(obj))
+					blocksNear.push(obj);
+				else
+					blocksFar.push(obj);
+			}
+		}
+		);
+		let data = [];
+		data.push(type);
+		blocksNear.forEach((block,i) => {
+			["x","y","z","id"].forEach(dataType => {
+				let value = block[dataType]+128;
+				if (value < 10)
+					data.push("00"+value);
+				else if (value < 100)
+					data.push("0"+value);
+				else
+					data.push(value);
+			});
+		});
+		if (blocksFar.length > 0) {
+			data.push("001","001","001","000");
+			blocksFar.forEach((block,i) => {
+				["x","y","z","id"].forEach(dataType => {
+					data.push(","+block[dataType]);
+				});
+			});
+		}
+		//console.log("blockCount = ",blocksNear.length,blocksFar.length);
+		return data;
 	},
-	saveCompressed: function() {
+	getCompressedData: function() {
 		let type = "mcworld-min-js";
 		let typeSize = type.length;
 		let blocksNear = [];
@@ -80,13 +126,17 @@ WorldSaver.prototype = {
 		repeat(typeSize, (i) => {
 			data[i] = type.charCodeAt(i);
 		});
+		return data;
+	},
+	saveCompressed: function() {
+		let data = this.getCompressedData();
 		if (typeof saveAs === "function") {
 			let info = []
-			console.log(data);
+			//console.log(data);
 			data.forEach((number) => {
 				info.push(String.fromCharCode(number));
 			});
-			console.log(info.map(obj => obj.charCodeAt()));
+			//console.log(info.map(obj => obj.charCodeAt()));
 			let blob = new Blob(info);
 			globy = blob;
 			saveAs(blob, "world.rmc", false);
