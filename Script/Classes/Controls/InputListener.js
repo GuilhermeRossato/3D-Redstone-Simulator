@@ -25,6 +25,10 @@ function InputListener() {
 
 InputListener.prototype = {
 	constructor: InputListener,
+	attachEventToObject: function(object, type, func) {
+		// Supposedly we should add a way to log this, but I'm feeling lazy
+		object.addEventListener(type, func);
+	},
 	addEventListener: function(type, func) {
 		if (type === "wheel")
 			this.events.onMouseScroll.attach(func);

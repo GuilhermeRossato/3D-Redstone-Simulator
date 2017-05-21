@@ -51,23 +51,45 @@ WorldLoader.prototype = {
 		xhttp.send();
 	},
 	decideFileTypeByData: function(data) {
-		var str = "";
-		repeat("mcworld-js".length, i => {
-			str += String.fromCharCode(data[i]);
-		});
-		if (str === "mcworld-js") {
-			this.readNormal(data)
-		} else if (str === "mcworld-mi" && data[13] === 115) {
-			this.readCompressed(data);
+		let type = data.substr(0,10);
+		if (type === "mcworld-js") {
+			return this.readNormal(data)
+		} else if (type === "mcworld-mi" && data[13] === 115) {
+			return this.readCompressed(data);
 		} else {
 			this.errorLoading("incorrect syntax");
 		}
 	},
 	readNormal: function(data) {
-		let i = 11; // Start point
+		let i = 10; // Start point
+		let blockLimit = 20000;
+		let blocks = [];
+		let mode = "fast";
+		while (blockLimit > 0 && i < data.length) {
+			blockLimit--;
+			if (mode === "fast") {
+				let here = {
+					x:parseInt(data.substr(i,3))-128,
+					y:parseInt(data.substr(i+3,3))-128,
+					z:parseInt(data.substr(i+6,3))-128,
+					id:parseInt(data.substr(i+9,3))-128,
+				}
+				i+=12;
+				if (here.id === 0 && here.x === 1 && here.y === 1 && here.z === 1)
+					mode = "slow";
+				else
+					blocks.push(here);
+			} else {
+				let here = {};
+				["x","y","z","id"].forEach(property => {
+
+				});
+				break;
+			}
+		}
+		return blocks;
 	},
 	readCompressed: function(data) {
-		//console.log(data);
 		let i = 14; // Start point
 		let blockLimit = 20000;
 		let blocks = [];
@@ -109,12 +131,13 @@ WorldLoader.prototype = {
 			}
 		}
 		console.log(blocks);
+		return blocks;
 	},
 	isValidBlock: function(block) {
 		return (typeof block.x === "number" && typeof block.y === "number" && typeof block.z === "number" && typeof block.id === "number" && !isNaN(block.x) && !isNaN(block.y) && !isNaN(block.z) && !isNaN(block.id));
 	},
 	errorLoading: function(type) {
-		logger.error("Unable to read error due to " + type);
+		logger.error("Unable to read due to " + type);
 	},
 	takeLeftSide: function(number) {
 		return number%256;

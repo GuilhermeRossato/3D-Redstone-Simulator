@@ -62,8 +62,8 @@ LoadingProgresser = (function() {
 	}
 	function showWatchDogFatalError() {
 		LoadingScreen.setState("title", "Loading Error")
-		LoadingScreen.setState("description", "An unhandled expection must have stopped the LoadingProgresser.");
-		LoadingScreen.setState("percentage", "Please, send this to the developer: \"Loading State: " + state + "\"");
+		LoadingScreen.setState("description", "An unhandled exception must have stopped the LoadingProgresser.");
+		LoadingScreen.setState("percentage", "Please, send this to the developer: \"State: " + state + "\"");
 		console.log("state: ",state,"  lastStatusChange: ", watchDog.lastStatusChange);
 	}
 	function processStatusState(status, id) {

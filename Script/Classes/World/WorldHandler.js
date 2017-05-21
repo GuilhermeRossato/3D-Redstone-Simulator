@@ -10,6 +10,7 @@ function WorldHandler(scene) {
 	this.saver = new WorldSaver(this);
 	this.scene = scene;
 	this.blocks = [];
+	this.blockList = [];
 	this.allFaces = [];
 	this.faces = [];
 }
@@ -51,18 +52,7 @@ WorldHandler.prototype = {
 		}
 	},
 	getBlockList: function() {
-		var allBlocks = [];
-		this.blocks.forEach((x_axis,x)=>{
-			x_axis.forEach((z_axis,x)=>{
-				z_axis.forEach((y_axis,y)=>{
-					allBlocks.push(y_axis);
-				}
-				);
-			}
-			);
-		}
-		);
-		return allBlocks;
+		return this.blockList;
 	},
 	sidesDisplacement: [
 		["z", 0.5, "y", 0],		// 0 Front
@@ -75,40 +65,32 @@ WorldHandler.prototype = {
 	facesDisplacement: [[0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0]],
 	generate: function() {
 		let world = this;
-		let size = 20;
+		let size = 32;
+		//repeat(size, (i)=>{repeat(size, (k)=>{world.setBlock(i-16, 0, k-16, 1);});});
+		let blockList = this.loader.decideFileTypeByData(worldData);
+		blockList.forEach(block => {
+			world.setBlock(block.x, block.y, block.z, block.id);
+		});
+	},
+	generateMinecraftLikeTerrain() {
+		// Manual but CPU intensive!
+		let world = this;
+		let size = 32;
+		function isSolidSpace(x, y, z) {
+			return (y <= 0) || ((noise.perlin3((x+4)/16, (y)/16, (z-8)/16)+1)*10 > (y+7));
+		}
+		let counter = 0;
 		repeat(size, (i)=>{
-			repeat(size, (j)=>{
-				world.setBlock(i - size / 2, 0, j - size / 2, 1);
-			}
-			);
-		}
-		);
-		world.setBlock(0, 0, 0, 0);
-		world.setBlock(0, 1, 0, 0);
-		world.setBlock(1, 0, 0, 0);
-		world.setBlock(-1, 0, 0, 0);
-		world.setBlock(0, 0, 1, 0);
-		world.setBlock(0, 0, -1, 0);
-		world.setBlock(0, 0, 0, 0);
-		world.setBlock(3, 2, 6, 6);
-		world.setBlock(3, 2, 7, 4);
-		world.setBlock(4, 2, 6, 4);
-		world.setBlock(5, 1, 6, 43);
-		world.setBlock(6, 2, 6, 203);
-		world.setBlock(6, 3, 6, 203);
-		world.setBlock(6, 2, 7, 4);
-		world.setBlock(6, 6, 6, 204);
-		world.setBlock(6, 6, 7, 98);
-		world.setBlock(6, 6, 9, 98);
-		repeat(4, i=>{
-			world.setBlock(3, i + 1, 1, 98);
-			world.setBlock(3, i + 1, 0, 98);
-			if (i < 3) {
-				world.setBlock(-2, 1, i, 98);
-				world.setBlock(-2, 2, i, 98);
-			}
-		}
-		);
+			repeat(size, (k)=>{
+				repeat(25, (j)=> {
+					if (isSolidSpace(i, j, k) && (!isSolidSpace(i, j, k+1) || !isSolidSpace(i, j, k-1) || !isSolidSpace(i+1, j, k) || !isSolidSpace(i-1, j, k) || !isSolidSpace(i, j+1, k) || !isSolidSpace(i, j-1, k))) {
+						world.setBlock(i-size/2, j, k-size/2, 1);
+						counter++;
+					}
+				});
+			});
+		});
+		console.log("Created",counter,"blocks manually");
 	},
 	setTouchingFacesVisibility: function(x, y, z, ownFaces, state) {
 		this.facesDisplacement.forEach((obj,i)=>{
@@ -262,6 +244,11 @@ WorldHandler.prototype = {
 	removeBlock: function(x, y, z) {
 		let blockInfo = this.getBlockInfo(x, y, z);
 		if (blockInfo && blockInfo.faces) {
+			let blockListIndex = this.blockList.indexOf(blockInfo);
+			if (blockListIndex !== -1)
+				this.blockList.splice(blockListIndex, 1);
+			else
+				console.warn("Block to be removed not found on main block list");
 			this.showTouchingFaces(x, y, z);
 			let sceneIndex = this.scene.children.indexOf(blockInfo.faces[0]);
 			let facesIndex = this.allFaces.indexOf(blockInfo.faces[0]);
@@ -300,6 +287,10 @@ WorldHandler.prototype = {
 			this.blocks[y] = [];
 		if (!this.blocks[y][x])
 			this.blocks[y][x] = [];
+		block.x = x;
+		block.y = y;
+		block.z = z;
+		this.blockList.push(block);
 		this.blocks[y][x][z] = block;
 	},
 	update: function() {}

@@ -4,8 +4,9 @@ var logger, inventory;
 function GUI(parent, input) {
 	this.performancer = new Performancer(Settings.performance.compactPerformancer.value, 20);
 	this.performancer.onCompactChange = function(value) {
-		Settings.performance.compactPerformancer.set(value)
+		Settings.performance.compactPerformancer.value = value;
 	}
+	this.input = input;
 	this.parent = parent;
 }
 
@@ -14,8 +15,13 @@ GUI.prototype = {
 	loadBegin: function() {
 		this.primary = document.getElementById("primary");
 		this.secondary = document.getElementById("secondary");
+		this.main = this.primary.parentNode;
 		(!this.primary || !this.secondary) && console.warn("Primary and Secondary element should already exist!");
 		this.loadCount = 0;
+
+		this.input.attachEventToObject(this.main, "mousedown", ()=>this.onMouseDown.call(this));
+		this.input.attachEventToObject(this.main, "mousemove", ()=>this.onMouseMove.call(this));
+		this.input.attachEventToObject(this.main, "mouseup", ()=>this.onMouseUp.call(this));
 	},
 	loadStep: function() {
 		if (this.loadCount === 0) {
@@ -50,6 +56,9 @@ GUI.prototype = {
 				this.setState("crosshair");
 			}
 		}
+	},
+	onMouseMove: function(event) {
+
 	},
 	onMouseUp: function(event) {
 
@@ -181,27 +190,12 @@ GUI.prototype = {
 			while (this.secondary.firstChild)
 				this.secondary.removeChild(this.secondary.firstChild);
 		this.canvas.style.cursor = "default";
-		if (this.fill)
-			this.fill.style.backgroundColor = "transparent";
+		this.setFill("transparent");
 		if (typeof logger === "object")
 			this.secondary.appendChild(logger.domElement);
 	},
-	createFill: function() {
-		this.fill = document.createElement("div");
-		this.fill.style.position = "absolute";
-		this.fill.style.width = "100%";
-		this.fill.style.height = "100%";
-		this.fill.style.zIndex = "5";
-		let fillActive = true;
-		if (fillActive) {
-			//document.body.style.backgroundColor = "#ffffff";
-			document.body.appendChild(this.fill);
-		}
-	},
 	setFill: function(color) {
-		if (!this.fill)
-			this.createFill();
-		this.fill.style.backgroundColor = color
+		this.main.style.backgroundColor = color;
 	},
 	showPaused: function() {
 		this.clearInterface();
@@ -237,7 +231,7 @@ GUI.prototype = {
 	},
 	showInstructions: function() {
 		this.clearInterface();
-		this.setFill("rgba(0,0,0,0.1)");
+		this.setFill("rgba(0,0,0,0.3)");
 		InstructionScreen.show();
 		document.body.style.cursor = "pointer";
 	},

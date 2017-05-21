@@ -60,18 +60,6 @@ const Application = (function() {
 		window.requestAnimationFrame(update);
 	}
 
-	function onMouseDown(ev) {
-		gui.onMouseDown(ev);
-	}
-
-	function onMouseMove(ev) {
-		//gui.onMouseMove(ev);
-	}
-
-	function onMouseUp(ev) {
-		gui.onMouseUp(ev);
-	}
-
 	return {
 		pause: function() {
 			return (paused = true);
@@ -81,9 +69,6 @@ const Application = (function() {
 		},
 		init: function(inputPar) {
 			input = inputPar;
-			input.addEventListener("mousedown", onMouseDown);
-			input.addEventListener("mousemove", onMouseMove);
-			input.addEventListener("mouseup", onMouseUp);
 			setup.call(this);
 			this.init = undefined;
 		},

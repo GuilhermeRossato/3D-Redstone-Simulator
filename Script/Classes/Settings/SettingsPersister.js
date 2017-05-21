@@ -27,46 +27,65 @@ SettingsPersister.prototype = {
 			this._recursiveSave("rs", Settings);
 		}
 	},
-	_loadBooleanSetting: function(cookieName, setting) {
+	_parseBooleanSetting: function(cookieName, setting) {
 		var cookieData = getCookie(cookieName)
 		if (cookieData === "1")
 			setting.value = true;
 		else if (cookieData === "0")
 			setting.value = false;
+		setting.attach(function(value) {
+			//console.log("savingb",cookieName);
+			setCookie(cookieName, value?"1":"0");
+		});
 	},
-	_loadFloatSetting: function(cookieName, setting) {
+	_parseFloatSetting: function(cookieName, setting) {
 		var cookieData = getCookie(cookieName);
 		if (cookieData && cookieData !== "") {
 			cookieData = parseFloat(cookieData);
 			if (!isNaN(cookieData))
 				setting.value = cookieData;
 		}
+		setting.attach(function(value) {
+			//console.log("savingf",cookieName);
+			setCookie(cookieName, value);
+		});
 	},
-	_loadIntegerSetting: function(cookieName, setting) {
+	_parseIntegerSetting: function(cookieName, setting) {
 		var cookieData = getCookie(cookieName);
 		if (cookieData && cookieData !== "") {
 			cookieData = parseInt(cookieData);
 			if (!isNaN(cookieData))
 				setting.value = cookieData;
 		}
+		setting.attach(function(value) {
+			//console.log("savingi",cookieName);
+			setCookie(cookieName, value);
+		});
 	},
-	_loadVectorSetting: function(cookieName, setting) {
-		var cookieData = getCookie(cookieName);
-		if (cookieData && cookieData !== "") {
-			cookieData = cookieData.split(",").filter(piece=>(piece && piece !== "")).map(piece=>parseFloat()).filter(float=>!isNaN(float));
-			if (cookieData.length === 3)
-				setting.set(cookieData[0], cookieData[1], cookieData[2]);
-		}
+	_parseVectorSetting: function(cookieName, setting) {
+		["x", "y", "z"].forEach(axis => {
+			let cookieData = getCookie(cookieName + axis);
+			if (cookieData && cookieData !== "") {
+				cookieData = parseFloat(cookieData);
+				if (!isNaN(cookieData)) {
+					setting[axis].value = cookieData;
+				}
+			}
+			setting[axis].attach(function(value) {
+				//console.log("saving",cookieName + axis);
+				setCookie(cookieName + axis, value);
+			});
+		});
 	},
 	_recursiveParse: function(past, object) {
 		if (object instanceof BooleanSetting) {
-			this._loadBooleanSetting(past, object)
+			this._parseBooleanSetting(past, object)
 		} else if (object instanceof FloatSetting) {
-			this._loadFloatSetting(past, object);
+			this._parseFloatSetting(past, object);
 		} else if (object instanceof IntegerSetting) {
-			this._loadIntegerSetting(past, object);
+			this._parseIntegerSetting(past, object);
 		} else if (object instanceof VectorSetting) {
-			this._loadVectorSetting(past, object);
+			this._parseVectorSetting(past, object);
 		} else if (object instanceof Array)
 			object.forEach((subObject,i)=>{
 				this._recursiveParse(past + i, subObject);
