@@ -84,6 +84,7 @@ const WelcomeScreen = {
 		document.addEventListener("touchstart", this.checkEvents.onTouchStart);
 		document.addEventListener("mousedown", this.checkEvents.onMouseDown);
 		document.addEventListener("keydown", this.checkEvents.onKeyDown);
+		logger.log("started v1");
 		return this;
 	},
 	hide: function() {
