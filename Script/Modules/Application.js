@@ -11,7 +11,7 @@ const Application = (function() {
 
 	function loadFinish() {
 		paused = true;
-		gui.setState("help");
+		gui.setState("welcome");
 		update();
 	}
 
@@ -56,6 +56,7 @@ const Application = (function() {
 			}
 			leftOver = difference;
 		}
+		gui.update();
 		gui.renderer.render(gui.scene, gui.camera);
 		window.requestAnimationFrame(update);
 	}

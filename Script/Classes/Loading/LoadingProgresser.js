@@ -55,15 +55,15 @@ LoadingProgresser = (function() {
 		console.log(status.debug);
 	}
 	function showWatchDogError() {
-		LoadingScreen.setState("title", "WatchDog Intervention")
-		LoadingScreen.setState("description", "Too long has passed between the last loading update");
-		LoadingScreen.setState("percentage", "This shouldn't happen unless you have a slow network.");
+		//LoadingScreen.setState("title", "WatchDog Intervention")
+		LoadingScreen.setState("description", "This is taking too long...");
+		//LoadingScreen.setState("percentage", "This shouldn't happen unless you have a slow network.");
 		console.log("state: ",state,"  lastStatusChange: ", watchDog.lastStatusChange);
 	}
 	function showWatchDogFatalError() {
-		LoadingScreen.setState("title", "Loading Error")
+		LoadingScreen.setState("title", "WatchDog Intervention")
 		LoadingScreen.setState("description", "An unhandled exception must have stopped the LoadingProgresser.");
-		LoadingScreen.setState("percentage", "Please, send this to the developer: \"State: " + state + "\"");
+		LoadingScreen.setState("percentage", "Please, send this to the developer: \"Error State: " + state + "\"");
 		console.log("state: ",state,"  lastStatusChange: ", watchDog.lastStatusChange);
 	}
 	function processStatusState(status, id) {
@@ -81,10 +81,16 @@ LoadingProgresser = (function() {
 		if (id === 0) {
 			setText("Initializing Graphical User Interface");
 			(gui.loadBegin && gui.loadBegin());
-			InstructionScreen.init();
-			InventoryScreen.init();
-			MenuScreen.init();
-			MessageScreen.init();
+			let screenList = [
+					DesktopInstructionScreen,
+					MobileInstructionScreen,
+					GamepadInstructionScreen,
+					InventoryScreen,
+					MenuScreen,
+					MessageScreen,
+					WelcomeScreen
+			];
+			screenList.forEach(screen => screen.init.call(screen, gui));
 			setState(1);
 		} else if (id === 1) {
 			let lastStatus = gui.loadStep();

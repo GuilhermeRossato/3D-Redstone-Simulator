@@ -8,6 +8,8 @@ function GUI(parent, input) {
 	}
 	this.input = input;
 	this.parent = parent;
+	this.activeScreen = undefined;
+	this.inputType = "desktop";
 }
 
 GUI.prototype = {
@@ -31,8 +33,6 @@ GUI.prototype = {
 			this.primary = document.getElementById("primary");
 			this.secondary = document.getElementById("secondary");
 			logger = this.logger;
-			InstructionScreen.init();
-			MessageScreen.init();
 			this.performancer.attach(document.body);
 			return new LoadStatus("Graphical User Interface", "three.js Setup", 0.5);
 		} else if (this.loadCount === 1) {
@@ -58,10 +58,8 @@ GUI.prototype = {
 		}
 	},
 	onMouseMove: function(event) {
-
 	},
 	onMouseUp: function(event) {
-
 	},
 	onTouchDown: function() {
 	},
@@ -95,6 +93,11 @@ GUI.prototype = {
 				ItemFunctions[data.name].onSelected();
 		}
 	},
+	update: function() {
+		if (this.activeScreen && this.activeScreen.update) {
+			this.activeScreen.update();
+		}
+	},
 	setState: function(state) {
 		this.state = state;
 		if (state === "inventory")
@@ -105,8 +108,14 @@ GUI.prototype = {
 			this.showHalted();
 		else if (state === "paused")
 			this.showPaused();
-		else if (state === "help")
-			this.showInstructions();
+		else if (state === "desktop")
+			this.showInstructions(0);
+		else if (state === "touchscreen")
+			this.showInstructions(1);
+		else if (state === "gamepad")
+			this.showInstructions(2);
+		else if (state === "welcome")
+			this.showWelcome();
 		else
 			console.warn("Invalid State!");
 	},
@@ -182,15 +191,21 @@ GUI.prototype = {
 		if (this.renderer) {
 			this.renderer.setSize(window.innerWidth, window.innerHeight);
 		}
+		if (this.activeScreen && this.activeScreen.resize) {
+			this.activeScreen.resize();
+		}
 	},
 	clearInterface: function() {
-		while (this.primary.firstChild)
-			this.primary.removeChild(this.primary.firstChild);
-		if (this.secondary instanceof HTMLDivElement)
-			while (this.secondary.firstChild)
-				this.secondary.removeChild(this.secondary.firstChild);
-		this.canvas.style.cursor = "default";
-		this.setFill("transparent");
+		if (this.activeScreen) {
+			this.activeScreen.hide()
+		} else {
+			while (this.primary.firstChild)
+				this.primary.removeChild(this.primary.firstChild);
+			if (this.secondary instanceof HTMLDivElement)
+				while (this.secondary.firstChild)
+					this.secondary.removeChild(this.secondary.firstChild);
+			this.setFill("transparent");
+		}
 		if (typeof logger === "object")
 			this.secondary.appendChild(logger.domElement);
 	},
@@ -207,8 +222,7 @@ GUI.prototype = {
 			style: "font-size:48px;"
 		}]);
 		MessageScreen.show();
-		this.setFill("rgba(0,0,0,0.3)");
-		this.fill.style.cursor = "pointer";
+		this.setFill("rgba(0,0,0,0.4)");
 	},
 	showHalted: function() {
 		this.clearInterface();
@@ -226,28 +240,39 @@ GUI.prototype = {
 			style: "font-size:12px;"
 		});
 		MessageScreen.show();
-		this.setFill("rgba(0,0,0,0.3)");
-		this.fill.style.cursor = "pointer";
+		this.setFill("rgba(0,0,0,0.4)");
 	},
-	showInstructions: function() {
+	showInstructions: function(id) {
 		this.clearInterface();
-		this.setFill("rgba(0,0,0,0.3)");
-		InstructionScreen.show();
-		document.body.style.cursor = "pointer";
+		if (id === 0) {
+			this.inputType = "desktop";
+			this.activeScreen = DesktopInstructionScreen.show();
+		} else if (id === 1) {
+			this.inputType = "touchscreen";
+			this.activeScreen = MobileInstructionScreen.show();
+		} else if (id === 2) {
+			this.inputType = "gamepad";
+			this.activeScreen = GamepadInstructionScreen.show();
+		}
+		this.setFill("rgba(0,0,0,0.4)");
 	},
 	showCrosshair: function(ignoreRequest) {
 		this.clearInterface();
 		if (!ignoreRequest)
 			this.parent.player.requestMouse();
-		let img = document.createElement("img");
-		img.src = "Images/crosshair.png";
-		this.primary.appendChild(img);
+		this.activeScreen = CrosshairScreen.show();
 		this.parent.resume();
 	},
 	showInventory: function() {
 		this.clearInterface();
 		this.parent.pause();
-		InventoryScreen.show();
+		this.activeScreen = InventoryScreen.show();
+		this.setFill("rgba(0,0,0,0.65)");
+	},
+	showWelcome: function() {
+		this.clearInterface();
+		this.parent.pause();
+		this.activeScreen = WelcomeScreen.show();
 		this.setFill("rgba(0,0,0,0.65)");
 	},
 	preventDefaultBehaviours: function() {

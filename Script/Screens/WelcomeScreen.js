@@ -1,33 +1,91 @@
 const WelcomeScreen = {
-	init: function() {
+	init: function(gui) {
+		this.parent = gui;
 		this.shown = false;
 		let primary = document.getElementById("primary");
-		this.main = primary.parentElement;
-		
+		let baseChildStyle = "min-width:20vmax;text-align:center;flex: 1 1 auto; margin:5px; background-color:rgba(99,99,99,0.5);";
 		this.elements = {
-			wrapper: this.createElement("div", "display:flex; align-items:center; content-align:space-around;background-color:#444;"),
-			keyboard: this.createElement("div", "order:1;width:30%;background-color:#555;color:#eee;",
-										 "Mouse and Keyboard", "mouse keyboard", "Click anywhere to select"),
-			touchscreen: this.createElement("div", "order:2;width:30%;background-color:#555;color:#eee;",
-											"Touchscreen", "touch_app", "Touch anywhere to select"),
-			gamepad: this.createElement("div", "order:3;width:30%;background-color:#555;color:#eee;",
-										"Gamepad", "videogame_asset", "Press any key to select")
+			wrapper: this.createElement("div", "color:#DDD; display:flex; align-items:flex-start;align-content: space-around;"),
+			keyboard: this.createElement("div", "order:1;"+baseChildStyle,
+										 "Desktop", "keyboard mouse", "Click anywhere to select", 1),
+			touchscreen: this.createElement("div", "order:2;"+baseChildStyle,
+											"Touchscreen", "touch_app", "Touch anywhere to select", 2),
+			gamepad: this.createElement("div", "order:3;"+baseChildStyle,
+										"Gamepad", "videogame_asset", "Press any button to select", 3)
 		}
+		this.main = primary.parentElement;
 		[this.elements.keyboard,this.elements.touchscreen,this.elements.gamepad].forEach(element => this.elements.wrapper.appendChild(element));
+
+		let self = this;
+		this.checkEvents = {
+			onTouchStart: function() {
+				self.lastEvent = "touchscreen";
+			},
+			onGamepadKey: function() {
+				self.lastEvent = "gamepad";
+			},
+			onMouseDown: function() {
+				self.lastEvent = "desktop";
+			},
+			onKeyDown: function() {
+				self.lastEvent = "desktop";
+			}
+		}
+	},
+	checkForGampadEvent: function() {
+		let gamepad = navigator.getGamepads()[0];
+		if (gamepad && gamepad.buttons) {
+			gamepad.buttons.forEach(button => (button.pressed && this.checkEvents.onGamepadKey(button)));
+		}
+	},
+	update: function() {
+		if (this.fading) {
+			let timeStamp = performance.now();
+			if (timeStamp - this.fadedTimeStamp > 1000) {
+				this.fading = false;
+				this.parent.setState(this.nextGuiState);
+			}
+		} else {
+			this.checkForGampadEvent();
+			let index = ["desktop", "touchscreen", "gamepad"].indexOf(this.lastEvent);
+			if (index !== -1) {
+				this.fading = true;
+				this.fadeOut(index);
+				this.fadedTimeStamp = performance.now();
+				this.nextGuiState = this.lastEvent;
+			}
+		}
+	},
+	resize: function() {
+		this.elements.wrapper.style.rotate = (window.innerWidth < window.innerHeight)?"90deg":"none";
 	},
 	show: function() {
-		if (!this.shown)
-			return
-		this.elements.wrapper.display = "none";
-		this.shown = false;
-	},
-	hide: function() {
 		if (this.shown)
 			return
-		this.elements.wrapper.display = "flex";
-		this.shown = false;
+		this.resize();
+		this.main.appendChild(this.elements.wrapper);
+		this.main.style.cursor = "pointer";
+		this.shown = true;
+		document.addEventListener("touchstart", this.checkEvents.onTouchStart);
+		document.addEventListener("mousedown", this.checkEvents.onMouseDown);
+		document.addEventListener("keydown", this.checkEvents.onKeyDown);
+		return this;
 	},
-	createElement: function(type, style, title, iconText, text) {
+	hide: function() {
+		if (!this.shown)
+			return
+		this.main.removeChild(this.elements.wrapper);
+		this.main.style.cursor = "default";
+		this.shown = false;
+		document.removeEventListener("touchstart", this.checkEvents.onTouchStart);
+		document.removeEventListener("mousedown", this.checkEvents.onMouseDown);
+		document.removeEventListener("keydown", this.checkEvents.onKeyDown);
+	},
+	fadeOut: function(id) {
+		let elements = [this.elements.keyboard, this.elements.touchscreen, this.elements.gamepad];
+		elements.forEach((element, i) => ((element.style.transition = (i === id)?"all 1s ease-in":"all 0.5s") && (element.style.opacity = '0')));
+	},
+	createElement: function(type, style, title, iconText, text, id) {
 		let element = document.createElement(type);
 		let selement;
 		if (style) {
@@ -35,25 +93,35 @@ const WelcomeScreen = {
 		}
 		if (title) {
 			selement = document.createElement("span");
-			selement.setAttribute("style", "display:block;font-size:2em;");
-			selement.appendChild(document.createTextNode(text));
+			selement.setAttribute("style", "display:block;font-size:1.5em; padding:7px;");
+			selement.appendChild(document.createTextNode(title));
 			element.appendChild(selement);
 		}
 		if (iconText) {
-			selement = document.createElement("span");
-			selement.setAttribute("style", "display:block;font-size:1em;");
-			let sselement = document.createElement("i");
-			sselement.setAttribute("class", "material-icons");
-			selement.appendChild(document.createTextNode(iconText));
+			selement = document.createElement("div");
+			selement.setAttribute("style", "display: flex; width: 100%; align-items: center; justify-content:center; white-space: nowrap;");
+			//let iconList = iconText.split(" ");
+			iconText.split(" ").forEach(function(iconName, i, iconList) {
+				let sselement = document.createElement("i");
+				sselement.setAttribute("class", "material-icons");
+				if (iconList.length > 1 && i == 0) {
+					sselement.setAttribute("style", "font-size:9.2em;");
+				} else if (iconList.length > 1 && i == 1) {
+					sselement.setAttribute("style", "font-size:5.2em;");
+				} else {
+					sselement.setAttribute("style", "font-size:9em;");
+				}
+				sselement.appendChild(document.createTextNode(iconName));
+				selement.appendChild(sselement);
+			});
 			element.appendChild(selement);
 		}
 		if (text) {
 			selement = document.createElement("span");
-			selement.setAttribute("style", "display:block;font-size:1em;");
+			selement.setAttribute("style", "display:block;font-size:0.75em; padding:8px 4px; white-space: nowrap;");
 			selement.appendChild(document.createTextNode(text));
-			element.appendChild(subElement);
+			element.appendChild(selement);
 		}
 		return element;
 	}
 }
-	

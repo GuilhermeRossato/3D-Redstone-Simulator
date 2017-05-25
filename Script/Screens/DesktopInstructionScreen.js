@@ -1,4 +1,4 @@
-const InstructionScreen = {
+const DesktopInstructionScreen = {
 /*"Click anywhere to start\nInstructions\n" +
 "[W, A, S, D] to move up, left, down, right\n" +
 "[Numeric Keys] to change selected block\n" +
