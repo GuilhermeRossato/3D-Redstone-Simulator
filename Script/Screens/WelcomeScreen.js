@@ -19,6 +19,7 @@ const WelcomeScreen = {
 		let self = this;
 		this.checkEvents = {
 			onTouchStart: function() {
+				document.body.requestFullscreen();
 				self.lastEvent = "touchscreen";
 			},
 			onGamepadKey: function() {
@@ -43,6 +44,7 @@ const WelcomeScreen = {
 			let timeStamp = performance.now();
 			if (timeStamp - this.fadedTimeStamp > 1000) {
 				this.fading = false;
+				this.parent.inputType = this.nextGuiState;
 				this.parent.setState(this.nextGuiState);
 			}
 		} else {
