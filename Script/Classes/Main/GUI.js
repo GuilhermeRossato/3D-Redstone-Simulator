@@ -93,6 +93,9 @@ GUI.prototype = {
 				ItemFunctions[data.name].onSelected();
 		}
 	},
+	requestFullScreen: function() {
+		document.body.requestFullscreen();
+	},
 	update: function() {
 		if (this.activeScreen && this.activeScreen.update) {
 			this.activeScreen.update();
@@ -108,13 +111,13 @@ GUI.prototype = {
 			this.showHalted();
 		else if (state === "paused")
 			this.showPaused();
-		else if (state === "desktop")
+		else if (state === "desktop") {
 			this.showInstructions(0);
-		else if (state === "touchscreen")
+		} else if (state === "touchscreen") {
 			this.showInstructions(1);
-		else if (state === "gamepad")
+		} else if (state === "gamepad") {;
 			this.showInstructions(2);
-		else if (state === "welcome")
+		} else if (state === "welcome")
 			this.showWelcome();
 		else
 			console.warn("Invalid State!");
@@ -245,13 +248,10 @@ GUI.prototype = {
 	showInstructions: function(id) {
 		this.clearInterface();
 		if (id === 0) {
-			this.inputType = "desktop";
 			this.activeScreen = DesktopInstructionScreen.show();
 		} else if (id === 1) {
-			this.inputType = "touchscreen";
 			this.activeScreen = MobileInstructionScreen.show();
 		} else if (id === 2) {
-			this.inputType = "gamepad";
 			this.activeScreen = GamepadInstructionScreen.show();
 		}
 		this.setFill("rgba(0,0,0,0.4)");

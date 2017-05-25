@@ -19,6 +19,19 @@ const WelcomeScreen = {
 		let self = this;
 		this.checkEvents = {
 			onTouchStart: function() {
+				logger.log("Trying First");
+				let elem = this.main;
+				if (elem.requestFullscreen) {
+				  elem.requestFullscreen();
+				} else if (elem.msRequestFullscreen) {
+				  elem.msRequestFullscreen();
+				} else if (elem.mozRequestFullScreen) {
+				  elem.mozRequestFullScreen();
+				} else if (elem.webkitRequestFullscreen) {
+				  elem.webkitRequestFullscreen();
+				} else {
+					logger.log("Failed miserably");
+				}
 				self.lastEvent = "touchscreen";
 			},
 			onGamepadKey: function() {
@@ -43,6 +56,8 @@ const WelcomeScreen = {
 			let timeStamp = performance.now();
 			if (timeStamp - this.fadedTimeStamp > 1000) {
 				this.fading = false;
+				this.parent.inputType = this.nextGuiState;
+				
 				this.parent.setState(this.nextGuiState);
 			}
 		} else {
