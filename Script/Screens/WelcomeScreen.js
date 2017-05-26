@@ -72,6 +72,7 @@ const WelcomeScreen = {
 		}
 	},
 	resize: function() {
+		logger.log((window.innerWidth < window.innerHeight)?"Resized sideways":"No resizing necessray");
 		this.elements.wrapper.style.rotate = (window.innerWidth < window.innerHeight)?"90deg":"none";
 	},
 	show: function() {
