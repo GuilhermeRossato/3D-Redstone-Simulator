@@ -37,11 +37,9 @@ const WelcomeScreen = {
 			onGamepadKey: function() {
 				self.lastEvent = "gamepad";
 			},
-			onMouseDown: function() {
-				self.lastEvent = "desktop";
-			},
-			onKeyDown: function() {
-				self.lastEvent = "desktop";
+			onMouseDown: function(ev) {
+				if (ev.button === 0)
+					self.lastEvent = "desktop";
 			}
 		}
 	},
@@ -73,7 +71,7 @@ const WelcomeScreen = {
 	},
 	resize: function() {
 		logger.log((window.innerWidth < window.innerHeight)?"Resized sideways":"No resizing necessray");
-		this.elements.wrapper.style.rotate = (window.innerWidth < window.innerHeight)?"90deg":"none";
+		this.elements.wrapper.style.transform = (window.innerWidth < window.innerHeight)?"rotate(90deg)":"none";
 	},
 	show: function() {
 		if (this.shown)
