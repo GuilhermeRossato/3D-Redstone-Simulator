@@ -12,7 +12,7 @@ const LoadingScreen = {
 		document.body.setAttribute("style", "width:100%;height:100%;background-color:#999;margin:0px;padding:0px;overflow:hidden;");
 
 		let primaryParent = document.createElement("div");
-		primaryParent.setAttribute("style", "z-index:10;position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;")
+		primaryParent.setAttribute("style", "z-index:10;position:absolute;width:100%;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;")
 
 		let primary = document.createElement("div");
 		primary.setAttribute("style", "z-index:11;text-align:center;");
