@@ -84,7 +84,7 @@ const WelcomeScreen = {
 		this.shown = true;
 		document.addEventListener("touchstart", this.checkEvents.onTouchStart);
 		document.addEventListener("mousedown", this.checkEvents.onMouseDown);
-		document.addEventListener("keydown", this.checkEvents.onKeyDown);
+		//document.addEventListener("keydown", this.checkEvents.onKeyDown);
 		logger.log("started v1");
 		return this;
 	},
@@ -96,7 +96,7 @@ const WelcomeScreen = {
 		this.shown = false;
 		document.removeEventListener("touchstart", this.checkEvents.onTouchStart);
 		document.removeEventListener("mousedown", this.checkEvents.onMouseDown);
-		document.removeEventListener("keydown", this.checkEvents.onKeyDown);
+		//document.removeEventListener("keydown", this.checkEvents.onKeyDown);
 	},
 	fadeOut: function(id) {
 		let elements = [this.elements.keyboard, this.elements.touchscreen, this.elements.gamepad];
