@@ -16,7 +16,11 @@ Note that during development, the above link will not always bring you to a work
  - v 0.4 [Inventory, Hotbar and Procedural Terrain Generation]
 ![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v04_normal.gif?raw=true)
 
-# How to run / build locally
+# How to run this repo locally
+
+If you have windows, run the file inside `/Tools/run.bat`, it should run Google Chrome with web security disabled. That solves cross origin conflicts, block textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
+
+Coming ~~soon~~ eventually: a `run.sh` for Linux
 
 If you download a release, (on windows) use the "Run" shortcut to the .bat to run chrome with web security disabled. That solves cross origin conflicts, all blocks textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
 
