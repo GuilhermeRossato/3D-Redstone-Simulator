@@ -270,7 +270,7 @@ GUI.prototype = {
 		this.setFill("rgba(0,0,0,0.65)");
 	},
 	showWelcome: function() {
-		this.clearInterface();
+		//this.clearInterface();
 		this.parent.pause();
 		this.activeScreen = WelcomeScreen.show();
 		this.setFill("rgba(0,0,0,0.65)");
