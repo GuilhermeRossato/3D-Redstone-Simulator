@@ -3,9 +3,15 @@ const WelcomeScreen = {
 		this.parent = gui;
 		this.shown = false;
 		let primary = document.getElementById("primary");
+		this.primary = primary;
+		let wrapper = document.createElement("div");
+		wrapper.setAttribute("style", primary.parentNode.getAttribute("style"));
+		primary.parentNode.parentNode.appendChild(wrapper);
+
 		let baseChildStyle = "min-width:20vmax;text-align:center;flex: 1 1 auto; margin:5px; background-color:rgba(99,99,99,0.5);";
+		this.showInputMenuTimer = 16;
 		this.elements = {
-			wrapper: this.createElement("div", "color:#DDD; display:flex; align-items:flex-start;align-content: space-around;"),
+			wrapper: this.createElement("div", "opacity: 0; color:#DDD; display:flex; align-items:flex-start;align-content: space-around;"),
 			keyboard: this.createElement("div", "order:1;"+baseChildStyle,
 										 "Desktop", "keyboard mouse", "Click anywhere to select", 1),
 			touchscreen: this.createElement("div", "order:2;"+baseChildStyle,
@@ -13,7 +19,7 @@ const WelcomeScreen = {
 			gamepad: this.createElement("div", "order:3;"+baseChildStyle,
 										"Gamepad", "videogame_asset", "Press any button to select", 3)
 		}
-		this.main = primary.parentElement;
+		this.main = wrapper;
 		[this.elements.keyboard,this.elements.touchscreen,this.elements.gamepad].forEach(element => this.elements.wrapper.appendChild(element));
 
 		let self = this;
@@ -66,11 +72,21 @@ const WelcomeScreen = {
 				this.fadeOut(index);
 				this.fadedTimeStamp = performance.now();
 				this.nextGuiState = this.lastEvent;
+			} else {
+				if (this.showInputMenuTimer > 0) {
+					this.showInputMenuTimer--;
+					if (this.showInputMenuTimer === 0) {
+						this.elements.wrapper.style.opacity = "1";
+						this.parent.activeScreen = undefined;
+						this.parent.clearInterface();
+						this.parent.activeScreen = this;
+						this.parent.setFill("rgba(0,0,0,0.65)");
+					}
+				}
 			}
 		}
 	},
 	resize: function() {
-		logger.log((window.innerWidth < window.innerHeight)?"Resized sideways":"No resizing necessray");
 		this.elements.wrapper.style.transform = (window.innerWidth < window.innerHeight)?"rotate(90deg)":"none";
 	},
 	show: function() {
@@ -83,7 +99,6 @@ const WelcomeScreen = {
 		document.addEventListener("touchstart", this.checkEvents.onTouchStart);
 		document.addEventListener("mousedown", this.checkEvents.onMouseDown);
 		//document.addEventListener("keydown", this.checkEvents.onKeyDown);
-		logger.log("started v1");
 		return this;
 	},
 	hide: function() {
@@ -119,12 +134,16 @@ const WelcomeScreen = {
 			iconText.split(" ").forEach(function(iconName, i, iconList) {
 				let sselement = document.createElement("i");
 				sselement.setAttribute("class", "material-icons");
-				if (iconList.length > 1 && i == 0) {
-					sselement.setAttribute("style", "font-size:9.2em;");
-				} else if (iconList.length > 1 && i == 1) {
-					sselement.setAttribute("style", "font-size:5.2em;");
+				var fontSize = "9em";
+				if (iconName === "keyboard") {
+					fontSize = "9.2em";
+				} else if (iconName === "mouse") {
+					fontSize = "5.2em";
+				}
+				if (iconName === "touch_app") {
+					sselement.setAttribute("style", `font-size:${fontSize}; height: 154px; margin-top:-10px;`);
 				} else {
-					sselement.setAttribute("style", "font-size:9em;");
+					sselement.setAttribute("style", `font-size:${fontSize}; max-height: 144px;`);
 				}
 				sselement.appendChild(document.createTextNode(iconName));
 				selement.appendChild(sselement);
