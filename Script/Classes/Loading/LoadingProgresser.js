@@ -82,13 +82,13 @@ LoadingProgresser = (function() {
 			setText("Initializing Graphical User Interface");
 			(gui.loadBegin && gui.loadBegin());
 			let screenList = [
-					DesktopInstructionScreen,
-					MobileInstructionScreen,
-					GamepadInstructionScreen,
-					InventoryScreen,
-					MenuScreen,
-					MessageScreen,
-					WelcomeScreen
+				DesktopInstructionScreen,
+				MobileInstructionScreen,
+				GamepadInstructionScreen,
+				InventoryScreen,
+				MenuScreen,
+				MessageScreen,
+				WelcomeScreen
 			];
 			screenList.forEach(screen => screen.init.call(screen, gui));
 			setState(1);
@@ -98,7 +98,7 @@ LoadingProgresser = (function() {
 			if (state === 2 && gui.loadEnd)
 				gui.loadEnd();
 		} else if (id === 2) {
-			setText("Setting up World");
+			setText("World > Setting up World");
 			game.setupWorld();
 			game.setupPlayer();
 			game.world.loadBegin();
@@ -109,13 +109,14 @@ LoadingProgresser = (function() {
 			if (state === 4 && world.loadEnd)
 				world.loadEnd();
 		} else if (id === 4) {
-			setText("Rendering World");
+			setText("GUI > Rendering World");
 			game.render();
 			setState(5);
 		} else if (id === 5) {
 			gui.showRenderer();
 			game.render();
 			setState(6);
+			setText("GUI > Loading Input Menu");
 		}
 	}
 	function updateProgress(id) {
