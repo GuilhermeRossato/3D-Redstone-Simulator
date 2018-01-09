@@ -1,5 +1,0 @@
-const MenuScreen = {
-	init: function() {
-		
-	}
-}

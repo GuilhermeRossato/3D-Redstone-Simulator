@@ -1,76 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>Minecraft Redstone Simulator - Threejs Experiment</title>
+<html>
+    <head>
+        <title>Unnamed</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-	</head>
-	<body style="background-color:#333;color:#DDD;text-shadow: 2px 2px 12px #000;width:100vw;height:100vh;margin:0px;padding:0px;overflow:hidden;cursor:default;">
-		<div style="z-index:10;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;">
+        <script data-main="Scripts/main" src="Scripts/require.js"></script>
+    </head>
+    <body style="background-color:#333;color:#DDD;text-shadow: 2px 2px 12px #000;width:100vw;height:100vh;margin:0px;padding:0px;overflow:hidden;cursor:default;">
+    	<div style="z-index:10;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;">
 			<div id="primary" style="z-index:11;text-align:center;"><div style="font-size:48px;">Loading</div><div style="font-size:12px;margin-top:5px;">Downloading javascript files</div><div style="font-size:12px;margin-top:5px;">0%</div></div>
 			<div id="secondary" style="z-index:12;position:absolute;top:90%;"><span style="font-size:16px;">javascript must be enabled</span></div>
 		</div>
-
-		<script src="Script/options.js"></script>
-		<script src="Script/Reusable/polyfill.js"></script>
-		<script src="Script/Reusable/ImageLoader.js"></script>
-		<script src="Script/Libraries/three.js"></script>
-		<script src="Script/Libraries/FileSaver.min.js"></script>
-
-		<script src="Script/Classes/Settings/SettingsClasses.js"></script>
-		<script src="Script/Classes/Settings/DefaultSettings.js"></script>
-		<script src="Script/Classes/Settings/SettingsPersister.js"></script>
-
-		<script src="Script/Classes/Controls/InputListener.js"></script>
-		<script src="Script/Classes/Controls/InputSimulator.js"></script>
-		<script src="Script/Classes/Controls/PointerLockControls.js"></script>
-		<script src="Script/Classes/Controls/CollisionController.js"></script>
-		<script src="Script/Classes/Controls/MinecraftControls.js"></script>
-
-		<script src="Script/Classes/Menu/itemData.js"></script>
-		<script src="Script/Classes/Menu/Hotbar.js"></script>
-		<script src="Script/Classes/Menu/Inventory.js"></script>
-
-		<script src="Script/Data/blockData.js"></script>
-		<script src="Script/Data/worldData.js"></script>
-		<script src="Script/Classes/ItemFunctions.js"></script>
-		<script src="Script/Classes/AnimationController.js"></script>
-		<script src="Script/Classes/Logger.js"></script>
-
-		<script src="Script/Classes/Loading/TextureStitcher.js"></script>
-		<script src="Script/Classes/Loading/TextureHandler.js"></script>
-		<script src="Script/Classes/Loading/ErrorStatus.js"></script>
-		<script src="Script/Classes/Loading/LoadStatus.js"></script>
-		<script src="Script/Classes/Loading/LoadingProgresser.js"></script>
-		<script src="Script/Classes/Chunk/Chunk.js"></script>
-		<script src="Script/Classes/Chunk/BlockController.js"></script>
-
-		<script src="Script/Classes/World/WorldHandler.js"></script>
-		<script src="Script/Classes/World/WorldLoader.js"></script>
-		<script src="Script/Classes/World/WorldSaver.js"></script>
-		<script src="Script/Classes/World/MinecraftSelection.js"></script>
-		<script src="Script/Classes/World/SpacialSelection.js"></script>
-		<script src="Script/Classes/World/SpacialHighlight.js"></script>
-
-		<script src="Script/Screens/LoadingScreen.js"></script>
-		<script src="Script/Screens/DesktopInstructionScreen.js"></script>
-		<script src="Script/Screens/MobileInstructionScreen.js"></script>
-		<script src="Script/Screens/GamepadInstructionScreen.js"></script>
-		<script src="Script/Screens/InventoryScreen.js"></script>
-		<script src="Script/Screens/MenuScreen.js"></script>
-		<script src="Script/Screens/MessageScreen.js"></script>
-		<script src="Script/Screens/WelcomeScreen.js"></script>
-		<script src="Script/Classes/Main/GUI.js"></script>
-		<script src="Script/Classes/Main/Player.js"></script>
-
-		<script src="Script/Reusable/PerlinFunctions.js"></script>
-		<script src="Script/Reusable/BezierFunctions.js"></script>
-		<script src="Script/Reusable/CookieFunctions.js"></script>
-		<script src="Script/Reusable/Performancer.js"></script>
-
-		<script src="Script/Modules/Application.js"></script>
-		<script src="Script/setup.js"></script>
-		<script src="Script/script.js"></script>
-	</body>
+    </body>
 </html>
