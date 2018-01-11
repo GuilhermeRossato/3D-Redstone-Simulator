@@ -20,9 +20,10 @@ define(["Scripts/Classes/Loading/LoadingStep.js", "Scripts/Data/BlockData.js"], 
 			});
 			return files;
 		}
-		progress() {
+		updateProgress() {
 			this.progress = this.images.reduce((a,n) => a+=(n&&n.ready))/this.images.length;
 			console.log(this.progress);
+			this.onProgress(this.progres);
 		}
 		load() {
 			return new Promise((resolve, reject) => {
@@ -30,7 +31,7 @@ define(["Scripts/Classes/Loading/LoadingStep.js", "Scripts/Data/BlockData.js"], 
 					var img = new Image();
 					img.onload = (ev) => {
 						img.ready = true;
-						this.progress(i);
+						this.updateProgress();
 						delete img.onload;
 					}
 					img.src = file;
