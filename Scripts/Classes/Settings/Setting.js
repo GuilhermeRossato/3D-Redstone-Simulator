@@ -7,10 +7,10 @@ Description:
 Usage Example:
 
 	An object that needs to keep an updated configuration file can just do:
-	(Some Setting class).attach(this, "jumpKey");
-	Something executes: (Same Setting Class).value = 2;
-	The object's property "jumpKey" will be updated automatically (this.jumpKey === 2) is true
-	If a function is passed as second parameter at attach, each change will call the function
+		(Some Setting class).attach(this, "jumpKey");
+	When the value of the setting changes, so will the object's jumpKey property.
+	If a function is passed as second parameter at attach, each change will call
+		the function with the new value as parameter
 */
 
 define(()=> class Setting {
