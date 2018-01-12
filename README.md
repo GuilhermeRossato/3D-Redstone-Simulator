@@ -15,6 +15,8 @@ Note that during development, the above link will not always bring you to a work
 ![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v03_normal.gif?raw=true)
  - v 0.4 [Inventory, Hotbar and Procedural Terrain Generation]
 ![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v04_normal.gif?raw=true)
+ - v 0.5 [Rewrite for ES6 and New Promise-oriented Loading System]
+![Preview v0.5](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v05_normal.gif?raw=true)
 
 # How to run this repo locally
 
