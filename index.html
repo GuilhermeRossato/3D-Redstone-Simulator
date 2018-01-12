@@ -5,13 +5,25 @@
         <title>3D Redstone Simulator</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
-		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-        <script data-main="Scripts/main" src="Scripts/require.js"></script>
     </head>
-    <body style="background-color:#333;color:#DDD;text-shadow: 2px 2px 12px #000;width:100vw;height:100vh;margin:0px;padding:0px;overflow:hidden;cursor:default;">
+    <body style="background-color:#222;color:#DDD;text-shadow: 2px 2px 12px #000;width:100vw;height:100vh;margin:0px;padding:0px;overflow:hidden;cursor:default;">
     	<div class="wrapper" style="z-index:10;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;">
-			<div class="content" style="z-index:11;text-align:center;"><div style="font-size:48px;">Loading</div><div style="font-size:12px;margin-top:5px;">Downloading javascript files</div><div style="font-size:12px;margin-top:5px;">0%</div></div>
+			<div class="content" style="z-index:11;">
+				<h1 class="title" style="text-align:center;font-size:48px;font-weight:normal;margin:0">Loading</h1>
+				<div class="description" style="margin:15px 0 5px;font-size:14px;display:flex;justify-content:space-between">
+					<span class="text" style="min-width:320px;">Downloading javascript files</span>
+					<span class="percentage" style="">0%</span>
+				</div>
+				<div class="bar" style="box-shadow:0 0 20px -2.1px #000;background-color:white;height:7px;border-radius:4px;">
+					<div class="progress" style="width:10%;"></div>
+				</div>
+			</div>
 		</div>
-		<div class="footer" style="z-index:12;position:absolute;top:90%;display:block;width:100vw;text-align:center"><span style="font-size:16px;">javascript must be enabled</span></div>
+		<div class="footer" style="z-index:12;position:absolute;top:90%;display:block;width:100vw;text-align:center">
+			<span style="font-size:16px;text-shadow:2px 2px 9px #000;">javascript must be enabled</span>
+		</div>
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<link href="style.css" rel="stylesheet">
+        <script data-main="Scripts/main" src="Scripts/require.js"></script>
     </body>
 </html>
