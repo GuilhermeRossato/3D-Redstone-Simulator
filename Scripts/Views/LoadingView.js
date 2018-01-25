@@ -1,11 +1,11 @@
-define(()=>{
-	init: function() {
+define([], {
+	init: function () {
 		console.log("LoadingView Initialized");
-	}
-	open: function() {
+	},
+	open: function () {
 		console.log("Loading View Started");
-	}
-	close: function() {
+	},
+	close: function () {
 		console.log("Loading View Closed");
 	}
 });

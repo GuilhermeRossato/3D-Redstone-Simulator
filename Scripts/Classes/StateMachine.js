@@ -57,4 +57,4 @@ define(()=>class StateMachine {
 		if (config[currentState].onEnter instanceof Function && !config[currentState].ignoreInit)
 			config[currentState].onEnter.call(scope);
 	}
-}
+});

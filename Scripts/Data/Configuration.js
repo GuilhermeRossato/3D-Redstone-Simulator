@@ -6,4 +6,4 @@ define([
 	page: {
 		title: new StringSetting("Redstone Simulator")
 	}
-}))
+}));
