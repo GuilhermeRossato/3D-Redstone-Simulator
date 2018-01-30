@@ -28,6 +28,7 @@ define(()=>class StateMachine {
 			if (config.hasOwnProperty(key)) {
 				if (typeof config[key] === "object") {
 					currentState = key;
+					break;
 				} else if (typeof config[key] === "string") {
 					currentState = config[key];
 					break;

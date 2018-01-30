@@ -13,11 +13,15 @@ define([
 			var files = [];
 			BlockData.forEach(block => {
 				if (block.texture.children instanceof Array) {
-					files.push(...block.texture.children.map(f=>(this.texturePath+f)));
+					files.push(...block.texture.children);
 				} else {
 					for (var key in block.texture.children) {
 						if (block.texture.children.hasOwnProperty(key)) {
-							files.push(block.texture.children[key]);
+							if (block.texture.children[key] instanceof Array) {
+								files.push(...block.texture.children[key]);
+							} else {
+								files.push(block.texture.children[key]);
+							}
 						}
 					}
 				}
@@ -41,11 +45,12 @@ define([
 						delete img.onload;
 					}
 					img.onerror = (ev) => {
+						console.log("Could not load "+file);
 						img.ready = true;
 						this.updateProgress(resolve);
 						delete img.onerror;
 					}
-					img.src = file;
+					img.src = this.texturePath+file;
 					return img;
 				});
 			});

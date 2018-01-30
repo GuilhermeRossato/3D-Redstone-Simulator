@@ -25,13 +25,15 @@ define(()=>[{
 		]
 	}
 }, {
-	name: "Log",
+	name: "Oak Log",
 	texture: {
-		type: "directional",
+		type: "log",
 		children: {
-			top: "log-top.png",
-			sides: "log-sides.png",
-			bottom: "log-bottom.png"
+			top: "log-oak-top.png",
+			sides: [
+				"log-oak-side0.png",
+				"log-oak-side1.png",
+			]
 		}
 	}
 }]);
