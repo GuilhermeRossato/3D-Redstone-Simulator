@@ -8,10 +8,14 @@ class Application {
 		Configuration.page.title.attach(document, "title");
 		this.gui = new Interface();
 		this.loader = new LoadingSystem();
-		this.loader.load().then((data) => {
+		this.init();
+	}
+	async init() {
+		try {
+			await this.loader.load();
 			this.gui.state = "input-selection";
-		}).catch((data) => {
+		} catch (err) {
 			this.gui.state = "show-error";
-		});
+		}
 	}
 });

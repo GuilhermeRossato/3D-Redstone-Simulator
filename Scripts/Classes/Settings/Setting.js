@@ -52,4 +52,4 @@ define(()=> class Setting {
 			listeners = undefined;
 		}
 	}
-})
+});
