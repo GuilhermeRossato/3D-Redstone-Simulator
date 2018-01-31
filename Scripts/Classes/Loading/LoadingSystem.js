@@ -1,23 +1,35 @@
 define([
+	"Scripts/Classes/Loading/LoadingStep.js",
+	"Scripts/Views/LoadingView.js",
 	"Scripts/Classes/Loading/TextureAtlas.js",
-], function (...steps) {
-	return class LoadingSystem {
+	"Scripts/Classes/Loading/WorldGenerator.js",
+], function (LoadingStep, LoadingView, TextureAtlas, WorldGenerator) {
+	return class LoadingSystem extends LoadingStep {
 		constructor() {
-			this.instances = steps.map(s => new s());
+			super();
+			this.textureAtlas = new TextureAtlas();
+			this.loadingView = new LoadingView();
+			this.worldGenerator = new WorldGenerator();
 		}
-		updateProgress(instance, progress) {
-			
+		updateProgress() {
+			var stepsLoaded = LoadingStep.getLoadedCount();
+			var allSteps = LoadingStep.getInstanceCount();
+			var progress = stepsLoaded/allSteps;
+			this.loadingView.setProgress(progress);
+			return progress;
 		}
-		makePromiseWithTimeout(promise, seconds) {
-			let timeout = new Promise((resolve, reject)=>setTimeout(()=>reject(`Timeout after ${seconds.toFixed(2)} seconds`), seconds*1000));
-			return Promise.race([promise, timeout]);
-		}
-		processInstance(instance) {
-			instance.onProgress = this.updateProgress.bind(this, instance);
-			return this.makePromiseWithTimeout(instance.load(), instance.estimatedSeconds || 10);
-		}
-		load() {
-			return Promise.all(this.instances.map(this.processInstance.bind(this)));
+		async load() {
+			await this.loadingView.load();
+			var updateProgress = this.updateProgress.bind(this);
+			this.textureAtlas.on("progress", updateProgress);
+			this.worldGenerator.on("progress", updateProgress);
+			await Promise.all([
+				this.textureAtlas.load(),
+				this.worldGenerator.load()
+			]);
+			if (this.updateProgress() < 1) {
+				throw new Error("There were "+().toFixed(0)+" that could not be loaded");
+			}
 		}
 	}
 });

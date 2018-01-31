@@ -6,7 +6,7 @@ define([
 		constructor() {
 			super();
 			this.texturePath = "./Images/Textures/";
-			this.files = this.getAllUsedImages();
+			this.images = this.getAllUsedImages().map(fileName => new ImageLoader(fileName));
 			console.log("TextureAtlas got ready to load",this.files.length,"files");
 		}
 		getAllUsedImages() {
