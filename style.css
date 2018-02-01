@@ -4,5 +4,5 @@
 	border-radius:4px;
 	transition: width 0.5s cubic-bezier(0.75, 0, 0.1, 1.05);
 	box-shadow:2px 1px 4px -1.7px #200;
-	margin-left:-1px;
+	/* margin-left:-1px; */
 }

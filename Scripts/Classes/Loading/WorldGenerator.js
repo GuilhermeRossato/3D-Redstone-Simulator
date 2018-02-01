@@ -2,7 +2,7 @@ define([
 	"Scripts/Classes/Loading/LoadingStep.js",
 	"Scripts/Data/BlockData.js"
 ], (LoadingStep, BlockData) =>
-	class WorldGeneration extends LoadingStep {
+	class WorldGenerator extends LoadingStep {
 		constructor() {
 			super();
 		}

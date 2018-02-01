@@ -9,8 +9,14 @@ class ImageLoader extends Emitter {
 	}
 	load() {
 		return new Promise((resolve, reject) => {
-			this.image.onload = resolve;
-			this.image.onerror = reject;
+			this.image.onload = ()=>{
+				this.emit("progress", 1);
+				resolve();
+			}
+			this.image.onerror = () => {
+				this.emit("progress", 1);
+				reject();
+			}
 			try {
 				this.src = this.imageUrl;
 			} catch (err) {
@@ -18,4 +24,4 @@ class ImageLoader extends Emitter {
 			}
 		});
 	}
-}
+});

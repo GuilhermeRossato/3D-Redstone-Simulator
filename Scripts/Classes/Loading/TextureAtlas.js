@@ -1,15 +1,18 @@
 define([
 	"Scripts/Classes/Loading/LoadingStep.js",
-	"Scripts/Data/BlockData.js"
-], (LoadingStep, BlockData) =>
+	"Scripts/Classes/Loading/ImageLoader.js",
+	"Scripts/Data/BlockData.js",
+], (LoadingStep, ImageLoader, BlockData) =>
 	class TextureAtlas extends LoadingStep {
 		constructor() {
 			super();
 			this.texturePath = "./Images/Textures/";
-			this.images = this.getAllUsedImages().map(fileName => new ImageLoader(fileName));
-			console.log("TextureAtlas got ready to load",this.files.length,"files");
+			debugger;
+			this.fileNames = TextureAtlas.getAllUsedImages()
+			this.images = this.fileNames.map(fileName => new ImageLoader(fileName));
+			//console.log("TextureAtlas got ready to load",this.files.length,"files");
 		}
-		getAllUsedImages() {
+		static getAllUsedImages() {
 			var files = [];
 			BlockData.forEach(block => {
 				if (block.texture.children instanceof Array) {
@@ -28,32 +31,13 @@ define([
 			});
 			return files;
 		}
-		updateProgress(successCallback) {
-			this.progress = this.images.reduce((a,n) => a+=(n&&n.ready)?1:0, 0)/(this.images.length);
-			this.onProgress(this.progress);
-			if (this.progress >= 1) {
-				successCallback(this.images);
-			}
+		updateProgress() {
+			var p = this.images.reduce((a,n) => a+=(n&&n.ready)?1:0, 0)/(this.images.length);
+			this.emit("progress", p);
 		}
 		load() {
-			return new Promise((resolve, reject) => {
-				this.images = this.files.map((file,i) => {
-					var img = new Image();
-					img.onload = (ev) => {
-						img.ready = true;
-						this.updateProgress(resolve);
-						delete img.onload;
-					}
-					img.onerror = (ev) => {
-						console.log("Could not load "+file);
-						img.ready = true;
-						this.updateProgress(resolve);
-						delete img.onerror;
-					}
-					img.src = this.texturePath+file;
-					return img;
-				});
-			});
+			this.images.map(image => image.on("progress", this.updateProgress.bind(this)));
+			return Promise.all(this.images.map(image => image.load()));
 		}
 	}
 );

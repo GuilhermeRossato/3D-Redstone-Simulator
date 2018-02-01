@@ -28,7 +28,7 @@ define([
 				this.worldGenerator.load()
 			]);
 			if (this.updateProgress() < 1) {
-				throw new Error("There were "+().toFixed(0)+" that could not be loaded");
+				throw new Error("There were "+(LoadingStep.getInstanceCount()-LoadingStep.getLoadedCount()).toFixed(0)+" incomplete loading steps");
 			}
 		}
 	}
