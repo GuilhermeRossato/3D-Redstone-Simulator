@@ -6,14 +6,20 @@ define([
 	return class LoadingStep extends Emitter {
 		constructor() {
 			super();
-			this.on("progress", this.checkStatus.bind(this));
+			this.on("progress", this.__progressed.bind(this));
 			this.loaded = false;
+			this.lastProgress = 0;
 			instanceCount++;
 		}
-		checkStatus(progress) {
-			if (progress >= 1 && !this.loaded) {
-				this.loaded = true;
-				loadedCount++;
+		__progressed(progress) {
+			console.log(loadedCount, instanceCount);
+			//debugger;
+			if (progress > 1) {
+				throw new Error("Step has overload");
+			}
+			if (this.lastProgress != progress) {
+				loadedCount += progress - this.lastProgress;
+				this.lastProgress = progress;
 			}
 		}
 		static getInstanceCount() {

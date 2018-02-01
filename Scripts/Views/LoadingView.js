@@ -7,9 +7,8 @@ define([], {
 		this.percentageBar = this.content.querySelector(".bar .progress");
 	},
 	setProgress: function(p) {
-		var percentString = (100*p).toFixed(2)+"%";
-		this.percentageBar.style.width = percentString;
-		this.percentageLabel.innerText = percentString;
+		this.percentageBar.style.width = (101*p).toFixed(2)+"%";
+		this.percentageLabel.innerText = (100*p).toFixed(0)+"%";
 	},
 	open: function () {
 		console.log("Loading View Started");

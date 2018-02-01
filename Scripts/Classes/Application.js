@@ -14,7 +14,9 @@ class Application {
 		try {
 			await this.loader.load();
 			this.gui.state = "input-selection";
+			console.log("Entering Input Selection");
 		} catch (err) {
+			console.log("Entering error mode due to error:", err);
 			this.gui.state = "show-error";
 		}
 	}

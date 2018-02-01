@@ -1,26 +1,30 @@
 define([
-	"Scripts/Classes/Generic/Emitter.js",
-], (Emitter) =>
-class ImageLoader extends Emitter {
+	"Scripts/Classes/Loading/LoadingStep.js"
+], (LoadingStep) =>
+class ImageLoader extends LoadingStep {
 	constructor(imageUrl) {
 		super();
 		this.imageUrl = imageUrl;
 		this.image = new Image();
 	}
+	finish(callback) {
+		//debugger;
+		console.log("Image loaded");
+		this.emit("progress", 1);
+		callback();
+	}
 	load() {
 		return new Promise((resolve, reject) => {
 			this.image.onload = ()=>{
-				this.emit("progress", 1);
-				resolve();
+				this.finish(resolve);
 			}
 			this.image.onerror = () => {
-				this.emit("progress", 1);
-				reject();
+				this.finish(reject);
 			}
 			try {
-				this.src = this.imageUrl;
+				this.image.src = this.imageUrl;
 			} catch (err) {
-				reject(err);
+				this.finish(reject);
 			}
 		});
 	}

@@ -6,9 +6,8 @@ define([
 	class TextureAtlas extends LoadingStep {
 		constructor() {
 			super();
-			this.texturePath = "./Images/Textures/";
-			debugger;
-			this.fileNames = TextureAtlas.getAllUsedImages()
+			this.texturePath = "./Images/Textures";
+			this.fileNames = TextureAtlas.getAllUsedImages().map(fileName => this.texturePath+"/"+fileName);
 			this.images = this.fileNames.map(fileName => new ImageLoader(fileName));
 			//console.log("TextureAtlas got ready to load",this.files.length,"files");
 		}
@@ -31,13 +30,10 @@ define([
 			});
 			return files;
 		}
-		updateProgress() {
-			var p = this.images.reduce((a,n) => a+=(n&&n.ready)?1:0, 0)/(this.images.length);
-			this.emit("progress", p);
-		}
 		load() {
-			this.images.map(image => image.on("progress", this.updateProgress.bind(this)));
-			return Promise.all(this.images.map(image => image.load()));
+			var promises = Promise.all(this.images.map(image => image.load()));
+			this.emit("progress", 1);
+			return promises;
 		}
 	}
 );
