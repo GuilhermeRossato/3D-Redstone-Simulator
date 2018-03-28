@@ -1,5 +1,5 @@
 define([
-	"Scripts/Classes/Loading/LoadingStep.js"
+	"scripts/Classes/Loading/LoadingStep.js"
 ], (LoadingStep) =>
 class ImageLoader extends LoadingStep {
 	constructor(imageUrl) {

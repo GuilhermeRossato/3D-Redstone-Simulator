@@ -1,17 +1,17 @@
 define([
-	"Scripts/Classes/Loading/LoadingStep.js",
-	"Scripts/Classes/Loading/ImageLoader.js",
-	"Scripts/Data/BlockData.js",
+	"scripts/Classes/Loading/LoadingStep.js",
+	"scripts/Classes/Loading/ImageLoader.js",
+	"scripts/Data/BlockData.js",
 ], (LoadingStep, ImageLoader, BlockData) =>
 	class TextureAtlas extends LoadingStep {
 		constructor() {
 			super();
-			this.texturePath = "./Images/Textures";
-			this.fileNames = TextureAtlas.getAllUsedImages().map(fileName => this.texturePath+"/"+fileName);
+			this.texturePath = "./images/Textures";
+			this.fileNames = TextureAtlas.getAllUsedimages().map(fileName => this.texturePath+"/"+fileName);
 			this.images = this.fileNames.map(fileName => new ImageLoader(fileName));
 			//console.log("TextureAtlas got ready to load",this.files.length,"files");
 		}
-		static getAllUsedImages() {
+		static getAllUsedimages() {
 			var files = [];
 			BlockData.forEach(block => {
 				if (block.texture.children instanceof Array) {

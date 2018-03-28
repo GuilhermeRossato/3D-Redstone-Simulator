@@ -1,9 +1,9 @@
 define([
-	"Scripts/Classes/Loading/LoadingStep.js",
-	"Scripts/Views/LoadingView.js",
-	"Scripts/Classes/Loading/TextureAtlas.js",
-	"Scripts/Classes/Loading/WorldGenerator.js",
-	"Scripts/Classes/Loading/WebGLStarter.js",
+	"scripts/Classes/Loading/LoadingStep.js",
+	"scripts/Views/LoadingView.js",
+	"scripts/Classes/Loading/TextureAtlas.js",
+	"scripts/Classes/Loading/WorldGenerator.js",
+	"scripts/Classes/Loading/WebGLStarter.js",
 ], function (LoadingStep, LoadingView, TextureAtlas, WorldGenerator) {
 	return class LoadingSystem {
 		constructor() {

@@ -1,7 +1,7 @@
 define([
-	"Scripts/Classes/Loading/LoadingSystem.js",
-	"Scripts/Modules/Interface.js",
-	"Scripts/Data/Configuration.js"
+	"scripts/Classes/Loading/LoadingSystem.js",
+	"scripts/Modules/Interface.js",
+	"scripts/Data/Configuration.js"
 ], (LoadingSystem, Interface, Configuration) =>
 class Application {
 	constructor() {

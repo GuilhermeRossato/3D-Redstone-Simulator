@@ -8,21 +8,21 @@ Note that during development, the above link will not always bring you to a work
 
 # Releases
  - v 0.1 [Performance Viability Release]
-![Preview v0.1](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v01_normal.gif?raw=true)
+![Preview v0.1](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/images/releases/v01_normal.gif?raw=true)
  - v 0.2 [Primitive Block Distinction]
-![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/Images/Releases/v02_normal.png)
+![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/images/releases/v02_normal.png)
  - v 0.3 [Collision Detection and Block Selection]
-![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v03_normal.gif?raw=true)
+![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/images/releases/v03_normal.gif?raw=true)
  - v 0.4 [Inventory, Hotbar and Procedural Terrain Generation]
-![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v04_normal.gif?raw=true)
- - v 0.5 [Rewrite for ES6 and New Promise-oriented Loading System]
-![Preview v0.5](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/Images/Releases/v05_normal.gif?raw=true)
+![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/images/releases/v04_normal.gif?raw=true)
+ - v 0.5 [ES6 Rewrite using Require.js]
+![Preview v0.5](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/images/releases/v05_normal.gif?raw=true)
+ - v 0.6 [Menu Screen, Inventory Screen]
+![Preview v0.6](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/images/releases/v06_normal.gif?raw=true)
 
 # How to run this repo locally
 
-If you have windows, run the file inside `/Tools/run.bat`, it should run Google Chrome with web security disabled. That solves cross origin conflicts, block textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
-
-Coming ~~soon~~ eventually: a `run.sh` for Linux
+If you have windows, run the file inside `/tools/run.bat`, it should run Google Chrome with web security disabled. That solves cross origin conflicts, block textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
 
 If you download a release, (on windows) use the "Run" shortcut to the .bat to run chrome with web security disabled. That solves cross origin conflicts, all blocks textures wouldn't load otherwise. Use it at your own risk, the alternative is to set up a server to run this application (such as Apache). It's not safe to allow a local web application to load your computer files, that's why it's blocked on most browers.
 

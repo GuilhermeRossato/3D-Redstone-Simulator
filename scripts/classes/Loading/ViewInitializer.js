@@ -1,6 +1,6 @@
 define([
-	"Scripts/Classes/Loading/LoadingStep.js",
-	"Scripts/Views/LoadingView.js"
+	"scripts/Classes/Loading/LoadingStep.js",
+	"scripts/Views/LoadingView.js"
 ], (LoadingStep, ...views) => {
 	class ViewInitializer extends LoadingStep {
 		constructor() {

@@ -1,5 +1,5 @@
 define([
-	"Scripts/Classes/Generic/Emitter.js"
+	"scripts/Classes/Generic/Emitter.js"
 ], (Emitter) => {
 	var instanceCount = 0;
 	var loadedCount = 0;

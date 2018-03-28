@@ -1,7 +1,7 @@
 define([
-	"Scripts/Classes/Loading/LoadingStep.js",
-	"Scripts/Data/VertexShader.js",
-	"Scripts/Data/FragmentShader.js",
+	"scripts/Classes/Loading/LoadingStep.js",
+	"scripts/Data/VertexShader.js",
+	"scripts/Data/FragmentShader.js",
 ], (LoadingStep, VertexShader, FragmentShader) =>
 class WebGLSystem extends LoadingStep {
 	constructor(imageUrl) {
