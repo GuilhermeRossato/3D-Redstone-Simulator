@@ -1,4 +1,5 @@
-define(["scripts/Classes/Application.js"], (Application)=>{
+define(["scripts/classes/Application.js"], (Application)=>{
+	console.log(this);
 	this.app = new Application();
 });
 

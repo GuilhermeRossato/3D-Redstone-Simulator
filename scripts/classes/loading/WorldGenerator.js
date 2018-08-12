@@ -1,6 +1,6 @@
 define([
-	"scripts/Classes/Loading/LoadingStep.js",
-	"scripts/Data/BlockData.js"
+	"scripts/classes/loading/LoadingStep.js",
+	"scripts/data/BlockData.js"
 ], (LoadingStep, BlockData) =>
 	class WorldGenerator extends LoadingStep {
 		constructor() {

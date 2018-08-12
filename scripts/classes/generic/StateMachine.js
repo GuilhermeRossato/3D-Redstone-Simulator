@@ -14,9 +14,9 @@
  *    iterate: ()=>{assert(this.states.working.iterate instanceof Function)}
  *  });
  * // assert(sm.state === "working"); // starts at first defined state
- * sm.state = "working"; // prints both logs
- * sm.state = "waiting"; // prints one log
- * sm.states.working.iterate(); // one way to reach that function
+ * sm.state = "working"; // prints both stopped and started logs
+ * sm.state = "waiting"; // prints nothing
+ * sm.states[sm.state].iterate(); // access a function inside the current state
  *
  */
 

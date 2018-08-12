@@ -1,4 +1,7 @@
-define(["scripts/Classes/StateMachine.js","scripts/Views/LoadingView.js"], (StateMachine, LoadingView)=>
+define([
+	"scripts/classes/generic/StateMachine.js",
+	"scripts/views/LoadingView.js"
+], (StateMachine, LoadingView)=>
 class Interface extends StateMachine {
 	constructor() {
 		super({

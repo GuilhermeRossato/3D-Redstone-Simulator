@@ -1,7 +1,7 @@
 define([
-	"scripts/Classes/Loading/LoadingSystem.js",
-	"scripts/Modules/Interface.js",
-	"scripts/Data/Configuration.js"
+	"scripts/classes/loading/LoadingSystem.js",
+	"scripts/modules/Interface.js",
+	"scripts/data/Configuration.js"
 ], (LoadingSystem, Interface, Configuration) =>
 class Application {
 	constructor() {
@@ -11,6 +11,10 @@ class Application {
 		this.init();
 	}
 	async init() {
+		var loader = this.loader;
+		this.loader.addPhase("Loading configurations, images and the world", [
+			Configuration
+		]);
 		try {
 			await this.loader.load();
 			this.gui.state = "input-selection";

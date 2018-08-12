@@ -7,7 +7,7 @@ define([], {
 		this.percentageBar = this.content.querySelector(".bar .progress");
 	},
 	setProgress: function(p) {
-		this.percentageBar.style.width = (101*p).toFixed(2)+"%";
+		this.percentageBar.style.width = (100.5*p).toFixed(2)+"%";
 		this.percentageLabel.innerText = (100*p).toFixed(0)+"%";
 	},
 	open: function () {

@@ -1,7 +1,7 @@
 define([
-	"scripts/Classes/Loading/LoadingStep.js",
-	"scripts/Classes/Loading/ImageLoader.js",
-	"scripts/Data/BlockData.js",
+	"scripts/classes/loading/LoadingStep.js",
+	"scripts/classes/loading/ImageLoader.js",
+	"scripts/data/BlockData.js",
 ], (LoadingStep, ImageLoader, BlockData) =>
 	class TextureAtlas extends LoadingStep {
 		constructor() {
