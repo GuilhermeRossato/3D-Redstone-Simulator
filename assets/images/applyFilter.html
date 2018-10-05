@@ -9,7 +9,7 @@
 			<button onclick="onButtonLoad()">Load image</button>
 		</div>
 		<div>
-			<canvas id='canvas' style='image-rendering:pixelated; margin-top: 5px; padding: 1px; border: 1px #000 dashed'></canvas>
+			<canvas id='canvas' style='image-rendering: pixelated; margin-top: 5px; padding: 1px; border: 1px #000 dashed'></canvas>
 		</div>
 		<script src="../Script/BezierFunctions.js"></script>
 		<script>
@@ -36,9 +36,9 @@
 				image.src = "";
 				try {
 					if (input.value.indexOf(".") == -1) {
-						image.src = "./Textures/" + input.value + ".png";
+						image.src = "./textures/" + input.value + ".png";
 					} else {
-						image.src = "./Textures/" + input.value;
+						image.src = "./textures/" + input.value;
 					}
 				} catch (e) {
 					canvasClear();
