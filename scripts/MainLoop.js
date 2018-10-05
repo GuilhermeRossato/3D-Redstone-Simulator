@@ -1,39 +1,58 @@
-window.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || ((callback) => window.setTimeout(callback, 1000 / 60));
+'use strict';
 
-const MainLoop = (function() {
+export default class MainLoop {
+	constructor(config) {
+		this.updateCall = config.update || (function() {});
+		this.drawCall = config.draw || (function() {});
+		this.overflowCall = config.overflow || (function() {});
+		this.underflowCall = config.underflow || (function() {});
+		this.fps = config.fps;
 
-	var canvas;
+		this.period = 1000/config.fps;
+		this.running = false;
 
-	var lastEvent;
-
-	var draw;
-
-	function init(element) {
-		canvas = element;
-		window.addEventListener("resize", resize);
-		lastEvent = performance.now();
-		window.requestAnimFrame(update);
+		this.update = this.update.bind(this);
 	}
-
-	function resize() {
-		
-	}
-
-	function update() {
-		var deltaMS = leftover-(holdThis.lastEvent - (holdThis.lastEvent = performance.now()));
-		
-	}
-
-	return {
-		setCanvas: function(element) {
-			if (!element) throw Error("Invalid canvas element");
-			init(element);
-			this.setCanvas = undefined;
-		},
-		setDraw: function(func) {
-			if (!(func instanceof Function)) throw Error("Invalid draw function callback");
-			draw = func;
-			this.setDraw = undefined;
+	start() {
+		if (this.running) {
+			return console.warn("Main loop is already running.");
 		}
+		this.running = true;
+
+		this.last = performance.now();
+		this.extra = 0;
+		requestAnimationFrame(this.update)
 	}
-})();
+	stop() {
+		if (!this.running) {
+			return console.warn("Main loop is already not running.");
+		}
+		this.running = false;
+	}
+	update() {
+		const period = this.period;
+		var delta = this.extra - this.last + (this.last = performance.now());
+		if (delta < this.period) {
+			this.extra = delta;
+			this.underflowCall();
+		} else if (delta > this.period*16) {
+			if (delta > this.period*22) {
+				this.overflowCall();
+			} else {
+				this.updateCall();
+				this.updateCall();
+			}
+			delta = 0;
+		} else {
+			while (delta > period) {
+				delta -= period;
+				this.updateCall();
+			}
+			this.drawCall();
+		}
+
+		this.extra = delta;
+
+		this.running && requestAnimationFrame(this.update);
+	}
+}
