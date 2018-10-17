@@ -1,5 +1,5 @@
-#!/bin/bash
-projectPath=`pwd`/..
-browserExec="google-chrome"
-browserParams="--disable-web-security --user-data-dir=${HOME// /%20}/.config/google-chrome --profile-directory=Default ${projectPath// /%20}/index.html"
-$browserExec $browserParams
+#/bin/bash
+cd ..
+x-terminal-emulator -e "php -S 127.0.0.1:8080"
+sleep 1
+xdg-open 'http://127.0.0.1:8080' &
