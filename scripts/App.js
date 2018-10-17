@@ -2,6 +2,7 @@
 
 import GraphicsEngine from './GraphicsEngine.js';
 import MainLoop from './MainLoop.js';
+import WorldHandler from './classes/world/WorldHandler.js';
 
 export default class App {
 	constructor(canvas, gl, program, image) {
@@ -26,24 +27,30 @@ export default class App {
 		window.addEventListener("resize", this.debounce(this.resize, 300));
 	}
 	update() {
-		if (this.graphics.scene.children[0]) {
-			this.graphics.scene.children[0].rotation.y += 0.01;
+		if (this.graphics.scene.children[6]) {
+			this.graphics.scene.children[6].rotation.y += 0.01;
 		}
 	}
 	draw() {
 		this.graphics.draw();
 	}
-	// Called when 333ms has been elapsed since last update
 	overflow() {
+		// Called when 333ms has been elapsed since last update
 		console.log("overflow");
 	}
-	load() {
-		document.querySelector(".content").remove();
-		document.querySelector(".wrapper").appendChild(this.canvas);
-		this.resize();
+	loadGraphics() {
 		this.graphics = new GraphicsEngine(this.canvas, this.gl, this.program);
-		this.attachEvents();
+		document.querySelector(".wrapper").appendChild(this.canvas);
+		this.canvas.style.position = "absolute";
 		this.graphics.load();
+		this.resize();
+		this.attachEvents();
+	}
+	loadWorld() {
+		this.world = new WorldHandler(this.graphics);
+		this.world.load();
+	}
+	loadLoop() {
 		this.loop = new MainLoop({
 			fps: 60,
 			draw: this.draw,

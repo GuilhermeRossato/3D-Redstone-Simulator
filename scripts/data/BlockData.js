@@ -1,4 +1,4 @@
-define(()=>[{
+export default ([{
 	name: "Stone",
 	texture: {
 		type: "single-variable",

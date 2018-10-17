@@ -81,7 +81,7 @@ export default class FatalErrorDisplayErrorDisplay {
 			`]], innerWrapper);
 		let paragraph = this.newElement("pre", [
 			["style", `
-				color: rgba(0, 0, 0, 0.54);
+				color: rgba(0, 0, 0, 0.63);
 				font-size: 1rem;
 				font-weight: 400;
 				font-family: "Roboto", "Helvetica", "Arial", sans-serif;
@@ -92,7 +92,13 @@ export default class FatalErrorDisplayErrorDisplay {
 				cursor: text;
 			`]], paragraphWrapper);
 		let stack = error.stack.toString().substr(error.name.length+2);
-		paragraph.innerText = stack;
+		
+		if (!String.prototype.replaceAll) {
+			String.prototype.replaceAll = function(str1, str2, ignore) {
+				return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
+			}
+		}
+		paragraph.innerText = stack.replaceAll(window.location.href, '/');
 		document.body.appendChild(wrapper);
 	}
 }

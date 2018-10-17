@@ -36,9 +36,7 @@ function clearFooterText() {
 		const shaderPromises = ["assets/FragmentShader.glsl", "assets/VertexShader.glsl"].map(
 				shader => sLoader.load(shader)
 			)
-		console.log("Waiting");
 		const sources = await Promise.all(shaderPromises);
-		console.log("done");
 		if (!sources[0] || !sources[1]) {
 			throw new Error("Missing shader in shader array!");
 		}
@@ -49,8 +47,18 @@ function clearFooterText() {
 		setLoadingText("Building Shader Program");
 		const program = sLoader.join(gl, built[0], built[1]);
 
-		setLoadingText("Initializing the App");
-		(new App(canvas, program, image)).load();
+		const app = new App(canvas, program, image);
+
+		setLoadingText("Initializing the Graphics Engine");
+		app.loadGraphics();
+
+		setLoadingText("Initializing the World");
+		app.loadWorld();
+
+		setLoadingText("Initializing the Main Loop");
+		app.loadLoop();
+		await new Promise(r=>setTimeout(r, 250));
+		document.querySelector(".content").remove();
 	} catch (err) {
 		console.error(err);
 		(new FatalErrorDisplay).show(err);
