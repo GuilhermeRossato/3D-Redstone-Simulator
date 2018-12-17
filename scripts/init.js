@@ -1,7 +1,6 @@
 'use strict';
 
 import App from './App.js';
-import ShaderController from './ShaderController.js';
 import AssetLoader from './AssetLoader.js';
 import FatalErrorDisplay from './FatalErrorDisplay.js';
 
@@ -12,14 +11,8 @@ function setLoadingText(str) {
 	document.querySelector(".text").innerText = str
 }
 
-function clearFooterText() {
-	document.querySelector(".footer .footer-text").innerText = "";
-}
-
 (async function() {
 	try {
-		clearFooterText();
-
 		setLoadingText("Creating WebGL Context");
 		const canvas = document.createElement('canvas');
 		const gl = canvas.getContext("webgl");
@@ -29,25 +22,11 @@ function clearFooterText() {
 
 		setLoadingText("Loading Assets");
 		const aLoader = new AssetLoader();
-		const image = aLoader.loadImage("assets/textures.png");
+		const assets = {
+			"textures": await aLoader.loadImage("assets/textures.png")
+		};
 
-		setLoadingText("Loading Shaders");
-		const sLoader = new ShaderController();
-		const shaderPromises = ["assets/FragmentShader.glsl", "assets/VertexShader.glsl"].map(
-				shader => sLoader.load(shader)
-			)
-		const sources = await Promise.all(shaderPromises);
-		if (!sources[0] || !sources[1]) {
-			throw new Error("Missing shader in shader array!");
-		}
-
-		setLoadingText("Building Shaders");
-		const built = await Promise.all(sources.map(shader => sLoader.build(gl, shader)));
-
-		setLoadingText("Building Shader Program");
-		const program = sLoader.join(gl, built[0], built[1]);
-
-		const app = new App(canvas, program, image);
+		const app = new App(canvas, assets);
 
 		setLoadingText("Initializing the Graphics Engine");
 		app.loadGraphics();

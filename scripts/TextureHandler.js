@@ -9,7 +9,7 @@ export default class WorldHandler {
 	}
 	load() {
 		var filenames = new Set();
-
+		/*
 		this.data.forEach(block => {
 			for (const key in block.texture.children) {
 				const value = block.texture.children[key];
@@ -20,7 +20,7 @@ export default class WorldHandler {
 				}
 			}
 		});
-
+*/
 		console.log(filenames);
 		/*
 		this.data.forEach(block => {

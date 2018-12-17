@@ -72,7 +72,7 @@ export default class FatalErrorDisplayErrorDisplay {
 				display: block;
 				text-shadow: none;
 			`]], titleWrapper);
-		title.innerText = error.name;
+		title.innerText = error.name?error.name:"Error Event";
 		let paragraphWrapper = this.newElement("div", [
 			["style", `
 			flex: 1 1 auto;
@@ -91,7 +91,12 @@ export default class FatalErrorDisplayErrorDisplay {
 				text-shadow: none;
 				cursor: text;
 			`]], paragraphWrapper);
-		let stack = error.stack.toString().substr(error.name.length+2);
+		let stack;
+		if (error instanceof Event && error.type === "error") {
+			stack = "Event error occured at path:\n"+error.path.map(a=>a.tag?a.tag:a.name).join(", ");
+		} else {
+			stack = error.stack.toString().substr(error.name.length+2);
+		}
 		
 		if (!String.prototype.replaceAll) {
 			String.prototype.replaceAll = function(str1, str2, ignore) {

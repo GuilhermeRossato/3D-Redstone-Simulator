@@ -9,14 +9,25 @@ export default class AssetLoader {
 			mode: 'cors',
 			cache: 'no-store'
 		});
-		return (await response.blob());
+		var blob = (await response.blob());
+		return blob;
 	}
 	loadImage(filename) {
 		return new Promise((resolve, reject) => {
-			const image = new Image();
-			image.onLoad = ()=>resolve(image);
-			image.onError = (err)=>reject(err);
-			image.src = filename;
+			if (!filename || filename.trim().length === 0) {
+				reject(new Error("Required parameter 'filename' not provided for loadImage"))
+			}
+			try {
+				const image = new Image();
+				image.onload = ()=>resolve(image);
+				image.onerror = ()=>reject(new Error("Could not load image \""+filename+"\""));
+				image.src = filename;
+			} catch (err) {
+				console.log("caught before");
+				console.log(err);
+				reject(err);
+			}
+			window.setTimeout(reject.bind(this, new Error("Timeout on image load ("+filename+")")), 8000);
 		})
 	}
 }

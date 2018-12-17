@@ -5,11 +5,10 @@ import MainLoop from './MainLoop.js';
 import WorldHandler from './classes/world/WorldHandler.js';
 
 export default class App {
-	constructor(canvas, gl, program, image) {
+	constructor(canvas, gl, assets) {
 		this.canvas = canvas;
 		this.gl = gl;
-		this.program = program;
-		this.image = image;
+		this.assets = assets;
 		this.resize = this.resize.bind(this);
 		this.update = this.update.bind(this);
 		this.draw = this.draw.bind(this);
@@ -39,7 +38,7 @@ export default class App {
 		console.log("overflow");
 	}
 	loadGraphics() {
-		this.graphics = new GraphicsEngine(this.canvas, this.gl, this.program);
+		this.graphics = new GraphicsEngine(this.canvas, this.gl);
 		document.querySelector(".wrapper").appendChild(this.canvas);
 		this.canvas.style.position = "absolute";
 		this.graphics.load();
