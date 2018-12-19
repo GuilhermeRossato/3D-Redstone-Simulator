@@ -26,8 +26,17 @@ export default class App {
 		window.addEventListener("resize", this.debounce(this.resize, 300));
 	}
 	update() {
-		if (this.graphics.scene.children[6]) {
-			this.graphics.scene.children[6].rotation.y += 0.01;
+		// Update camera around the object
+		if (this.frame < 500) {
+			this.frame++;
+		} else {
+			this.frame = 0;
+		}
+		if (this.graphics.camera) {
+			var angle = 2*Math.PI*(this.frame/500);
+			this.graphics.camera.position.x = Math.cos(angle)*2;
+			this.graphics.camera.position.z = Math.sin(angle)*2;
+			this.graphics.camera.lookAt(0, 0, 0);
 		}
 	}
 	draw() {
