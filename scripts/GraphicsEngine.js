@@ -33,14 +33,14 @@ export default class GraphicsEngine {
 		addLight("Right", { x: 1, y: 0, z: 0 }, 1.7742);
 		addLight("Bottom", { x: 0, y: -1, z: 0 }, 1.5161);
 	}
-	load(width, height) {
+	async load(width, height) {
 		const camera = this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.01, 255);
 		this.camera.position.z = 1;
 		const scene = this.scene = new THREE.Scene();
 
 		this.constructor.addLightToScene(scene);
 
-		const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+		const geometry = new THREE.BoxGeometry(.5, .5, .5);
 		const material = new THREE.MeshNormalMaterial();
 
 		const mesh = new THREE.Mesh(geometry, material);

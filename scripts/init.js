@@ -29,13 +29,13 @@ function setLoadingText(str) {
 		const app = new App(canvas, assets);
 
 		setLoadingText("Initializing the Graphics Engine");
-		app.loadGraphics();
+		await app.loadGraphics();
 
 		setLoadingText("Initializing the World");
-		app.loadWorld();
+		await app.loadWorld();
 
 		setLoadingText("Initializing the Main Loop");
-		app.loadLoop();
+		await app.loadLoop();
 		await new Promise(r=>setTimeout(r, 250));
 		document.querySelector(".content").remove();
 	} catch (err) {

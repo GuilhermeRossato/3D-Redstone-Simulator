@@ -37,19 +37,19 @@ export default class App {
 		// Called when 333ms has been elapsed since last update
 		console.log("overflow");
 	}
-	loadGraphics() {
+	async loadGraphics() {
 		this.graphics = new GraphicsEngine(this.canvas, this.gl);
 		document.querySelector(".wrapper").appendChild(this.canvas);
 		this.canvas.style.position = "absolute";
-		this.graphics.load();
+		await this.graphics.load();
 		this.resize();
 		this.attachEvents();
 	}
-	loadWorld() {
+	async loadWorld() {
 		this.world = new WorldHandler(this.graphics);
-		this.world.load();
+		await this.world.load();
 	}
-	loadLoop() {
+	async loadLoop() {
 		this.loop = new MainLoop({
 			fps: 60,
 			draw: this.draw,

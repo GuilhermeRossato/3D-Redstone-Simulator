@@ -21,7 +21,6 @@ export default class WorldHandler {
 			}
 		});
 */
-		console.log(filenames);
 		/*
 		this.data.forEach(block => {
 
