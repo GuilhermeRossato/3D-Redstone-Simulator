@@ -13,19 +13,24 @@
     	<div class="wrapper" style="z-index:10;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif">
 			<div class="content" style="z-index:11;">
 				<h1 class="title" style="text-align:center;font-size:48px;font-weight:normal;margin:0">Loading</h1>
-				<div class="description" style="margin:15px 0 5px;font-size:14px;text-align: center">
+				<div class="description" style="pointer-events:none;margin:15px 0 5px;font-size:14px;text-align:center">
 					<span class="text" style="min-width:320px;">Downloading javascript files</span>
 				</div>
 			</div>
 		</div>
-		<script>((location.origin === "file://")&&(document.querySelector(".text").innerHTML = "This cannot run from the file system.<br><br>Serve this application from an http server."));setTimeout(function(){if(document.querySelector(".text") && document.querySelector(".text").innerText==="Downloading javascript files"){ document.querySelector(".text").innerHTML = "Something wen't wrong while downloading the javascript files" }}, 1000)</script>
-		<div class="footer" style="z-index:12;position:absolute;top:90%;display:block;width:100vw;text-align:center">
+		<script>((location.origin === "file://")&&(document.querySelector(".text").innerHTML = "This cannot run from the file system.<br><br>Serve this application from an http server."));setTimeout(function(){if(document.querySelector(".text") && document.querySelector(".text").innerText==="Downloading javascript files"){ document.querySelector(".text").innerHTML = "Something wen't wrong while downloading the javascript files" }}, 1500)</script>
+		<div class="footer" style="z-index:12;position:absolute;top:90%;display:block;width:100vw;text-align:center;transition:0.3s opacity ease-in-out">
 			<span class="footer-text" style="font-size:16px;text-shadow:2px 2px 9px #000;">javascript must be enabled</span>
 		</div>
     	<script src="./scripts/init.js" async defer type="module"></script>
     	<!--
     	<script src="./build/index.min.js" async defer></script>
     -->
-    	<script>document.querySelector(".footer .footer-text").innerText = ""</script>
+    	<script>document.querySelector(".footer").classList.add("closed");</script>
+<style>
+	.footer.closed {
+		opacity: 0 !important;
+	}
+</style>
     </body>
 </html>

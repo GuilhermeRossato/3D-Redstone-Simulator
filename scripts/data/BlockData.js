@@ -1,17 +1,17 @@
-export default ([{
+export default [
+{
+	name: "Air"
+}, {
 	name: "Stone",
 	render: "simple",
 	texture: {
-		children: [
-			3
-		]
+		children: [{x:3, y:0}]
 	}
 }, {
 	name: "Stone Brick",
-	render: "single",
+	render: "simple",
 	texture: {
-		children: [
-			31
-		]
+		children: [{x:6, y:3}]
 	}
-}]);
+}
+];

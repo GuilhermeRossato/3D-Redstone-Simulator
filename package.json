@@ -4,7 +4,7 @@
   "description": "A 3D Redstone Simulator for the web to simulate digital boolean logic in the same environment as minecraft's",
   "main": "index.js",
   "scripts": {
-    "start": "http-server --gzip",
+    "start": "http-server --gzip -c-1",
     "start-php": "php -S localhost:80",
     "build": "npm run webpack && npm run babel && npm run compress",
 

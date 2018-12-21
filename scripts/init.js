@@ -26,7 +26,7 @@ function setLoadingText(str) {
 			"textures": await aLoader.loadImage("assets/textures.png")
 		};
 
-		const app = new App(canvas, assets);
+		window.app = new App(canvas, assets);
 
 		setLoadingText("Initializing the Graphics Engine");
 		await app.loadGraphics();

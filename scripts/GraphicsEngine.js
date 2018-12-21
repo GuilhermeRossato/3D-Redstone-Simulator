@@ -23,6 +23,7 @@ export default class GraphicsEngine {
 		const addLight = (name, position, intensity) => {
 			const light = new THREE.DirectionalLight(0xffffff, intensity);
 			light.position.copy(position);
+			light.matrixAutoUpdate = false;
 			light.name = name;
 			scene.add(light);
 		}
@@ -44,7 +45,8 @@ export default class GraphicsEngine {
 		const material = new THREE.MeshNormalMaterial();
 
 		const mesh = new THREE.Mesh(geometry, material);
-		scene.add(mesh);
+		
+		//scene.add(mesh);
 
 		const rendererConfig = {
 			canvas: this.canvas,
