@@ -6,6 +6,7 @@ export default class MainLoop {
 		this.drawCall = config.draw || (function() {});
 		this.overflowCall = config.overflow || (function() {});
 		this.underflowCall = config.underflow || (function() {});
+		this.performancer = config.performancer;
 		this.fps = config.fps;
 
 		this.period = 1000/config.fps;
@@ -32,6 +33,7 @@ export default class MainLoop {
 	update() {
 		const period = this.period;
 		var delta = this.extra - this.last + (this.last = performance.now());
+		this.performancer && this.performancer.update(delta);
 		if (delta < this.period) {
 			this.extra = delta;
 			this.underflowCall();
