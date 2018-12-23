@@ -2,47 +2,44 @@
  * @author alteredq / http://alteredqualia.com/
  */
 
-THREE.ShaderPass = function ( shader, textureID ) {
+import * as THREE from '../libs/three.module.js';
+import Pass from './Pass.js'
 
-	THREE.Pass.call( this );
+class ShaderPass extends Pass {
+	constructor( shader, textureID ) {
+		super();
 
-	this.textureID = ( textureID !== undefined ) ? textureID : "tDiffuse";
+		this.textureID = ( textureID !== undefined ) ? textureID : "tDiffuse";
 
-	if ( shader instanceof THREE.ShaderMaterial ) {
+		if ( shader instanceof THREE.ShaderMaterial ) {
 
-		this.uniforms = shader.uniforms;
+			this.uniforms = shader.uniforms;
 
-		this.material = shader;
+			this.material = shader;
 
-	} else if ( shader ) {
+		} else if ( shader ) {
 
-		this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+			this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
-		this.material = new THREE.ShaderMaterial( {
+			this.material = new THREE.ShaderMaterial( {
 
-			defines: Object.assign( {}, shader.defines ),
-			uniforms: this.uniforms,
-			vertexShader: shader.vertexShader,
-			fragmentShader: shader.fragmentShader
+				defines: Object.assign( {}, shader.defines ),
+				uniforms: this.uniforms,
+				vertexShader: shader.vertexShader,
+				fragmentShader: shader.fragmentShader
 
-		} );
+			} );
 
+		}
+
+		this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+		this.scene = new THREE.Scene();
+
+		this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+		this.quad.frustumCulled = false; // Avoid getting clipped
+		this.scene.add( this.quad );
 	}
-
-	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-	this.scene = new THREE.Scene();
-
-	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
-	this.quad.frustumCulled = false; // Avoid getting clipped
-	this.scene.add( this.quad );
-
-};
-
-THREE.ShaderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
-
-	constructor: THREE.ShaderPass,
-
-	render: function( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+	render( renderer, writeBuffer, readBuffer, delta, maskActive ) {
 
 		if ( this.uniforms[ this.textureID ] ) {
 
@@ -64,4 +61,6 @@ THREE.ShaderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
 	}
 
-} );
+};
+
+export default ShaderPass;

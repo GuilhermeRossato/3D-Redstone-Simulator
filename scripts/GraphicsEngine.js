@@ -1,6 +1,8 @@
 'use strict';
 
 import * as THREE from './libs/three.module.js';
+import SSAOPass from './third-party/SSAOPass.js';
+import EffectComposer from './third-party/EffectComposer.js';
 
 export default class GraphicsEngine {
 	constructor(canvas, gl) {
@@ -17,6 +19,9 @@ export default class GraphicsEngine {
 		}
 		if (this.renderer) {
 			this.renderer.setSize(this.width, this.height);
+		}
+		if (this.ssaoPass) {
+			this.ssaoPass.setSize(this.width, this.height);
 		}
 	}
 	static addLightToScene(scene) {
@@ -57,8 +62,23 @@ export default class GraphicsEngine {
 		const renderer = this.renderer = new THREE.WebGLRenderer(rendererConfig);
 		renderer.setClearColor(0x333333, 1);
 		renderer.setSize(this.width, this.height);
+		if (!renderer.extensions.get( 'WEBGL_depth_texture')) {
+			console.warn("Disabled SSAO because it doesn't seem supported");
+			this.ssao = false;
+		} else {
+			this.ssao = true;
+			const ssaoPass = this.ssaoPass = new SSAOPass(scene, camera, this.width, this.height);
+			ssaoPass.kernelRadius = 7;
+			ssaoPass.minDistance = 0.003;
+			ssaoPass.maxDistance = 0.1;
+			ssaoPass.renderToScreen = true;
+
+			const effectComposer = this.effectComposer = new EffectComposer(renderer);
+			effectComposer.addPass(ssaoPass);
+		}
 	}
 	draw() {
-		this.renderer.render(this.scene, this.camera);
+		//this.renderer.render(this.scene, this.camera);
+		this.effectComposer.render();
 	}
 }
