@@ -40,6 +40,16 @@ export default class GraphicsEngine {
 		addLight("Right", { x: 1, y: 0, z: 0 }, 1.7742);
 		addLight("Bottom", { x: 0, y: -1, z: 0 }, 1.5161);
 	}
+	async addSSAO(scene, camera, renderer) {
+		const ssaoPass = this.ssaoPass = new SSAOPass(scene, camera, this.width, this.height);
+		ssaoPass.kernelRadius = 15;
+		ssaoPass.minDistance = 0.006;
+		ssaoPass.maxDistance = 0.2;
+		ssaoPass.renderToScreen = true;
+
+		const effectComposer = this.effectComposer = new EffectComposer(renderer);
+		effectComposer.addPass(ssaoPass);
+	}
 	async load(width, height) {
 		const camera = this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.01, 255);
 		this.camera.position.z = 1;
@@ -67,18 +77,14 @@ export default class GraphicsEngine {
 			this.ssao = false;
 		} else {
 			this.ssao = true;
-			const ssaoPass = this.ssaoPass = new SSAOPass(scene, camera, this.width, this.height);
-			ssaoPass.kernelRadius = 7;
-			ssaoPass.minDistance = 0.003;
-			ssaoPass.maxDistance = 0.1;
-			ssaoPass.renderToScreen = true;
-
-			const effectComposer = this.effectComposer = new EffectComposer(renderer);
-			effectComposer.addPass(ssaoPass);
+			//this.addSSAO(scene, camera, renderer);
 		}
 	}
 	draw() {
-		//this.renderer.render(this.scene, this.camera);
-		this.effectComposer.render();
+		if (this.effectComposer) {
+			this.effectComposer.render();	
+		} else {
+			this.renderer.render(this.scene, this.camera);
+		}
 	}
 }

@@ -35,27 +35,76 @@ export default class WorldHandler {
 		x = x*t+(1+x*2)/16*t;
 		y = y*t+(1+y*2)/16*t;
 		var args = [x, -y, x, -t-y, t+x, -y, x, -t-y, t+x, -t-y, t+x, -y];
-		const m = 0.0003;
-		uvs[0][0].set(args[0]+m, args[1]-m); //-
+		const m = t/512;
+		uvs[0][0].set(args[0]+m, args[1]-m);
 		uvs[0][1].set(args[2]+m, args[3]+m);
-		uvs[0][2].set(args[4]-m, args[5]-m); //-
-		uvs[1][0].set(args[6]+m, args[7]+m); //+
-		uvs[1][1].set(args[8]-m, args[9]+m); //+
+		uvs[0][2].set(args[4]-m, args[5]-m);
+		uvs[1][0].set(args[6]+m, args[7]+m);
+		uvs[1][1].set(args[8]-m, args[9]+m);
 		uvs[1][2].set(args[10]-m, args[11]-m);
 		(!this.cache[x]) && (this.cache[x] = [])
 		this.cache[x][y] = geometry;
 	}
-	load() {
+	loadImage(filename) {
 		return new Promise((resolve, reject) => {
-			//const assetFilename = "../assets/textures.png";
-			const assetFilename = "../assets/textures_separated.png"
-			this.loader = new THREE.TextureLoader();
+			var img = new Image();
+			img.onload = resolve.bind(this, img);
+			img.onerror = reject.bind(this, new Error("Could not load asset \""+filename+"\""));
+			img.src = filename;
+		});
+	}
+	loadImageWithThreejs(asset) {
+		return new Promise((resolve, reject) => {
+			this.loader = this.loader || new THREE.TextureLoader();
 			this.texture = this.loader.load(
-				assetFilename,
+				asset,
 				resolve,
 				undefined,
-				reject.bind(this, new Error("Could not load asset \""+assetFilename+"\""))
+				reject.bind(this, new Error("Could not load asset \""+asset+"\""))
 			);
 		});
+	}
+	createCanvasFromImage(img) {
+		return new Promise((resolve, reject) => {
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			canvas.width = img.width;
+			canvas.height = img.height;
+			ctx.drawImage(img, 0, 0, img.width, img.height);
+			resolve(canvas);
+		});
+	}
+	addMarginToCanvas(canvas, img) {
+		const ctx = canvas.getContext("2d");
+		let sx, sy, swidth, sheight, dx, dy, dwidth, dheight;
+		for (let i=0;i<canvas.height;i+=18) {
+			sx = 0;
+			sy = i+1;
+			dwidth = swidth = canvas.width;
+			dheight = sheight = 1;
+			dx = 0;
+			dy = i;
+			ctx.drawImage(canvas, sx, sy, swidth, sheight, dx, dy, dwidth, dheight);
+			sy = i+16;
+			dy = i+17;
+			ctx.drawImage(canvas, sx, sy, swidth, sheight, dx, dy, dwidth, dheight);
+			sx = i+1;
+			sy = 0;
+			dwidth = swidth = 1;
+			dheight = sheight = canvas.height;
+			dx = i;
+			dy = 0;
+			ctx.drawImage(canvas, sx, sy, swidth, sheight, dx, dy, dwidth, dheight);
+			sx = i+16;
+			dx = i+17;
+			ctx.drawImage(canvas, sx, sy, swidth, sheight, dx, dy, dwidth, dheight);
+		}
+	}
+	async load() {
+		const img = await this.loadImage("../assets/textures_separated.png");
+		const canvas = await this.createCanvasFromImage(img);
+		this.addMarginToCanvas(canvas, img);
+		await new Promise(resolve=>setTimeout(resolve, 50));
+		return await this.loadImageWithThreejs(canvas.toDataURL());
 	}
 }

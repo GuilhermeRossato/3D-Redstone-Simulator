@@ -32,7 +32,7 @@ export default class App {
 	}
 	update() {
 		// Update camera around the object
-		if (this.frame < 5000) {
+		if (this.frame < 4000) {
 			this.frame++;
 		} else {
 			this.frame = 0;
@@ -44,9 +44,9 @@ export default class App {
 			}
 		}
 		if (this.graphics.camera) {
-			var angle = 2*Math.PI*(this.frame/1000)
-			angle = Math.PI*1.7;
-			var scale = window.scale || 0.1;
+			var angle = 2*Math.PI*(this.frame/4000)
+			//angle = Math.PI*1.7;
+			var scale = window.scale || 0.11;
 			this.graphics.camera.position.x = 0.41+Math.cos(angle)*30*scale;
 			this.graphics.camera.position.z = Math.sin(angle)*30*scale;
 			this.graphics.camera.position.y = 68*scale;
@@ -74,10 +74,10 @@ export default class App {
 	async loadWorld() {
 		this.world = new WorldHandler(this.graphics);
 		await this.world.load();
-		const size = 4;
+		const size = 8;
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
-				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j, j-size/2, (i%3==0||j%3==0)?2:3);
+				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3, j-size/2, (i%3==0||j%3==0)?2:3);
 			}
 		}
 		console.log(j*i);
