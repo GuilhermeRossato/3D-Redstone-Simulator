@@ -8,10 +8,16 @@ export default [
 		children: [{x:3, y:0}]
 	}
 }, {
+	name: "Minecraft Stone Brick",
+	render: "simple",
+	texture: {
+		children: [{x:3, y:5}]
+	}
+}, {
 	name: "Stone Brick",
 	render: "simple",
 	texture: {
-		children: [{x:6, y:3}]
+		children: [{x:5, y:0}]
 	}
 }
 ];

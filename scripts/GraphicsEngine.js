@@ -25,6 +25,7 @@ export default class GraphicsEngine {
 			light.position.copy(position);
 			light.matrixAutoUpdate = false;
 			light.name = name;
+			light.updateMatrix();
 			scene.add(light);
 		}
 		addLight("Top", { x: 0, y: 1, z: 0 }, 2.935);
@@ -42,11 +43,11 @@ export default class GraphicsEngine {
 		this.constructor.addLightToScene(scene);
 
 		const geometry = new THREE.BoxGeometry(.5, .5, .5);
-		const material = new THREE.MeshNormalMaterial();
+		const material = new THREE.MeshLambertMaterial({color:new THREE.Color("#333333")});
 
 		const mesh = new THREE.Mesh(geometry, material);
-		
-		//scene.add(mesh);
+		mesh.position.set(0, 4.75, 0);
+		scene.add(mesh);
 
 		const rendererConfig = {
 			canvas: this.canvas,

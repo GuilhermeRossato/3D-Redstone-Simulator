@@ -40,16 +40,16 @@ export default class App {
 		if (this.frame%20 === 19) {
 			const element = document.querySelector(".footer");
 			if (!element.classList.contains("closed")) {
-				element.querySelector(".footer-text").innerText = "Hello World";
+				element.querySelector(".footer-text").innerText = this.graphics.renderer.info.render.calls;
 			}
 		}
 		if (this.graphics.camera) {
-			var angle = 2*Math.PI*(this.frame/5000);
-			//angle = Math.PI*0.25;
-			var scale = window.scale || 1;
-			this.graphics.camera.position.x = Math.cos(angle)*30*scale;
+			var angle = 2*Math.PI*(this.frame/1000)
+			angle = Math.PI*1.7;
+			var scale = window.scale || 0.1;
+			this.graphics.camera.position.x = 0.41+Math.cos(angle)*30*scale;
 			this.graphics.camera.position.z = Math.sin(angle)*30*scale;
-			this.graphics.camera.position.y = 15*scale;
+			this.graphics.camera.position.y = 68*scale;
 			this.graphics.camera.lookAt(0, 0, 0);
 		}
 	}
@@ -74,11 +74,13 @@ export default class App {
 	async loadWorld() {
 		this.world = new WorldHandler(this.graphics);
 		await this.world.load();
-		for (var i = 0; i < 25; i++) {
-			for (var j = 0; j < 25; j++) {
-				this.world.set(i-12, (i%3==0||j%3==0)?0:2, j-12, (i%3==0||j%3==0)?2:1);
+		const size = 4;
+		for (var i = 0; i < size; i++) {
+			for (var j = 0; j < size; j++) {
+				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j, j-size/2, (i%3==0||j%3==0)?2:3);
 			}
 		}
+		console.log(j*i);
 	}
 	async loadLoop() {
 		this.loop = new MainLoop({
