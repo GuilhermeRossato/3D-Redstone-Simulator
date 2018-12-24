@@ -77,7 +77,7 @@ export default class GraphicsEngine {
 			this.ssao = false;
 		} else {
 			this.ssao = true;
-			//this.addSSAO(scene, camera, renderer);
+			this.addSSAO(scene, camera, renderer);
 		}
 	}
 	draw() {
