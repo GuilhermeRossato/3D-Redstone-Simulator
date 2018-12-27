@@ -74,10 +74,10 @@ export default class App {
 	async loadWorld() {
 		this.world = new WorldHandler(this.graphics);
 		await this.world.load();
-		const size = 8;
+		const size = 32;
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
-				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3, j-size/2, (i%3==0||j%3==0)?2:3);
+				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
 			}
 		}
 		console.log(j*i);

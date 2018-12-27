@@ -19,6 +19,7 @@ export default class WorldHandler {
 				map: this.texture,
 				color: 0x555555
 			});
+			this.material.side = THREE.FrontSide;
 		}
 		return this.material;
 	}
@@ -28,13 +29,13 @@ export default class WorldHandler {
 		}
 		return this.cache[x][y];
 	}
-	applyUv(geometry, x, y) {
+	applyUv(geometry, xo, yo) {
 		const uvs = geometry.faceVertexUvs[0];
 		window.geometry = geometry;
 		const t = 1/8;
-		x = x*t+(1+x*2)/16*t;
-		y = y*t+(1+y*2)/16*t;
-		var args = [x, -y, x, -t-y, t+x, -y, x, -t-y, t+x, -t-y, t+x, -y];
+		const x = xo*t+(1+xo*2)/16*t;
+		const y = yo*t+(1+yo*2)/16*t;
+		const args = [x, -y, x, -t-y, t+x, -y, x, -t-y, t+x, -t-y, t+x, -y];
 		const m = t/512;
 		uvs[0][0].set(args[0]+m, args[1]-m);
 		uvs[0][1].set(args[2]+m, args[3]+m);
@@ -42,8 +43,8 @@ export default class WorldHandler {
 		uvs[1][0].set(args[6]+m, args[7]+m);
 		uvs[1][1].set(args[8]-m, args[9]+m);
 		uvs[1][2].set(args[10]-m, args[11]-m);
-		(!this.cache[x]) && (this.cache[x] = [])
-		this.cache[x][y] = geometry;
+		(!this.cache[xo]) && (this.cache[xo] = [])
+		this.cache[xo][yo] = geometry;
 	}
 	loadImage(filename) {
 		return new Promise((resolve, reject) => {

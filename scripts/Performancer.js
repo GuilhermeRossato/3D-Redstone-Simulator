@@ -7,11 +7,11 @@
 export default class Performancer {
 	constructor(compact=true, zIndex=1) {
 		/* Document Elements */
-		let wrapper = document.createElement("div");
-		let span = document.createElement("span");
-		let canvas = document.createElement("canvas");
+		const wrapper = document.createElement("div");
+		const span = document.createElement("span");
+		const canvas = document.createElement("canvas");
 		/* Styles */
-		let alignment = "left:0px; top:0px";
+		const alignment = "left:0px; top:0px";
 		wrapper.setAttribute("style", `cursor:pointer;${alignment};${(zIndex?"z-index: "+zIndex+";":"")}position:absolute; margin:0px; padding:0px; background-color:#020;`);
 		canvas.width = 75;
 		canvas.height = 32;
@@ -42,8 +42,9 @@ export default class Performancer {
 		index = 0;
 	}
 	update(delta) {
-		let ctx = this.ctx;
-		let span = this.span;
+		this.lastDelta = delta;
+		const ctx = this.ctx;
+		const span = this.span;
 		if (this.index < 75)
 			this.index++;
 		else
