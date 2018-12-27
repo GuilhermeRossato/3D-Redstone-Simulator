@@ -21,34 +21,61 @@ export default class WorldHandler {
 	}
 
 	set(x, y, z, id) {
+		var geometry, ix, iy, iz, i, side;
 		const data = BlockData[id];
 		const renderType = data.render;
 		const material = this.textures.getMaterial();
-		if (renderType === "simple") {
+		const block = {
+			faces: undefined,
+			id: id
+		}
+		if (renderType === "simple" || renderType === undefined) {
 			const texture = data.texture.children[0];
-			const geometry = this.textures.getCachedResult(texture.x, texture.y, this.geometries.plane);
-			this.textures.applyUv(geometry, texture.x, texture.y);
-			const faces = this.sidesDisplacement.map(side => {
+			geometry = this.textures.getCachedResult(texture.x, texture.y);
+			if (!geometry) {
+				geometry = this.geometries.plane.clone();
+				this.textures.applyUv(geometry, texture.x, texture.y);
+			}
+			block.faces = [];
+			for (i=0;i<this.sidesDisplacement.length;i++) {
+				side = this.sidesDisplacement[i];
 				const mesh = new THREE.Mesh(geometry, material);
 				mesh.matrixAutoUpdate = false;
 				mesh.position.set((x|0), (y|0), (z|0));
 				mesh.position[side.origin[0]] += side.origin[1]/2;
-				mesh.rotation[side.target[0]] += side.target[1]*Math.PI;
+				mesh.rotation[side.rotation[0]] += side.rotation[1]*Math.PI;
 				mesh.updateMatrix();
-				return mesh;
-			});
-			this.scene.add(...faces);
+				// Face culling (hidden faces by other blocks)
+				ix = x-side.inverse[0];
+				iy = y-side.inverse[1];
+				iz = z-side.inverse[2];
+				if (this.blocks[ix] && this.blocks[ix][iz] && this.blocks[ix][iz][iy]) {
+					mesh.visible = false;
+					if (this.blocks[ix][iz][iy].faces.length === 6) {
+						this.blocks[ix][iz][iy].faces[side.inverseId].visible = false;
+					}
+				}
+				block.faces.push(mesh);
+			}
+			(!this.blocks[x]) && (this.blocks[x] = []);
+			(!this.blocks[x][z]) && (this.blocks[x][z] = []);
+			this.blocks[x][z][y] = block;
+		} else {
+			block.faces = [];
+			console.warn("Ignored invalid render type: "+renderType);
 		}
+		this.blockList.push(block);
+		this.scene.add(...block.faces);
 	}
 
 	static get SIDE_DISPLACEMENT() {
 		return [
-			{"name": "Front",	"origin": ["z", 1],	"target": ["y", 0],		"displacement": [0, 0, -1]},
-			{"name": "Back",	"origin": ["z", -1],	"target": ["y", 1],		"displacement": [0, 0, 1]},
-			{"name": "Right",	"origin": ["x", 1],	"target": ["y", 0.5],	"displacement": [-1, 0, 0]},
-			{"name": "Left",	"origin": ["x", -1],	"target": ["y", -0.5],	"displacement": [1, 0, 0]},
-			{"name": "Top",		"origin": ["y", 1],	"target": ["x", -0.5],	"displacement": [0, -1, 0]},
-			{"name": "Bottom",	"origin": ["y", -1],	"target": ["x", 0.5],	"displacement": [0, 1, 0]}
+			{"name": "Front",	"origin": ["z", 1],		"rotation": ["y", 0],		"inverse": [0, 0, -1],	"inverseId": 1},
+			{"name": "Back",	"origin": ["z", -1],	"rotation": ["y", 1],		"inverse": [0, 0, 1],	"inverseId": 0},
+			{"name": "Right",	"origin": ["x", 1],		"rotation": ["y", 0.5],		"inverse": [-1, 0, 0],	"inverseId": 3},
+			{"name": "Left",	"origin": ["x", -1],	"rotation": ["y", -0.5],	"inverse": [1, 0, 0],	"inverseId": 2},
+			{"name": "Top",		"origin": ["y", 1],		"rotation": ["x", -0.5],	"inverse": [0, -1, 0],	"inverseId": 5},
+			{"name": "Bottom",	"origin": ["y", -1],	"rotation": ["x", 0.5],		"inverse": [0, 1, 0],	"inverseId": 4}
 		];
 	}
 
