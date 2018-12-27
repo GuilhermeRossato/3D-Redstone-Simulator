@@ -40,7 +40,7 @@ export default class App {
 		if (this.frame%20 === 19) {
 			const element = document.querySelector(".footer");
 			if (!element.classList.contains("closed")) {
-				element.querySelector(".footer-text").innerText = this.graphics.renderer.info.render.calls;
+				element.querySelector(".footer-text").innerHTML = "Render Calls:"+this.graphics.renderer.info.render.calls+"<br>Blocks: "+this.world.blockList.length+"<br>Faces:"+(this.world.blockList.length*6);
 			}
 		}
 		if (this.graphics.camera) {
