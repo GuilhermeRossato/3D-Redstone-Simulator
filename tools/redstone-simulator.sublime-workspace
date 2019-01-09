@@ -1,0 +1,587 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"photo",
+				"photos_column_number"
+			],
+			[
+				"catego",
+				"category_lookup"
+			],
+			[
+				"error",
+				"error_message"
+			],
+			[
+				"ASSER",
+				"assertGcloud"
+			],
+			[
+				"module",
+				"moduleName"
+			],
+			[
+				"acertos",
+				"acertos_num"
+			],
+			[
+				"targ",
+				"target_filename"
+			],
+			[
+				"http_build",
+				"http_build_query"
+			],
+			[
+				"s_give",
+				"s_give_player_1"
+			],
+			[
+				"IS",
+				"IS_NEXT_CHECK"
+			],
+			[
+				"CARD",
+				"machine_card"
+			],
+			[
+				"user",
+				"user_card"
+			],
+			[
+				"value",
+				"value_list"
+			],
+			[
+				"formalize",
+				"formalizeSavingData"
+			],
+			[
+				"column",
+				"column_name"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/C/Users/dev-pc/Desktop/dev/redstone-simulator/scripts/App.js",
+			"settings":
+			{
+				"buffer_size": 1724,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"List",
+					""
+				],
+				[
+					"Packages/User/node-run-index.sublime-build",
+					""
+				],
+				[
+					"Packages/User/run-make.sublime-build",
+					""
+				]
+			],
+			[
+				"List",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Upload run file",
+					""
+				],
+				[
+					"Packages/User/node-run-index.sublime-build",
+					""
+				],
+				[
+					"Packages/User/run-make.sublime-build",
+					""
+				]
+			],
+			[
+				"Upload run file",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Upload the login file",
+					""
+				],
+				[
+					"Upload the run file",
+					""
+				],
+				[
+					"Packages/User/node-run-index.sublime-build",
+					""
+				],
+				[
+					"Packages/User/run-make.sublime-build",
+					""
+				]
+			],
+			[
+				"Upload the login file",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"install p",
+				"Package Control: Install Package"
+			],
+			[
+				"syntaxsql",
+				"Set Syntax: SQL"
+			],
+			[
+				"trailin",
+				"Trailing Spaces: Delete Trailing Spaces"
+			],
+			[
+				"encode",
+				"HTML: Encode Special Characters"
+			],
+			[
+				"setting",
+				"Preferences: Settings"
+			],
+			[
+				"tabs",
+				"Indentation: Convert to Tabs"
+			],
+			[
+				"traili",
+				"Trailing Spaces: Delete Trailing Spaces"
+			],
+			[
+				"settings",
+				"Preferences: Settings"
+			],
+			[
+				"build",
+				"Build: Cancel"
+			],
+			[
+				"build with",
+				"Build With: Upload login file"
+			],
+			[
+				"marko",
+				"Set Syntax: Markdown"
+			],
+			[
+				"trailing",
+				"Trailing Spaces: Delete Trailing Spaces"
+			],
+			[
+				"vhdl",
+				"Set Syntax: VHDL"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"install pa",
+				"Package Control: Install Package"
+			],
+			[
+				"jsx",
+				"Set Syntax: JSX"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"matlab",
+				"Set Syntax: MATLAB"
+			],
+			[
+				"enco",
+				"Indentation: Convert to Tabs"
+			],
+			[
+				"python",
+				"Build With: Python"
+			],
+			[
+				"run node",
+				"Build With: node-run-index"
+			],
+			[
+				"node",
+				"Build With: node-run-index"
+			],
+			[
+				"save p",
+				"Project: Save As"
+			],
+			[
+				"c++",
+				"Build With: C++ Single File"
+			],
+			[
+				"install packa",
+				"Install Package Control"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator",
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/assets",
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/scripts",
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/scripts/classes",
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/scripts/libs"
+	],
+	"file_history":
+	[
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/scripts/init.js",
+		"/C/Users/dev-pc/Desktop/dev/web-app-sistema-de-objetos/watch-and-upload/index.js",
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/index.html",
+		"/C/Users/dev-pc/Desktop/dev/web-app-sistema-de-objetos/public/hello.html",
+		"/C/Users/dev-pc/Downloads/test.js",
+		"/C/Users/dev-pc/Desktop/dev/web-app-sistema-de-objetos/watch-and-upload/package.json",
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/scripts/polyfill.js",
+		"/C/Users/dev-pc/Desktop/dev/redstone-simulator/README.md",
+		"/C/Users/dev-pc/AppData/Local/Temp/fz3temp-2/import-aldo.php",
+		"/C/Users/dev-pc/Desktop/BI/CAIMI/original_working",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/views/seleciona-base-header.html",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/controllers/FullFormController.php",
+		"/C/Users/dev-pc/Downloads/755326991125",
+		"/C/Users/dev-pc/AppData/Local/Temp/fz3temp-2/.setup_cronjob_status",
+		"/C/Users/dev-pc/dev/comteq/aldo/Test.php",
+		"/C/Users/dev-pc/Desktop/dev/comteq/aldo/result.csv",
+		"/C/Users/dev-pc/Desktop/dev/comteq/aldo/test.txt",
+		"/C/Users/dev-pc/Desktop/dev/comteq/aldo/aldo.xml",
+		"/C/Users/dev-pc/Desktop/dev/comteq/aldo/imagens.php",
+		"/C/Users/dev-pc/Desktop/dev/comteq/aldo/interpret-aldo.php",
+		"/C/Users/dev-pc/Desktop/dev/comteq/aldo/aldo_full.xml",
+		"/C/Users/dev-pc/Desktop/google vm/connect to it.txt",
+		"/C/Users/dev-pc/Desktop/medium-post.md",
+		"/C/Users/dev-pc/Desktop/test/main.c",
+		"/C/Users/dev-pc/Downloads/resumo-meses.usql",
+		"/C/Users/dev-pc/Downloads/aldo.xml",
+		"/C/Users/dev-pc/AppData/Local/Temp/fz3temp-2/index.php",
+		"/C/Users/dev-pc/Desktop/test.php",
+		"/C/Users/dev-pc/Desktop/dev/web-app-test/public/index.html",
+		"/C/Users/dev-pc/Desktop/BI/PIA/scripts/resumo-meses.usql",
+		"/C/Users/dev-pc/Desktop/BI/PIA/data-bkp/Notas_2018_10.csv",
+		"/C/Users/dev-pc/Desktop/BI/PIA/data-bkp/Devolucoes.csv",
+		"/C/Users/dev-pc/Desktop/dev/data-process/FileReaders/CSV.php",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris - Copy/public/index.html",
+		"/C/Users/dev-pc/Desktop/dev/step-by-step/steps/1-hello-world.md",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris/public/index.html",
+		"/C/Users/dev-pc/AppData/Local/Temp/Temp1_kimai-kimai-1.3.1-36-g0966744.zip/kimai-kimai-0966744/index.php",
+		"/C/Users/dev-pc/test.txt",
+		"/C/Users/dev-pc/Desktop/dev/step-by-step/steps/1-hello-world.mk",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris/public/assets/App.js",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris/public/assets/utilities.js",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris/public/assets/load.js",
+		"/C/Users/dev-pc/Desktop/process/index.php",
+		"/C/Users/dev-pc/Desktop/process/activity/AnalyseLine.php",
+		"/C/Users/dev-pc/dev/progressive-web-app/milligram.min.css",
+		"/C/Users/dev-pc/Downloads/UsersLOG.csv",
+		"/C/Users/dev-pc/Desktop/dev/simple-multiplayer-game-2/serve.bat",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris/serve.bat",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris/public/assets/utilities/debounce.js",
+		"/C/Users/dev-pc/Desktop/dev/dog-tetris/index.php",
+		"/C/Users/dev-pc/Desktop/dev/azure/azure-file-explorer/serve.bat",
+		"/C/Users/dev-pc/Desktop/dev/azure/scripts/list-blob-containers.bat",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/serve.bat",
+		"/C/Users/dev-pc/Desktop/BI/TIM/dados/csv/Base de dados OFFLINE - completa.csv",
+		"/C/Users/dev-pc/AndroidStudioProjects/DogTetris/.idea/misc.xml",
+		"/C/Users/dev-pc/AndroidStudioProjects/DogTetris/app/src/main/res/layout/activity_main.xml",
+		"/C/Users/dev-pc/AndroidStudioProjects/Ethea/app/build/outputs/apk/debug/teste/teste.zip",
+		"/C/Users/dev-pc/AndroidStudioProjects/Ethea/app/build/outputs/apk/debug/teste.zip",
+		"/C/Users/dev-pc/Desktop/BI/TIM/dados/Base de dados OFFLINE - completa.csv",
+		"/C/Users/dev-pc/Desktop/BI/TIM/dados/Base de dados Operadora - ONLINE atualizada.csv",
+		"/C/Users/dev-pc/AndroidStudioProjects/Ethea/app/build/outputs/apk/debug/app/classes.dex",
+		"/C/Users/dev-pc/AndroidStudioProjects/Ethea/app/build/intermediates/incremental/mergeDebugResources/merged.dir/values/values.xml",
+		"/C/Users/dev-pc/AndroidStudioProjects/DogTetris/app/src/main/java/com/guilherme_rossato/dogtetris/MainActivity.java",
+		"/C/Users/dev-pc/AndroidStudioProjects/MyWebApp/app/src/main/res/layout/activity_fullscreen.xml",
+		"/C/Users/dev-pc/Desktop/test (1).php",
+		"/C/Users/dev-pc/AndroidStudioProjects/Ethea/app/build/outputs/apk/debug/teste2.zip",
+		"/C/Users/dev-pc/AndroidStudioProjects/Ethea/app/build/outputs/apk/debug/teste/resources.arsc",
+		"/C/Users/dev-pc/AppData/Local/Temp/7zO40117AF8/resources.arsc",
+		"/C/Users/dev-pc/AppData/Local/Temp/7zO4019C9FA/resources.arsc",
+		"/C/Users/dev-pc/AppData/Local/Temp/7zO401310E8/resources.arsc",
+		"/C/Users/dev-pc/AppData/Local/Temp/7zO4FCC63A7/resources.arsc",
+		"/C/Users/dev-pc/AndroidStudioProjects/MyWebApp/app/src/main/java/com/guilherme_rossato/mywebapp/FullscreenActivity.java",
+		"/C/Users/dev-pc/AppData/Local/Temp/Temp2_app.zip/resources.arsc",
+		"/C/Users/dev-pc/AppData/Local/Temp/7zO8444E0F3/resources.arsc",
+		"/C/Users/dev-pc/AppData/Local/Temp/7zO8446FED3/resources.arsc",
+		"/C/Users/dev-pc/AppData/Local/Temp/Temp1_app.zip/resources.arsc",
+		"/C/Users/dev-pc/AndroidStudioProjects/Ethea/app/build/outputs/apk/debug/app/resources.arsc",
+		"/C/Users/dev-pc/Desktop/deploy/README.md",
+		"/C/Users/dev-pc/Desktop/dev/gcloud-deploy-server-script/.gitignore",
+		"/C/Users/dev-pc/Desktop/deploy/deploy-progress.json",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/deploy.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/google-dashboard.js",
+		"/C/Users/dev-pc/Desktop/deploy/test.js",
+		"/C/Users/dev-pc/Desktop/deploy/steps/3-check-js/index.js",
+		"/C/Users/dev-pc/Desktop/deploy/steps/3-check-js/validation.js",
+		"/C/Users/dev-pc/Desktop/deploy/steps/step1.js",
+		"/C/Users/dev-pc/Desktop/deploy/.deploy-config",
+		"/C/Users/dev-pc/Downloads/Notas_2017_01.csv",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/fast-dev/index.php",
+		"/C/Users/dev-pc/Downloads/Notas_2018_001.csv",
+		"/C/Program Files (x86)/Google/google_appengine/php/sdk/google/appengine/api/cloud_storage/CloudStorageTools.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/php.ini",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/fast-dev/run.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/fast-dev/login/index.html",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/redirect.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/main-website.sublime-project",
+		"/C/Program Files (x86)/Google/google_appengine/demos/php/minishell/frontpage.php",
+		"/C/Program Files (x86)/Google/google_appengine/demos/php/minishell/reset.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/fast-test/run.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/fast-test/index.php",
+		"/C/Program Files (x86)/Google/google_appengine/php/php-5.5-Win32-VC11-x86/php_curl.dll",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/main-website.sublime-workspace",
+		"/C/Program Files (x86)/Google/google_appengine/demos/php/minishell/shell.php",
+		"/C/Program Files (x86)/Google/Cloud SDK/google-cloud-sdk/platform/google_appengine/demos/php/sendpage/sendpage.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/gui-rossato/email/send.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/email/eval.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/email/system.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/email/index.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/email/send.php",
+		"/C/Users/dev-pc/Desktop/dev/vm-server/index.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/gui-rossato/email/system.php",
+		"/C/Users/dev-pc/Desktop/dev/main-website/git-repo/email/call.php",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/models/Simulacao.php",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/autoload.php",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/database/Query.php",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/models/Model.php",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/app/groups/RadioboxGroup.php",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/tests/ObTest.php",
+		"/C/Users/dev-pc/Desktop/2018_11_14_115738_create_simulation_table.php",
+		"/C/Users/dev-pc/Desktop/2018_11_14_115805_create_simulation_options_table.php",
+		"/C/Users/dev-pc/Desktop/dev/4w/projeto/wp-servicos/ftpsync.settings",
+		"/C/Users/dev-pc/Downloads/test.php",
+		"/C/Program Files/PuTTY/keys/is_rsa.pub",
+		"/C/Program Files/PuTTY/keys/id_rsa.ppk",
+		"/C/Users/dev-pc/Desktop/dev/cloud-file-system/index.js",
+		"/C/Users/dev-pc/Desktop/upload.php",
+		"/C/Users/dev-pc/Desktop/docker-test/Dockerfile.ubuntu-curl",
+		"/C/Users/dev-pc/Desktop/docker-test/app.py"
+	],
+	"find":
+	{
+		"height": 29.0
+	},
+	"find_in_files":
+	{
+		"height": 104.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"child_process",
+			"footer-text",
+			"javascript",
+			"FatalErrorDisplay",
+			"sLoader"
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/C/Users/dev-pc/Desktop/dev/redstone-simulator/scripts/App.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1724,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								249,
+								249
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 29.0
+	},
+	"input":
+	{
+		"height": 39.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 126.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "redstone-simulator.sublime-project",
+	"replace":
+	{
+		"height": 54.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"FullScre",
+				"C:\\Users\\dev-pc\\AndroidStudioProjects\\MyWebApp\\app\\src\\main\\java\\com\\guilherme_rossato\\mywebapp\\FullscreenActivity.java"
+			],
+			[
+				"Activity",
+				"app\\src\\main\\java\\com\\guilherme_rossato\\dogtetris\\MainActivity.java"
+			],
+			[
+				"activity",
+				"app\\src\\main\\res\\layout\\activity_main.xml"
+			],
+			[
+				".xml",
+				".idea\\misc.xml"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 192.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

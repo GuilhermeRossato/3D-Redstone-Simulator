@@ -6,6 +6,7 @@ export default class MainLoop {
 		this.drawCall = config.draw || (function() {});
 		this.overflowCall = config.overflow || (function() {});
 		this.underflowCall = config.underflow || (function() {});
+		this.constant = config.constant || false;
 		this.performancer = config.performancer;
 		this.fps = config.fps;
 
@@ -34,26 +35,31 @@ export default class MainLoop {
 		const period = this.period;
 		var delta = this.extra - this.last + (this.last = performance.now());
 		this.performancer && this.performancer.update(delta);
-		if (delta < this.period) {
-			this.extra = delta;
-			this.underflowCall();
-		} else if (delta > this.period*16) {
-			if (delta > this.period*22) {
-				this.overflowCall();
-			} else {
-				this.updateCall();
-				this.updateCall();
-			}
-			delta = 0;
-		} else {
-			while (delta > period) {
-				delta -= period;
-				this.updateCall();
-			}
+		if (this.constant) {
+			this.updateCall();
 			this.drawCall();
-		}
+		} else {
+			if (delta < this.period) {
+				this.extra = delta;
+				this.underflowCall();
+			} else if (delta > this.period*16) {
+				if (delta > this.period*22) {
+					this.overflowCall();
+				} else {
+					this.updateCall();
+					this.updateCall();
+				}
+				delta = 0;
+			} else {
+				while (delta > period) {
+					delta -= period;
+					this.updateCall();
+				}
+				this.drawCall();
+			}
 
-		this.extra = delta;
+			this.extra = delta;
+		}
 
 		this.running && requestAnimationFrame(this.update);
 	}

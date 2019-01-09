@@ -17,7 +17,7 @@ export default [
 	name: "Stone Brick",
 	render: "simple",
 	texture: {
-		children: [{x:5, y:0}]
+		children: [{x:6, y:0}]
 	}
 }
 ];

@@ -9,19 +9,37 @@ export default class GraphicsEngine {
 		this.canvas = canvas;
 		this.width = canvas.width;
 		this.height = canvas.height;
+		this.width = 856;
+		this.height = 384;
+		this.continue = true;
+		this.aaScale = 1;
 	}
 	resize(width, height) {
-		this.width = width;
-		this.height = height;
+		const aaScale = this.aaScale;
+		if (this.fixedSize) {
+			this.width = 856*aaScale;
+			this.height = 384*aaScale;
+		} else {
+			this.width = width*aaScale;
+			this.height = height*aaScale;
+		}
 		if (this.camera) {
 			this.camera.aspect = this.width / this.height;
 			this.camera.updateProjectionMatrix();
 		}
 		if (this.renderer) {
 			this.renderer.setSize(this.width, this.height);
+			this.renderer.domElement.style.width = this.width/aaScale+"px";
+			this.renderer.domElement.style.height = this.height/aaScale+"px";
+			this.renderer.domElement.width = this.width;
+			this.renderer.domElement.height = this.height;
 		}
 		if (this.ssaoPass) {
 			this.ssaoPass.setSize(this.width, this.height);
+			this.renderer.domElement.style.width = this.width/aaScale+"px";
+			this.renderer.domElement.style.height = this.height/aaScale+"px";
+			this.renderer.domElement.width = this.width;
+			this.renderer.domElement.height = this.height;
 		}
 	}
 	static addLightToScene(scene) {
@@ -74,6 +92,7 @@ export default class GraphicsEngine {
 		const rendererConfig = {
 			canvas: this.canvas,
 			antialias: true,
+			antialiasing: true,
 			alpha: false,
 			context: context
 		};
@@ -94,11 +113,47 @@ export default class GraphicsEngine {
 	}
 
 	draw() {
+		if (this.frame < 20000) {
+			this.frame++;
+		} else {
+			this.frame = 0;
+		}
 		this.ssao = false;
 		if (this.effectComposer && this.ssao) {
 			this.effectComposer.render();	
 		} else {
 			this.renderer.render(this.scene, this.camera);
 		}
+	}
+	sendCanvasToSaveServer() {
+		if (!this.continue) {
+			return;
+		}
+		this.continue = false;
+
+		if (this.image_downloads < 20000) {
+			this.image_downloads++;
+		} else {
+			this.image_downloads = 0;
+		}
+		if (this.image_downloads > 250) {
+			return false;
+		}
+		const self = this;
+		const data = new FormData();
+		const countStr = (this.image_downloads<10)?"00"+this.image_downloads:((this.image_downloads<100)?"0"+this.image_downloads:this.image_downloads);
+		const ssaoStr = this.ssao?"ssao":"no-ssao";
+		data.append("content", this.renderer.domElement.toDataURL());
+		data.append("filename", 'img'+countStr+'-'+ssaoStr+'.png');
+		fetch("http://localhost:8081", {
+			method: "post",
+			body: data
+		}).then(r=>r.text()).then((txt) => {
+			/*txt = txt.substr(txt.indexOf("<pre>")+5);
+			txt = txt.substr(0, txt.length-6);
+			const json = JSON.parse(txt);
+			console.log(json);*/
+			self.continue = true;
+		});
 	}
 }

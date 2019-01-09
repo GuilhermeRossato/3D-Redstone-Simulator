@@ -4,17 +4,16 @@ import GraphicsEngine from './GraphicsEngine.js';
 import MainLoop from './MainLoop.js';
 import WorldHandler from './classes/world/WorldHandler.js';
 import Performancer from './Performancer.js';
+import ControlSelectorScreen from './screens/ControlSelectorScreen.js';
 
 export default class App {
 	constructor(canvas, gl, assets) {
 		this.canvas = canvas;
 		this.gl = gl;
 		this.assets = assets;
-		this.resize = this.resize.bind(this);
 		this.update = this.update.bind(this);
 		this.draw = this.draw.bind(this);
 		this.overflow = this.overflow.bind(this);
-		this.mousemove = this.mousemove.bind(this);
 		this.world = undefined;
 		this.graphics = undefined;
 	}
@@ -27,10 +26,12 @@ export default class App {
 		}
 	}
 	attachEvents() {
-		window.addEventListener("resize", this.debounce(this.resize, 200));
-		window.addEventListener("mousemove", this.debounce(this.mousemove, 100));
+		window.addEventListener("resize", this.debounce(this.resize.bind(this), 200));
+		window.addEventListener("mousemove", this.debounce(this.mousemove.bind(this), 100));
+		window.addEventListener("mousedown", this.debounce(this.mousedown.bind(this), 100));
 	}
 	update() {
+		(this.screen) && (this.screen.update) && (this.screen.update());
 		// Update camera around the object
 		if (this.frame < 4000) {
 			this.frame++;
@@ -54,7 +55,7 @@ export default class App {
 		}
 	}
 	draw() {
-		this.graphics.draw();
+		//this.graphics.draw();
 	}
 	overflow() {
 		// Called when 333ms has been elapsed since last update
@@ -82,6 +83,9 @@ export default class App {
 		}
 		console.log(j*i);
 	}
+	async loadScreens() {
+		ControlSelectorScreen.init();
+	}
 	async loadLoop() {
 		this.loop = new MainLoop({
 			fps: 60,
@@ -89,8 +93,26 @@ export default class App {
 			update: this.update,
 			overflow: this.overflow,
 			performancer: this.performancer
+
 		});
+		this.update();
+		this.draw();
 		this.loop.start();
+	}
+	clearScreen() {
+		if (!HTMLCollection.prototype.forEach) {
+			HTMLCollection.prototype.forEach = Array.prototype.forEach;
+		}
+		console.log("just", document.querySelector(".content").children.length);
+		document.querySelector(".content").children.forEach(function(element) {
+			console.log("hi");
+			element.remove();
+		});
+	}
+	start() {
+		this.clearScreen();
+		this.screen = ControlSelectorScreen;
+		this.screen.show();
 	}
 	mousemove(evt) {
 		const nx = (evt.clientX/window.innerWidth);
@@ -102,9 +124,14 @@ export default class App {
 			element.classList.add("closed");
 		}
 	}
+	mousedown(evt) {
+		if (evt.button !== 0) return;
+		console.log("Mouse Down");
+	}
 	resize() {
-		this.width = this.canvas.width = window.innerWidth - 8;
-		this.height = this.canvas.height = window.innerHeight - 7;
+		this.width = this.canvas.width = window.innerWidth;
+		this.height = this.canvas.height = window.innerHeight;
 		this.graphics && this.graphics.resize(this.width, this.height);
+		(this.screen) && (this.screen.resize) && (this.screen.resize(this.width, this.height));
 	}
 }

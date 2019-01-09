@@ -36,8 +36,12 @@ function setLoadingText(str) {
 
 		setLoadingText("Initializing the Main Loop");
 		await app.loadLoop();
+
+		setLoadingText("Initializing the GUI");
+		await app.loadScreens();
+
 		await new Promise(r=>setTimeout(r, 250));
-		document.querySelector(".content").remove();
+		app.start();
 	} catch (err) {
 		console.error(err);
 		(new FatalErrorDisplay).show(err);
