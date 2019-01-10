@@ -47,12 +47,13 @@ npm build
 And alter `index.html` to load the bundle script at `/build/script.js`
 
 
-## Objectives and Priorities
+## Objectives, Priorities and Plan
+
 1. Menu (done)
 2. 3D Controls similar to minecraft (done)
 3. Correct Block Drawing (done)
 4. Crosshair and Block Selection (done)
-5. Collision Detection (done)
+5. Collision Detection (needs recreation)
 6. Procedural Terrain Generation (release v0.4 only)
 7. Inventory and Hotbar system (done)
 8. **Major update** - rewrote everything with modern technology (done)

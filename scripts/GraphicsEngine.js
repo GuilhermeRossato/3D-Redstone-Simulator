@@ -84,7 +84,7 @@ export default class GraphicsEngine {
 		scene.add(mesh);
 		*/
 
-		var context = this.canvas.getContext('webgl2');
+		let context = this.canvas.getContext('webgl2');
 		if (!context) {
 			context = this.canvas.getContext('webgl');
 		}
@@ -99,9 +99,9 @@ export default class GraphicsEngine {
 		const renderer = this.renderer = new THREE.WebGLRenderer(rendererConfig);
 		renderer.setClearColor(0x333333, 1);
 		renderer.setSize(this.width, this.height);
+
 		gl.enable(gl.CULL_FACE);
 		gl.cullFace(gl.BACK);
-		//renderer.setFaceCulling(false);
 
 		if (!renderer.extensions.get( 'WEBGL_depth_texture')) {
 			console.warn("Disabled SSAO because it doesn't seem supported");
@@ -118,9 +118,9 @@ export default class GraphicsEngine {
 		} else {
 			this.frame = 0;
 		}
-		this.ssao = false;
+
 		if (this.effectComposer && this.ssao) {
-			this.effectComposer.render();	
+			this.effectComposer.render();
 		} else {
 			this.renderer.render(this.scene, this.camera);
 		}

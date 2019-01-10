@@ -9,7 +9,7 @@ const ControlSelectorScreen = {
 		this.primary = document.querySelector(".content");
 		this.root = this.createElementByData({
 			"class": "root",
-			style: "z-index:100;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;pointer-events:none;background-color:rgba(0,0,0,0.61)"
+			style: "z-index:100;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;pointer-events:none;background-color:rgba(0,0,0,0);transition:background-color 0.2s ease-in-out"
 		});
 		document.body.appendChild(this.root);
 
@@ -82,10 +82,12 @@ const ControlSelectorScreen = {
 		document.addEventListener("touchstart", this.onTouchStart);
 		window.addEventListener("mousedown", this.onMouseDown);
 		const wrapper = this.elements.wrapper;
+		const rootElement = this.root;
 		window.requestAnimationFrame(function() {
 			window.requestAnimationFrame(function() {
-					wrapper.style.opacity = "1";
-					wrapper.style.transform = "translateY(0px)";
+				wrapper.style.opacity = "1";
+				wrapper.style.transform = "translateY(0px)";
+				rootElement.style.backgroundColor = "rgba(0,0,0,0.61)"
 			});
 		})
 		return this;
@@ -96,6 +98,9 @@ const ControlSelectorScreen = {
 		this.root.removeChild(this.elements.wrapper);
 		this.root.style.cursor = "default";
 		this.shown = false;
+		this.elements.wrapper.style.opacity = "0";
+		this.elements.wrapper.style.transform = "translateY(50px)";
+		this.root.style.backgroundColor = "rgba(0,0,0,0)";
 		document.removeEventListener("touchstart", this.onTouchStart);
 		window.removeEventListener("mousedown", this.onMouseDown);
 	},

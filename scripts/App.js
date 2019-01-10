@@ -55,7 +55,7 @@ export default class App {
 		}
 	}
 	draw() {
-		//this.graphics.draw();
+		this.graphics.draw();
 	}
 	overflow() {
 		// Called when 333ms has been elapsed since last update
