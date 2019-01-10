@@ -1,20 +1,23 @@
 const ControlSelectorScreen = {
-	init: function(gui) {
-		this.parent = gui;
+	init: function(config) {
+		this.onSelect = config.onSelect;
+		if (!(config.onSelect instanceof Function)) {
+			throw new Error("config's onSelect must be a callable function, got "+typeof(config.onSelect));
+		}
+
 		this.shown = false;
 		this.primary = document.querySelector(".content");
 		this.root = this.createElementByData({
 			"class": "root",
-			style: this.primary.parentNode.getAttribute("style")
+			style: "z-index:100;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif;pointer-events:none;background-color:rgba(0,0,0,0.61)"
 		});
-		this.primary.parentNode.parentNode.appendChild(this.root);
+		document.body.appendChild(this.root);
 
-		let baseChildStyle = "min-width:20vmax;text-align:center;flex: 1 1 auto; margin:5px; background-color:rgba(99,99,99,0.5);";
-		this.showInputMenuTimer = 16;
+		let baseChildStyle = "min-width:20vmax;text-align:center;flex: 1 1 auto; margin:5px;background-color:rgba(99,99,99,0.5);border-radius:2px";
 		this.elements = {
-			wrapper: this.createElement("div", "color:#DDD; display:flex; align-items:flex-start;align-content: space-around;"),
+			wrapper: this.createElement("div", "color:#DDD;display:flex; align-items:flex-start;align-content:space-around;opacity:0;transition:opacity 0.3s ease-in-out 0.1s,transform 0.4s ease-out;transform:translateY(35px);"),
 			keyboard: this.createElement("div", "order:1;"+baseChildStyle,
-										 "Desktop", "keyboard mouse", "Click anywhere to select", 1),
+										 "Desktop", "keyboard mouse", "Left click anywhere to select", 1),
 			touchscreen: this.createElement("div", "order:2;"+baseChildStyle,
 											"Touchscreen", "touch_app", "Touch anywhere to select", 2),
 			gamepad: this.createElement("div", "order:3;"+baseChildStyle,
@@ -24,19 +27,19 @@ const ControlSelectorScreen = {
 
 		elementList.forEach(element => this.elements.wrapper.appendChild(element));
 
-		const self = this;
-		this.checkEvents = {
-			onTouchStart: function() {
-				self.lastEvent = "touchscreen";
-			},
-			onGamepadKey: function() {
-				self.lastEvent = "gamepad";
-			},
-			onMouseDown: function(ev) {
-				if (ev.button === 0)
-					self.lastEvent = "desktop";
-			}
-		}
+		this.onTouchStart = this.onTouchStart.bind(this);
+		this.onGamepadKey = this.onGamepadKey.bind(this);
+		this.onMouseDown = this.onMouseDown.bind(this);
+	},
+	onTouchStart: function(ev) {
+		this.lastEvent = "touchscreen";
+	},
+	onGamepadKey: function(btn) {
+		this.lastEvent = "gamepad";
+	},
+	onMouseDown: function(ev) {
+		if (ev.button === 0)
+			this.lastEvent = "desktop";
 	},
 	requestFullscreen: function() {
 		let elem = this.main;
@@ -52,59 +55,37 @@ const ControlSelectorScreen = {
 			throw new Error("Could not request fullscreen access to the browser");
 		}
 	},
-	checkForGampadEvent: function() {
+	checkGampadEvent: function() {
 		let gamepad = navigator.getGamepads()[0];
 		if (gamepad && gamepad.buttons) {
-			gamepad.buttons.forEach(button => (button.pressed && this.checkEvents.onGamepadKey(button)));
+			gamepad.buttons.forEach(button => (button.pressed && this.onGamepadKey(button)));
 		}
 	},
 	update: function() {
-		if (this.fading) {
-			let timeStamp = performance.now();
-			if (timeStamp - this.fadedTimeStamp > 1000) {
-				this.fading = false;
-				this.parent.inputType = this.nextGuiState;
-				this.parent.setState(this.nextGuiState);
-			}
-		} else {
-			this.checkForGampadEvent();
-			let index = ["desktop", "touchscreen", "gamepad"].indexOf(this.lastEvent);
-			if (index !== -1) {
-				this.fading = true;
-				this.fadeOut(index);
-				this.fadedTimeStamp = performance.now();
-				this.nextGuiState = this.lastEvent;
-			} else {
-				if (this.showInputMenuTimer > 0) {
-					this.showInputMenuTimer--;
-					if (this.showInputMenuTimer === 0) {
-						this.elements.wrapper.style.opacity = "1";
-						this.parent.activeScreen = undefined;
-						this.parent.clearInterface();
-						this.parent.activeScreen = this;
-						this.parent.setFill("rgba(0,0,0,0.65)");
-					}
-				}
-			}
+		this.checkGampadEvent();
+		let index = ["desktop", "touchscreen", "gamepad"].indexOf(this.lastEvent);
+		if (index !== -1) {
+			this.onSelect(this.lastEvent);
+			this.lastEvent = undefined;
 		}
 	},
-	resize: function() {
-		this.elements.wrapper.style.transform = (window.innerWidth < window.innerHeight)?"rotate(90deg)":"none";
+	resize: function(width, height) {
+		this.elements.wrapper.style.transform = (width < height)?"rotate(90deg)":"none";
 	},
 	show: function() {
 		if (this.shown)
 			return
-		this.resize();
+		this.shown = true;
+		this.resize(window.innerWidth, window.innerHeight);
 		this.root.appendChild(this.elements.wrapper);
 		this.root.style.cursor = "pointer";
-		this.shown = true;
-		document.addEventListener("touchstart", this.checkEvents.onTouchStart);
-		document.addEventListener("mousedown", this.checkEvents.onMouseDown);
-		//document.addEventListener("keydown", this.checkEvents.onKeyDown);
+		document.addEventListener("touchstart", this.onTouchStart);
+		window.addEventListener("mousedown", this.onMouseDown);
 		const wrapper = this.elements.wrapper;
 		window.requestAnimationFrame(function() {
 			window.requestAnimationFrame(function() {
-				wrapper.style.opacity = 1;
+					wrapper.style.opacity = "1";
+					wrapper.style.transform = "translateY(0px)";
 			});
 		})
 		return this;
@@ -115,19 +96,18 @@ const ControlSelectorScreen = {
 		this.root.removeChild(this.elements.wrapper);
 		this.root.style.cursor = "default";
 		this.shown = false;
-		document.removeEventListener("touchstart", this.checkEvents.onTouchStart);
-		document.removeEventListener("mousedown", this.checkEvents.onMouseDown);
-		//document.removeEventListener("keydown", this.checkEvents.onKeyDown);
+		document.removeEventListener("touchstart", this.onTouchStart);
+		window.removeEventListener("mousedown", this.onMouseDown);
 	},
 	fadeOut: function(id) {
-		let elements = [this.elements.keyboard, this.elements.touchscreen, this.elements.gamepad];
+		const elements = [this.elements.keyboard, this.elements.touchscreen, this.elements.gamepad];
 		elements.forEach((element, i) => ((element.style.transition = (i === id)?"all 1s ease-in":"all 0.5s") && (element.style.opacity = '0')));
 	},
 	createElement: function(type, style, title, iconText, text, id) {
-		let element = document.createElement(type);
+		const element = document.createElement(type);
 		let selement;
 		if (style) {
-			element.setAttribute("style",style);
+			element.setAttribute("style", style);
 		}
 		if (title) {
 			selement = document.createElement("span");
@@ -138,9 +118,8 @@ const ControlSelectorScreen = {
 		if (iconText) {
 			selement = document.createElement("div");
 			selement.setAttribute("style", "display: flex; width: 100%; align-items: center; justify-content:center; white-space: nowrap;");
-			//let iconList = iconText.split(" ");
 			iconText.split(" ").forEach(function(iconName, i, iconList) {
-				let sselement = document.createElement("i");
+				const sselement = document.createElement("i");
 				sselement.setAttribute("class", "material-icons");
 				var fontSize = "9em";
 				if (iconName === "keyboard") {
@@ -160,15 +139,15 @@ const ControlSelectorScreen = {
 		}
 		if (text) {
 			selement = document.createElement("span");
-			selement.setAttribute("style", "display:block;font-size:0.75em; padding:8px 4px; white-space: nowrap;");
+			selement.setAttribute("style", "display:block;font-size:0.75em; padding:8px 10px; white-space: nowrap;");
 			selement.appendChild(document.createTextNode(text));
 			element.appendChild(selement);
 		}
 		return element;
 	},
 	createElementByData: function(data) {
-		let span = document.createElement(data.tag || 'div');
-		for (var property in data) {
+		const span = document.createElement(data.tag || 'div');
+		for (let property in data) {
 			if (property === "innerText") {
 				span.innerText = data[property];
 			} else if (data.hasOwnProperty(property)) {

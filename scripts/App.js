@@ -81,10 +81,15 @@ export default class App {
 				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
 			}
 		}
-		console.log(j*i);
 	}
 	async loadScreens() {
-		ControlSelectorScreen.init();
+		ControlSelectorScreen.init({
+			onSelect: this.onControlSelect.bind(this)
+		});
+	}
+	onControlSelect(selection) {
+		this.screen.hide();
+		console.log("selected", selection);
 	}
 	async loadLoop() {
 		this.loop = new MainLoop({
@@ -100,14 +105,10 @@ export default class App {
 		this.loop.start();
 	}
 	clearScreen() {
-		if (!HTMLCollection.prototype.forEach) {
-			HTMLCollection.prototype.forEach = Array.prototype.forEach;
+		const elements = document.querySelector(".content").children;
+		for (let i = elements.length-1; i>=0; i--) {
+			elements[i].remove();
 		}
-		console.log("just", document.querySelector(".content").children.length);
-		document.querySelector(".content").children.forEach(function(element) {
-			console.log("hi");
-			element.remove();
-		});
 	}
 	start() {
 		this.clearScreen();
@@ -126,7 +127,7 @@ export default class App {
 	}
 	mousedown(evt) {
 		if (evt.button !== 0) return;
-		console.log("Mouse Down");
+		console.log("App.js Mouse Down");
 	}
 	resize() {
 		this.width = this.canvas.width = window.innerWidth;
