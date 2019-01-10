@@ -1,4 +1,7 @@
 <?php
+
+$folderName = "saved_files";
+
 if (substr($_SERVER["REQUEST_URI"], -4) === ".png") {
 	header ("Content-type: image/png");
 	$im = @imagecreatetruecolor(150, 100) or die("Cannot Initialize new GD image stream");
@@ -8,6 +11,7 @@ if (substr($_SERVER["REQUEST_URI"], -4) === ".png") {
 	imagedestroy($im);
 	die();
 }
+
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
 	?>
 	<html>
@@ -34,7 +38,6 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 				<br>
 				<input type="submit" value='Submit' />
 			</form>
-			<p>The save server is usefull to create gifs, it receives a post request with a base64 image and its filename and saves it locally (usually as a list of PNG files) which can then be saved as a gif using a image editor (typically GIMP)</p>
 			<script>
 				document.querySelector("form").onsubmit = function(event) {
 					document.querySelector("input[name='content']").value = document.querySelector("canvas").toDataURL();
@@ -69,7 +72,8 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 }
 
 function reply_post($data) {
-	$folderName = "saved_files";
+	global $folderName;
+
 	if (file_exists($folderName) && !is_dir($folderName)) {
 		throw new Exception("Cannot create directory ".$folderName.". There's a file there");
 	}
