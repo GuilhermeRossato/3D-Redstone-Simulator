@@ -1,0 +1,1 @@
+@php ./connect.php
