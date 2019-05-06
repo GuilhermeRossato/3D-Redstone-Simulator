@@ -76,20 +76,21 @@ const ControlSelectorScreen = {
 		if (this.shown)
 			return
 		this.shown = true;
-		this.resize(window.innerWidth, window.innerHeight);
 		this.root.appendChild(this.elements.wrapper);
 		this.root.style.cursor = "pointer";
 		document.addEventListener("touchstart", this.onTouchStart);
 		window.addEventListener("mousedown", this.onMouseDown);
 		const wrapper = this.elements.wrapper;
 		const rootElement = this.root;
+		const resize = this.resize.bind(this);
 		window.requestAnimationFrame(function() {
 			window.requestAnimationFrame(function() {
 				wrapper.style.opacity = "1";
 				wrapper.style.transform = "translateY(0px)";
+				resize(window.innerWidth, window.innerHeight);
 				rootElement.style.backgroundColor = "rgba(0,0,0,0.61)"
 			});
-		})
+		});
 		return this;
 	},
 	hide: function() {
@@ -99,6 +100,7 @@ const ControlSelectorScreen = {
 		this.root.style.cursor = "default";
 		this.shown = false;
 		this.elements.wrapper.style.opacity = "0";
+		console.log("hidden");
 		this.elements.wrapper.style.transform = "translateY(50px)";
 		this.root.style.backgroundColor = "rgba(0,0,0,0)";
 		document.removeEventListener("touchstart", this.onTouchStart);

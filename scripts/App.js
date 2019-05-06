@@ -75,7 +75,9 @@ export default class App {
 	async loadWorld() {
 		this.world = new WorldHandler(this.graphics);
 		await this.world.load();
-		const size = 32;
+		const size = 26;
+		this.world.set(0, 3, 0, 1);
+		this.world.set(0, 4, 0, 1);
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
 				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
@@ -89,7 +91,7 @@ export default class App {
 	}
 	onControlSelect(selection) {
 		this.screen.hide();
-		console.log("selected", selection);
+		console.log("Selected \""+selection+"\"");
 	}
 	async loadLoop() {
 		this.loop = new MainLoop({
