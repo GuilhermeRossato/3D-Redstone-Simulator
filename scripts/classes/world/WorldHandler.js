@@ -20,8 +20,18 @@ export default class WorldHandler {
 		await this.textures.load();
 	}
 
+	clearBlock(x, y, z) {
+		if (!this.blocks[x] || !this.blocks[x][y] || !!this.blocks[x][y][z]) {
+			return true;
+		}
+		console.warn("Unimplemented clearBlock");
+	}
+
 	set(x, y, z, id) {
 		var geometry, ix, iy, iz, i, side;
+		if (id === 0) {
+			return this.clearBlock(x, y, z);
+		}
 		const data = BlockData[id];
 		const renderType = data.render;
 		const material = this.textures.getMaterial();

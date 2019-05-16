@@ -13,7 +13,7 @@ Usage Example:
 		the function with the new value as parameter
 */
 
-define(()=> class Setting {
+export default class AbstractSetting {
 	constructor(value, processFunc) {
 		Object.defineProperty(this, "value", {
 			get: () => value,
@@ -52,4 +52,4 @@ define(()=> class Setting {
 			listeners = undefined;
 		}
 	}
-});
+}

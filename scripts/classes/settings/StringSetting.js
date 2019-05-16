@@ -1,7 +1,7 @@
-define(["scripts/classes/settings/Setting.js"], (Setting) =>
-	class StringSetting extends Setting {
-		constructor(value) {
-			super(value);
-		}
+import AbstractSetting from "./AbstractSetting.js";
+
+export default class StringSetting extends AbstractSetting {
+	constructor(value) {
+		super(value);
 	}
-);
+}

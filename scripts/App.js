@@ -5,6 +5,7 @@ import MainLoop from './MainLoop.js';
 import WorldHandler from './classes/world/WorldHandler.js';
 import Performancer from './Performancer.js';
 import ControlSelectorScreen from './screens/ControlSelectorScreen.js';
+import Configuration from "./data/Configuration.js";
 
 export default class App {
 	constructor(canvas, gl, assets) {
@@ -47,7 +48,7 @@ export default class App {
 		if (this.graphics.camera) {
 			var angle = 2*Math.PI*(this.frame/4000)
 			//angle = Math.PI*1.7;
-			var scale = window.scale || 0.11;
+			var scale = window.scale || 0.15;
 			this.graphics.camera.position.x = 0.41+Math.cos(angle)*30*scale;
 			this.graphics.camera.position.z = Math.sin(angle)*30*scale;
 			this.graphics.camera.position.y = 68*scale;
@@ -65,7 +66,6 @@ export default class App {
 		this.graphics = new GraphicsEngine(this.canvas, this.gl);
 		window.graphics = this.graphics;
 		document.querySelector(".wrapper").appendChild(this.canvas);
-		this.canvas.style.position = "absolute";
 		await this.graphics.load();
 		this.resize();
 		this.attachEvents();
@@ -75,7 +75,7 @@ export default class App {
 	async loadWorld() {
 		this.world = new WorldHandler(this.graphics);
 		await this.world.load();
-		const size = 26;
+		const size = 16;
 		this.world.set(0, 3, 0, 1);
 		this.world.set(0, 4, 0, 1);
 		for (var i = 0; i < size; i++) {

@@ -1,7 +1,7 @@
-define(["scripts/classes/settings/Setting.js"], (Setting) =>
-	class KeySetting extends Setting {
-		constructor(keyCode) {
-			super(keyCode);
-		}
+import AbstractSetting from "./AbstractSetting.js";
+
+export default class KeySetting extends AbstractSetting {
+	constructor(value) {
+		super(value);
 	}
-);
+}
