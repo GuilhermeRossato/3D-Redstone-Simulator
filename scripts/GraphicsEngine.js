@@ -75,15 +75,6 @@ export default class GraphicsEngine {
 
 		this.constructor.addLightToScene(scene);
 
-		/*
-		const geometry = new THREE.BoxGeometry(.5, .5, .5);
-		const material = new THREE.MeshLambertMaterial({color:new THREE.Color("#333333")});
-
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.set(0, 4.75, 0);
-		scene.add(mesh);
-		*/
-
 		let context = this.canvas.getContext('webgl2');
 		if (!context) {
 			context = this.canvas.getContext('webgl');
