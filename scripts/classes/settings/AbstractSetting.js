@@ -15,13 +15,15 @@ Usage Example:
 
 export default class AbstractSetting {
 	constructor(value, processFunc) {
+		const listeners = [];
 		Object.defineProperty(this, "value", {
 			get: () => value,
 			set: (v) => {
 				if (v !== value) {
 					if (typeof v === typeof value) {
-						if (processFunc !== undefined)
-							v = processFunc(v);
+						if (processFunc !== undefined && this[processFunc]) {
+							v = this[processFunc](v);
+						}
 						listeners.forEach(f => f(v));
 						if (typeof v === typeof value)
 							value = v;
@@ -31,25 +33,43 @@ export default class AbstractSetting {
 				}
 			}
 		});
-		let listeners = [];
-		this.attach = function(f, g) {
-			if (f instanceof Function) {
-				listeners.push(f);
-			} else if (typeof f === "object" && typeof g === "string") {
-				f[g] = value;
-				listeners.push(function(value) { f[g] = value; });
-			}
+		this.addListener = function(fn) {
+			return listeners.push(fn);
 		}
-		this.detach = function(f) {
+		this.removeListener = function(fn) {
 			let index = listeners.indexOf(f);
-			if (index !== -1) {
-				listeners.splice(index, 1);
-			} else {
-				console.warn("Could not find function on listeners");
+			if (index === -1) {
+				return false;
 			}
+			return listeners.splice(index, 1);
 		}
 		this.dispose = function() {
 			listeners = undefined;
+		}
+	}
+	setterFunction(f, g, value) {
+		return (f[g] = value);
+	}
+	attach(f, g) {
+		if (f instanceof Function) {
+			this.addListener(f);
+			return true;
+		}
+
+		if (typeof f === "object" && typeof g === "string") {
+			if (f[g] != value) {
+				f[g] = value;
+			}
+			this.addListener(this.setterFunction.bind(this, f, g));
+			return true;
+		}
+
+		console.warn("Unhandled parameter types");
+		return false;
+	}
+	detach(fn) {
+		if (!this.removeListener(fn)) {
+			console.warn("Could not find function on listeners");
 		}
 	}
 }

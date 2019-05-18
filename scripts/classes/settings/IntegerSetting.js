@@ -2,21 +2,23 @@ import AbstractSetting from "./AbstractSetting.js";
 
 export default class IntegerSetting extends AbstractSetting {
 	constructor(config) {
-		if (typeof config === "number") {
-			super(config, v=>(v|0));
-		} else if (typeof config === "object" && typeof config.value === "number") {
-			if (typeof config.min === "number" && typeof config.max === "number") {
-				super(config.value, v=>(Math.min(Math.max(v, config.min), config.max)|0));
-			} else if (typeof config.min === "number") {
-				super(config.value, v=>(Math.max(v ,config.min)|0));
-			} else if (typeof config.max === "number") {
-				super(config.value, v=>(Math.min(v, config.max)|0));
-			} else {
-				super(config.value, v=>(v|0));
-			}
-		} else {
-			console.warn("Invalid parameter");
-			super(1);
+		if (typeof config === "undefined") {
+			throw new Error("Missing setting parameter");
 		}
+
+		if (typeof config === "number") {
+			super(config, "transformValue");
+			this.min = Number.NEGATIVE_INFINITY;
+			this.max = Number.POSITIVE_INFINITY;
+		} else if (typeof config === "object" && typeof config.default === "number") {
+			super(config.default, "transformValue");
+			this.min = (typeof config.min === "number")?config.min:Number.NEGATIVE_INFINITY;
+			this.max = (typeof config.max === "number")?config.max:Number.POSITIVE_INFINITY;
+		} else {
+			throw new Error("Invalid parameter options");
+		}
+	}
+	transformValue(v) {
+		return Math.min(Math.max(v, this.min), this.max)|0;
 	}
 }
