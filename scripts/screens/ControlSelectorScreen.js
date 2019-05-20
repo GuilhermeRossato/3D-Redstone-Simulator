@@ -1,9 +1,5 @@
 const ControlSelectorScreen = {
 	init: function(config) {
-		this.onSelect = config.onSelect;
-		if (!(config.onSelect instanceof Function)) {
-			throw new Error("config's onSelect must be a callable function, got "+typeof(config.onSelect));
-		}
 
 		this.shown = false;
 		this.primary = document.querySelector(".content");
@@ -55,17 +51,20 @@ const ControlSelectorScreen = {
 			throw new Error("Could not request fullscreen access to the browser");
 		}
 	},
-	checkGampadEvent: function() {
+	checkGamepadEvent: function() {
 		let gamepad = navigator.getGamepads()[0];
 		if (gamepad && gamepad.buttons) {
 			gamepad.buttons.forEach(button => (button.pressed && this.onGamepadKey(button)));
 		}
 	},
 	update: function() {
-		this.checkGampadEvent();
+		this.checkGamepadEvent();
 		let index = ["desktop", "touchscreen", "gamepad"].indexOf(this.lastEvent);
 		if (index !== -1) {
-			this.onSelect(this.lastEvent);
+			if (this.onSelect) {
+				this.onSelect(this.lastEvent);
+				this.onSelect = undefined;
+			}
 			this.lastEvent = undefined;
 		}
 	},
@@ -100,7 +99,6 @@ const ControlSelectorScreen = {
 		this.root.style.cursor = "default";
 		this.shown = false;
 		this.elements.wrapper.style.opacity = "0";
-		console.log("hidden");
 		this.elements.wrapper.style.transform = "translateY(50px)";
 		this.root.style.backgroundColor = "rgba(0,0,0,0)";
 		document.removeEventListener("touchstart", this.onTouchStart);
@@ -163,6 +161,13 @@ const ControlSelectorScreen = {
 		}
 		return span;
 	},
+	once: function(eventType, callback) {
+		if (eventType === "select") {
+			this.onSelect = callback;
+		} else {
+			throw new Error("Unhandled event \""+eventType+"\"");
+		}
+	}
 }
 
 export default ControlSelectorScreen;
