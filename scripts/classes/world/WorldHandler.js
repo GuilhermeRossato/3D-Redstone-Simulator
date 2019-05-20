@@ -1,6 +1,6 @@
 'use strict';
 
-import TextureHandler from '../../TextureHandler.js';
+import TextureService from '../../graphics/TextureService.js';
 import * as THREE from '../../libs/three.module.js';
 import BlockData from '../../data/BlockData.js';
 
@@ -16,8 +16,8 @@ export default class WorldHandler {
 	}
 
 	async load() {
-		this.textures = new TextureHandler(this);
-		await this.textures.load();
+		await TextureService.load();
+		this.textures = TextureService;
 	}
 
 	clearBlock(x, y, z) {

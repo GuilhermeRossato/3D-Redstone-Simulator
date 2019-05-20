@@ -1,4 +1,4 @@
-import GraphicsEngine from './GraphicsEngine.js';
+import GraphicsEngine from './graphics/GraphicsEngine.js';
 import LoopHandler from './LoopHandler.js';
 import WorldHandler from './classes/world/WorldHandler.js';
 import Performancer from './Performancer.js';

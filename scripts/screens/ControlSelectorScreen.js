@@ -1,6 +1,5 @@
 const ControlSelectorScreen = {
-	init: function(config) {
-
+	init: function() {
 		this.shown = false;
 		this.primary = document.querySelector(".content");
 		this.root = this.createElementByData({
