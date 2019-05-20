@@ -1,22 +1,25 @@
 'use strict';
 
-import GraphicsEngine from './GraphicsEngine.js';
-import MainLoop from './MainLoop.js';
-import WorldHandler from './classes/world/WorldHandler.js';
-import Performancer from './Performancer.js';
-import ControlSelectorScreen from './screens/ControlSelectorScreen.js';
+import AppLoader from './AppLoader.js';
 import Configuration from "./data/Configuration.js";
+import SettingStorageService from "./classes/settings/SettingStorageService.js";
+import ScreenService from "./screens/ScreenService.js";
+import ControlSelectorScreen from "./screens/ControlSelectorScreen.js";
 
 export default class App {
-	constructor(canvas, gl, assets) {
+	constructor(canvas, gl, assets, loader) {
 		this.canvas = canvas;
 		this.gl = gl;
 		this.assets = assets;
+
+		this.loader = loader ? loader : (new AppLoader(this));
+
+		this.world = undefined;
+		this.graphics = undefined;
+
 		this.update = this.update.bind(this);
 		this.draw = this.draw.bind(this);
 		this.overflow = this.overflow.bind(this);
-		this.world = undefined;
-		this.graphics = undefined;
 	}
 	debounce(func, delay) {
 		let inDebounce
@@ -63,59 +66,45 @@ export default class App {
 		console.log("overflow");
 	}
 	async loadGraphics() {
-		this.graphics = new GraphicsEngine(this.canvas, this.gl);
-		window.graphics = this.graphics;
-		document.querySelector(".wrapper").appendChild(this.canvas);
-		await this.graphics.load();
-		this.resize();
-		this.attachEvents();
-		this.performancer = new Performancer(true, 10);
-		this.performancer.attach(document.body);
+		return await this.loader.loadGraphics();
 	}
-	async loadWorld() {
-		this.world = new WorldHandler(this.graphics);
-		await this.world.load();
-		const size = 16;
+	mockWorld() {
+		const size = 8;
 		this.world.set(0, 3, 0, 1);
-		this.world.set(0, 4, 0, 1);
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
 				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
 			}
 		}
 	}
-	async loadScreens() {
-		ControlSelectorScreen.init({
-			onSelect: this.onControlSelect.bind(this)
-		});
+	async loadWorld() {
+		await this.loader.loadWorld();
+		this.mockWorld();
 	}
-	onControlSelect(selection) {
-		this.screen.hide();
-		console.log("Selected \""+selection+"\"");
+	async loadScreens() {
+		await this.loader.loadScreens();
+	}
+	onInputTypeSelected(selection) {
+		ScreenService.setScreen(this, undefined);
+		SettingStorageService.save("inputType", selection);
+		this.setupInputType(selection);
+	}
+	setupInputType(name) {
+		Configuration.inputType.value = name;
 	}
 	async loadLoop() {
-		this.loop = new MainLoop({
-			fps: 60,
-			draw: this.draw,
-			update: this.update,
-			overflow: this.overflow,
-			performancer: this.performancer
-
-		});
-		this.update();
-		this.draw();
-		this.loop.start();
-	}
-	clearScreen() {
-		const elements = document.querySelector(".content").children;
-		for (let i = elements.length-1; i>=0; i--) {
-			elements[i].remove();
-		}
+		this.loader.loadLoop(this.draw, this.update, this.overflow, this.performancer);
 	}
 	start() {
-		this.clearScreen();
-		this.screen = ControlSelectorScreen;
-		this.screen.show();
+		ScreenService.clearScreen();
+
+		const inputType = SettingStorageService.load("inputType");
+		if (!inputType || inputType === "unknown") {
+			ScreenService.setScreen(this, ControlSelectorScreen);
+			ControlSelectorScreen.once("select", this.onInputTypeSelected.bind(this));
+		} else {
+			this.setupInputType(inputType);
+		}
 	}
 	mousemove(evt) {
 		const nx = (evt.clientX/window.innerWidth);
@@ -129,7 +118,7 @@ export default class App {
 	}
 	mousedown(evt) {
 		if (evt.button !== 0) return;
-		console.log("App.js Mouse Down");
+		console.log("Mouse Down");
 	}
 	resize() {
 		this.width = this.canvas.width = window.innerWidth;

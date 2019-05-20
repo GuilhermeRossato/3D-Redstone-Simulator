@@ -5,7 +5,10 @@ import SSAOPass from './third-party/SSAOPass.js';
 import EffectComposer from './third-party/EffectComposer.js';
 
 export default class GraphicsEngine {
-	constructor(canvas, gl) {
+	constructor(wrapper, canvas, gl) {
+		if (canvas.parentNode != wrapper) {
+			wrapper.appendChild(canvas);
+		}
 		this.canvas = canvas;
 		this.width = canvas.width;
 		this.height = canvas.height;
