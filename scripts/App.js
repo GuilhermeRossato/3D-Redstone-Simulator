@@ -6,6 +6,9 @@ import LocalStorageService from "./services/LocalStorageService.js";
 import ScreenService from "./screens/ScreenService.js";
 import ControlSelectorScreen from "./screens/ControlSelectorScreen.js";
 
+import * as THREE from './libs/three.module.js';
+import TextureService from './graphics/TextureService.js';
+
 export default class App {
 	constructor(canvas, gl, assets, loader) {
 		this.canvas = canvas;
@@ -76,6 +79,13 @@ export default class App {
 				this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
 			}
 		}
+		this.addTests();
+	}
+	async addTests() {
+		const scene = this.world.scene;
+		const material = TextureService.getMaterial();
+		window.scene = scene;
+		window.material = material;
 	}
 	async loadWorld() {
 		await this.loader.loadWorld();
@@ -95,11 +105,20 @@ export default class App {
 	async loadLoop() {
 		this.loader.loadLoop(this.draw, this.update, this.overflow, this.performancer);
 	}
+	loadInputType() {
+		const inputType = LocalStorageService.load("inputType");
+		if (!inputType || inputType === "unknown") {
+			return "unknown"
+		} else {
+			return inputType;
+		}
+	}
 	start() {
 		ScreenService.clearScreen();
 
-		const inputType = SettingStorageService.load("inputType");
-		if (!inputType || inputType === "unknown") {
+		const inputType = this.loadInputType();
+		
+		if (inputType === "unknown") {
 			ScreenService.setScreen(this, ControlSelectorScreen);
 			ControlSelectorScreen.once("select", this.onInputTypeSelected.bind(this));
 		} else {
@@ -124,6 +143,6 @@ export default class App {
 		this.width = this.canvas.width = window.innerWidth;
 		this.height = this.canvas.height = window.innerHeight;
 		this.graphics && this.graphics.resize(this.width, this.height);
-		(this.screen) && (this.screen.resize) && (this.screen.resize(this.width, this.height));
+		this.screen && this.screen.resize && this.screen.resize(this.width, this.height);
 	}
 }
