@@ -2,7 +2,7 @@
 
 import AppLoader from './AppLoader.js';
 import Configuration from "./data/Configuration.js";
-import SettingStorageService from "./classes/settings/SettingStorageService.js";
+import LocalStorageService from "./services/LocalStorageService.js";
 import ScreenService from "./screens/ScreenService.js";
 import ControlSelectorScreen from "./screens/ControlSelectorScreen.js";
 
@@ -86,7 +86,7 @@ export default class App {
 	}
 	onInputTypeSelected(selection) {
 		ScreenService.setScreen(this, undefined);
-		SettingStorageService.save("inputType", selection);
+		LocalStorageService.save("inputType", selection);
 		this.setupInputType(selection);
 	}
 	setupInputType(name) {

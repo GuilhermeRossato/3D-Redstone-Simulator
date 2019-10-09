@@ -72,8 +72,11 @@ export default class TextureService {
 			canvas.width = img.width;
 			canvas.height = img.height;
 			ctx.drawImage(img, 0, 0, img.width, img.height);
-			canvas.setAttribute("style", "display: block; position: absolute; z-index: 100; width: 384px; image-rendering: pixelated;");
-			//document.body.appendChild(canvas);
+			let debugCanvas = false;
+			if (debugCanvas) {
+				canvas.setAttribute("style", "display: block; position: absolute; z-index: 100; width: 384px; image-rendering: pixelated;");
+				document.body.appendChild(canvas);
+			}
 			resolve(canvas);
 		});
 	}
@@ -89,8 +92,6 @@ export default class TextureService {
 				let r = 0;
 				dx = x+1+(x/16|0)*2;
 				dy = y+1+(y/16|0)*2;
-				console.log(x, y);
-				console.log(dx, dy);
 				if (x > 100 || y > 100) {
 					continue;
 				}

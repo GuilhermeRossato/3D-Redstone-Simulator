@@ -1,4 +1,4 @@
-export default class SettingStorageService {
+export default class LocalStorageService {
 	static load(name) {
 		if (!window.localStorage) {
 			return false;

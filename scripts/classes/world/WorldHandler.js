@@ -17,7 +17,6 @@ export default class WorldHandler {
 
 	async load() {
 		await TextureService.load();
-		this.textures = TextureService;
 	}
 
 	clearBlock(x, y, z) {
@@ -34,17 +33,17 @@ export default class WorldHandler {
 		}
 		const data = BlockData[id];
 		const renderType = data.render;
-		const material = this.textures.getMaterial();
+		const material = TextureService.getMaterial();
 		const block = {
 			faces: undefined,
 			id: id
 		}
 		if (renderType === "simple" || renderType === undefined) {
 			const texture = data.texture.children[0];
-			geometry = this.textures.getCachedResult(texture.x, texture.y);
+			geometry = TextureService.getCachedResult(texture.x, texture.y);
 			if (!geometry) {
 				geometry = this.geometries.plane.clone();
-				this.textures.applyUv(geometry, texture.x, texture.y);
+				TextureService.applyUv(geometry, texture.x, texture.y);
 			}
 			block.faces = [];
 			for (i=0;i<this.sidesDisplacement.length;i++) {
