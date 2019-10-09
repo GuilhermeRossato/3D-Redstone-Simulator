@@ -7,7 +7,6 @@
     "start": "http-server --gzip -c-1",
     "start-php": "php -S localhost:80",
     "build": "npm run webpack && npm run babel && npm run compress",
-
     "webpack": "webpack --config webpack.config.js",
     "babel": "babel --presets es2015 build/index.min.js -o build/index.min.js",
     "compress": "minify build -d build",

@@ -35,17 +35,16 @@ npm install
 Then, whenever you want to start the aplication:
 
 ```
-npm start
+npm run start
 ```
 
-And if you want to create a build, run:
+And if you want to build the application and pack it, run the following command:
 
 ```
-npm build
+npm run build
 ```
 
 And alter `index.html` to load the bundle script at `/build/script.js`
-
 
 ## Objectives, Priorities and Plan
 
