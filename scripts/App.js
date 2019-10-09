@@ -40,7 +40,7 @@ export default class App {
 	update() {
 		(this.screen) && (this.screen.update) && (this.screen.update());
 		// Update camera around the object
-		if (this.frame < 4000) {
+		if (this.frame < 9000) {
 			this.frame++;
 		} else {
 			this.frame = 0;
@@ -52,12 +52,12 @@ export default class App {
 			}
 		}
 		if (this.graphics.camera) {
-			var angle = 2*Math.PI*(this.frame/4000)
+			var angle = 2*Math.PI*(this.frame/9000)
 			//angle = Math.PI*1.7;
-			var scale = window.scale || 0.15;
-			this.graphics.camera.position.x = 0.41+Math.cos(angle)*30*scale;
-			this.graphics.camera.position.z = Math.sin(angle)*30*scale;
-			this.graphics.camera.position.y = 68*scale;
+			var scale = window.scale || 0.25;
+			this.graphics.camera.position.x = 0.41+Math.cos(angle)*10*scale;
+			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
+			this.graphics.camera.position.y = 0+68*scale;
 			this.graphics.camera.lookAt(0, 0, 0);
 		}
 	}
@@ -86,6 +86,47 @@ export default class App {
 		const material = TextureService.getMaterial();
 		window.scene = scene;
 		window.material = material;
+		window.THREE = THREE;
+		
+		var geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+		
+		var material2 = new THREE.MeshLambertMaterial({
+			map: TextureService.texture,
+			color: 0x555555,
+			wireframe: false,
+			transparent: true,
+			alphaMap: TextureService.alphaMap
+		});
+		material2.side = THREE.FrontSide;
+
+		var count = 100;
+
+		var mesh = new THREE.InstancedMesh( geometry, material2, count );
+
+		var dummy = new THREE.Object3D();
+
+		for ( var i = 0; i < count; i ++ ) {
+
+			dummy.position.set(
+				Math.random() * 20 - 10,
+				Math.random() * 20 - 10,
+				Math.random() * 20 - 10
+			);
+
+			dummy.rotation.set(
+				Math.random() * Math.PI,
+				Math.random() * Math.PI,
+				Math.random() * Math.PI
+			);
+
+			dummy.updateMatrix();
+
+			mesh.setMatrixAt( i, dummy.matrix );
+
+		}
+
+		mesh.position.set(0, 4, 0);
+		scene.add( mesh );
 	}
 	async loadWorld() {
 		await this.loader.loadWorld();
