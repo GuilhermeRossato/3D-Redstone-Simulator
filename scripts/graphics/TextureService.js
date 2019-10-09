@@ -3,10 +3,10 @@
 import BlockData from '../data/BlockData.js';
 import * as THREE from '../libs/three.module.js';
 
+const baseTexturePath = "../assets/textures.png";
+const alphaTexturePath = "../assets/textures-alpha.png";
+
 export default class TextureService {
-	static get data() {
-		return BlockData;
-	}
 	static getMaterial() {
 		if (!this.material) {
 			this.texture.wrapS = THREE.RepeatWrapping;
@@ -53,28 +53,29 @@ export default class TextureService {
 			img.src = filename;
 		});
 	}
-	static loadImageWithThreejs(asset) {
+	static createTextureFromImage(asset) {
+		if (asset instanceof HTMLCanvasElement) {
+			asset = asset.toDataURL();
+		}
+		const loader = this.loader || new THREE.TextureLoader();
 		return new Promise((resolve, reject) => {
-			this.loader = this.loader || new THREE.TextureLoader();
-			this.texture = this.loader.load(
+			loader.load(
 				asset,
 				resolve,
 				undefined,
 				reject.bind(this, new Error("Could not load asset \""+asset+"\""))
 			);
-			resolve(true);
 		});
 	}
-	static createCanvasFromImage(img) {
+	static createEmptyCanvasFromImage(img, addCanvasToScreen = false) {
 		return new Promise((resolve, reject) => {
 			const canvas = document.createElement("canvas");
 			const ctx = canvas.getContext("2d");
 			canvas.width = img.width;
 			canvas.height = img.height;
-			ctx.drawImage(img, 0, 0, img.width, img.height);
-			let debugCanvas = false;
-			if (debugCanvas) {
-				canvas.setAttribute("style", "display: block; position: absolute; z-index: 100; width: 384px; image-rendering: pixelated;");
+			//ctx.drawImage(img, 0, 0, img.width, img.height);
+			if (addCanvasToScreen) {
+				canvas.setAttribute("style", "display: block; position: absolute; z-index: 100; width: "+(img.width*3)+"px; image-rendering: optimizeSpeed; image-rendering: pixelated;");
 				document.body.appendChild(canvas);
 			}
 			resolve(canvas);
@@ -95,19 +96,34 @@ export default class TextureService {
 				if (x > 100 || y > 100) {
 					continue;
 				}
-				ctx.drawImage(canvas, x, y, 16, 16, dx, dy, 16, 16);
+				ctx.drawImage(img, x, y, 16, 16, dx, dy, 16, 16);
 				ctx.drawImage(canvas, dx, dy, 16, 1, dx-1, dy-1, 18, 1);
 				ctx.drawImage(canvas, dx, dy, 1, 16, dx-1, dy-1, 1, 18);
 				ctx.drawImage(canvas, dx, dy+15, 16, 1, dx-1, dy+15+1, 18, 1);
 				ctx.drawImage(canvas, dx+15, dy, 1, 16, dx+15+1, dy-1, 1, 18);
 			}
 		}
+
+		await new Promise(resolve=>setTimeout(resolve, 60));
+	}
+	// Loaded function, but whatever
+	static async processImageAndGenerateTextureFromPath(sourcePath, addCanvasToScreen = false) {
+		const image = await this.loadImage(sourcePath);
+		const canvas = await this.createEmptyCanvasFromImage(image, addCanvasToScreen);
+		await this.addMarginToCanvas(canvas, image);
+		const texture = await this.createTextureFromImage(canvas);
+		return texture;
+
 	}
 	static async load() {
-		const img = await this.loadImage("../assets/textures.png");
-		const canvas = await this.createCanvasFromImage(img);
-		await this.addMarginToCanvas(canvas, img);
-		await new Promise(resolve=>setTimeout(resolve, 500));
-		return await this.loadImageWithThreejs(canvas.toDataURL());
+		const textures = await Promise.all([
+			this.processImageAndGenerateTextureFromPath(baseTexturePath),
+			this.processImageAndGenerateTextureFromPath(alphaTexturePath),
+		]);
+
+		this.texture = textures[0];
+		this.alphaMap = textures[1];
+		
+		this.loaded = true;
 	}
 }
