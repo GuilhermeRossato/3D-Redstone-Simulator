@@ -1,6 +1,6 @@
 # Save Server
 
-As you can imagine I'm an avid gif creator so I developed this save-server script that runs a local server to receive images as base64 from javascript and then saves them to the file system so that they can then later be combined into an amazing gif.
+This save-server script runs a local server to receive images as base64 from the network and then saves them to the file system so that they can then later be combined into an amazing gif.
 
 To use it, you must start a local PHP server with the following command:
 
