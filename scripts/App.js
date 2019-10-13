@@ -140,59 +140,104 @@ export default class App {
 		window.THREE = THREE;
 		
 
-		var geometry = new THREE.PlaneBufferGeometry(2, 2);
+		var geometry = new THREE.PlaneBufferGeometry(1, 1);
 
 		const instanced = new THREE.InstancedBufferGeometry();
 		instanced.attributes.position = geometry.attributes.position;
 		instanced.attributes.uv = geometry.attributes.uv;
 		instanced.index = geometry.index;
 
-		const positionAttribute = new THREE.InstancedBufferAttribute( new Float32Array([-1.1, 1.1, 0, 1.1, 1.1, 0, -1.1, -1.1, 0, 1.1, -1.1, 0]), 3);
+		const positionAttribute = new THREE.InstancedBufferAttribute( new Float32Array([-1.0, -1.0, -0.5, 1.0, 1.0, 0, -1.0, -1.0, 0, 1.0, -1.0, 0]), 3);
 		instanced.addAttribute("instancePosition", positionAttribute);
-		const uvAttribute = new THREE.InstancedBufferAttribute( new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]), 2);
-		instanced.addAttribute("instanceUv", uvAttribute);
+		const tileAttribute = new THREE.InstancedBufferAttribute( new Float32Array([0, 0, 0, 1, 3, 1, 1, 1]), 2);
+		instanced.addAttribute("instanceTile", tileAttribute);
+		const rotationAttribute = new THREE.InstancedBufferAttribute( new Float32Array([0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0]), 3);
+		instanced.addAttribute("instanceRotation", rotationAttribute);
 
 		const material2 = new THREE.ShaderMaterial({
 			uniforms: {
 				texture1: { value: TextureService.texture },
-				textureDivision: { value: new THREE.Vector2(8,8) },
 				time: {value: 0}
 			},
 			vertexShader: `
-				precision highp float;
+				precision lowp float;
 
-				uniform vec2 textureDivision;
 				uniform float time;
 
 				attribute vec3 instancePosition;
-				attribute vec2 instanceUv;
+				attribute vec2 instanceTile;
+				attribute vec3 instanceRotation;
 
 				varying vec2 vUv;
 
-				void main(){
-				vec2 slices = vec2(1.0) / textureDivision;
-					vUv = slices * instanceUv + slices * uv;
-				vec3 pos = position + instancePosition;
-				pos += normalize(instancePosition) * (sin(time) * 0.5 + 0.5);
+				#define PI_HALF 1.5707963267949
+				#define IMAGE_SIZE_PIXELS 128.0
+				#define IMAGE_TILE_SIZE 8.0
 
-					gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );
+				mat4 translateXYZ(vec3 v) {
+					return mat4(
+						1.0, 0.0, 0.0, 0.0,
+						0.0, 1.0, 0.0, 0.0,
+						0.0, 0.0, 1.0, 0.0,
+						v.x, v.y, v.z, 1.0
+					);
+				}
+
+				mat4 rotateXYZ(vec3 v) {
+					return mat4(
+						1.0,		0,			0,			0,
+						0, 			cos(v.x),	-sin(v.x),	0,
+						0, 			sin(v.x),	cos(v.x),	0,
+						0,			0,			0, 			1
+					) * mat4(
+						cos(v.z),	-sin(v.z),	0,			0,
+						sin(v.z),	cos(v.z),	0,			0,
+						0,			0,			1,			0,
+						0,			0,			0,			1
+					) * mat4(
+						cos(v.y),	0,			sin(v.y),	0,
+						0,			1.0,		0,			0,
+						-sin(v.y),	0,			cos(v.y),	0,
+						0, 			0,			0,			1
+					);
+				}
+
+				void main() {
+					vec2 topLeftOrigin = (1.0/IMAGE_TILE_SIZE) * uv + vec2(0.0, (IMAGE_TILE_SIZE-1.)/IMAGE_TILE_SIZE);
+					vUv = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0+instanceTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * instanceTile);
+
+					vec3 pos = position + instancePosition;
+
+					mat4 toCenter = translateXYZ(-instancePosition);
+					mat4 fromCenter = translateXYZ(instancePosition);
+					mat4 transformation = fromCenter * rotateXYZ(PI_HALF*instanceRotation) * toCenter;
+
+
+					vec4 resultPos = transformation * vec4(pos, 1.0);
+					gl_Position = projectionMatrix * modelViewMatrix * resultPos;
 				}
 			`,
 			fragmentShader: `
-				precision highp float;
-
+				precision lowp float;
+				
 				uniform sampler2D texture1;
 
 				varying vec2 vUv;
 
 				void main() {
-					gl_FragColor = texture2D(texture1, vUv);
+					vec4 color = texture2D(texture1, vUv);
+					if (color.a != 1.0) {
+						discard;
+					}
+					gl_FragColor = vec4(color.xyz, 1.0);
 				}
-			`
+			`,
+			transparent: true
 		});
+		material2.side = THREE.FrontSide;
 
 		const mesh = new THREE.Mesh(instanced, material2);
-		mesh.position.set(0, 0, 0);
+		mesh.position.set(0, 1, 0);
 		scene.add(mesh);
 		scene.add(new THREE.AxesHelper(0.2));
 	}
@@ -237,6 +282,8 @@ export default class App {
 	mousemove(evt) {
 		const nx = (evt.clientX/window.innerWidth);
 		const ny = (evt.clientY/window.innerHeight);
+		window.lastMouseX = nx;
+		window.lastMouseY = ny;
 		const element = document.querySelector(".footer");
 		if (nx > 0.75 && ny > 0.8 && element.classList.contains("closed")) {
 			element.classList.remove("closed");
