@@ -23,6 +23,8 @@ export default class App {
 		this.update = this.update.bind(this);
 		this.draw = this.draw.bind(this);
 		this.overflow = this.overflow.bind(this);
+
+		window.cameraId = parseInt(window.localStorage.getItem("camera-id") || "1");
 	}
 	debounce(func, delay) {
 		let inDebounce
@@ -34,13 +36,44 @@ export default class App {
 	}
 	attachEvents() {
 		window.addEventListener("resize", this.debounce(this.resize.bind(this), 200));
-		window.addEventListener("mousemove", this.debounce(this.mousemove.bind(this), 100));
+		//window.addEventListener("mousemove", this.debounce(this.mousemove.bind(this), 1));
+		window.addEventListener("mousemove", this.mousemove.bind(this));
 		window.addEventListener("mousedown", this.debounce(this.mousedown.bind(this), 100));
+		window.addEventListener("keydown", this.keydown.bind(this));
+	}
+	updateCamera(id, frame) {
+		if (this.lastCameraId === id && id >= 2 && id <= 4) {
+			return;
+		}
+
+		if (id === 1 || id === 2) {
+			var angle = 2*Math.PI*(id === 1 ? this.frame/250 : this.frame/1000)
+			var scale = window.scale || 0.35;
+			this.graphics.camera.position.x = 0.41+Math.cos(angle)*10*scale;
+			this.graphics.camera.position.z = 0.41+Math.sin(angle)*10*scale;
+			this.graphics.camera.position.y = 2;
+			this.graphics.camera.lookAt(0, 0, 0);
+		} else if (id === 3 || id === 4 || id === 5) {
+			var angle
+			if (id === 3) {
+				angle = 2*Math.PI*0.1;
+			} else if (id === 4) {
+				angle = 2*Math.PI*0.2;
+			} else if (id === 5) {
+				angle = 2*Math.PI*0.3;
+			}
+			var scale = window.scale || 0.35;
+			this.graphics.camera.position.x = 0.41+Math.cos(angle)*10*scale;
+			this.graphics.camera.position.z = 0.41+Math.sin(angle)*10*scale;
+			this.graphics.camera.position.y = 2;
+			this.graphics.camera.lookAt(0, 0, 0);
+		}
+		document.title = id;
 	}
 	update() {
 		(this.screen) && (this.screen.update) && (this.screen.update());
 		// Update camera around the object
-		if (this.frame < 500) {
+		if (this.frame < 1000) {
 			this.frame++;
 		} else {
 			this.frame = 0;
@@ -52,13 +85,8 @@ export default class App {
 			}
 		}
 		if (this.graphics.camera) {
-			var angle = 2*Math.PI*(this.frame/1100)
-			//angle = Math.PI*1.7;
-			var scale = window.scale || 0.25;
-			this.graphics.camera.position.x = 0.41+Math.cos(angle)*10*scale;
-			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
-			this.graphics.camera.position.y = 0+10*scale;
-			this.graphics.camera.lookAt(0, 0, 0);
+			const cameraId = window.cameraId || 1;
+			this.updateCamera(cameraId, this.frame);
 		}
 	}
 	draw() {
@@ -73,13 +101,36 @@ export default class App {
 	}
 	mockWorld() {
 		const size = 8;
-		this.world.set(0, -2, 0, 1);
+		//this.world.set(0, 1, 0, 1);
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
 				//this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
 			}
 		}
 		this.addTests();
+	}
+	keydown(event) {
+		if (event.code === "Digit1") {
+			window.cameraId = 1;
+			this.frame = 0;
+			window.localStorage.setItem("camera-id", window.cameraId);
+		} else if (event.code === "Digit2") {
+			window.cameraId = 2;
+			this.frame = 0.5;
+			window.localStorage.setItem("camera-id", window.cameraId);
+		} else if (event.code === "Digit3") {
+			window.cameraId = 3;
+			window.localStorage.setItem("camera-id", window.cameraId);
+		} else if (event.code === "Digit4") {
+			window.cameraId = 4;
+			window.localStorage.setItem("camera-id", window.cameraId);
+		} else if (event.code === "Digit5") {
+			window.cameraId = 5;
+			window.localStorage.setItem("camera-id", window.cameraId);
+		} else if (event.code === "Digit6") {
+			window.cameraId = 6;
+			window.localStorage.setItem("camera-id", window.cameraId);
+		}
 	}
 	async addTests() {
 		const scene = this.world.scene;

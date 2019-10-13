@@ -9,10 +9,6 @@ const alphaTexturePath = "../assets/textures-alpha.png";
 export default class TextureService {
 	static getMaterial() {
 		if (!this.material) {
-			this.texture.wrapS = THREE.RepeatWrapping;
-			this.texture.wrapT = THREE.RepeatWrapping;
-			this.texture.magFilter = THREE.NearestFilter;
-			this.texture.minFilter = THREE.LinearFilter;
 			this.material = new THREE.MeshLambertMaterial({
 				map: this.texture,
 				color: 0x555555
@@ -122,6 +118,10 @@ export default class TextureService {
 		]);
 
 		this.texture = textures[0];
+		this.texture.wrapS = THREE.RepeatWrapping;
+		this.texture.wrapT = THREE.RepeatWrapping;
+		this.texture.magFilter = THREE.NearestFilter;
+		this.texture.minFilter = THREE.LinearFilter;
 		this.alphaMap = textures[1];
 		
 		this.loaded = true;
