@@ -24,7 +24,7 @@ export default class AppLoader {
 		this.parent.resize();
 		this.parent.attachEvents();
 		this.parent.performancer = new Performancer(true, 10);
-		this.parent.performancer.attach(document.body); 
+		this.parent.performancer.attach(document.body);
 	}
 	async loadWorld() {
 		if (!this.parent.graphics) {
@@ -45,7 +45,6 @@ export default class AppLoader {
 			update: updateFn,
 			overflow: overflowFn,
 			performancer: performancerObject
-
 		});
 		updateFn();
 		drawFn();

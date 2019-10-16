@@ -4,7 +4,6 @@ import BlockData from '../data/BlockData.js';
 import * as THREE from '../libs/three.module.js';
 
 const baseTexturePath = "../assets/textures.png";
-const alphaTexturePath = "../assets/textures-alpha.png";
 
 export default class TextureService {
 	static getMaterial() {
@@ -109,12 +108,18 @@ export default class TextureService {
 		await this.addMarginToCanvas(canvas, image);
 		const texture = await this.createTextureFromImage(canvas);
 		return texture;
-
 	}
+
+	static async getTexture() {
+		if (!this.loaded) {
+			this.load();
+		}
+		return this.texture;
+	}
+
 	static async load() {
 		const textures = await Promise.all([
-			this.processImageAndGenerateTextureFromPath(baseTexturePath),
-			this.processImageAndGenerateTextureFromPath(alphaTexturePath),
+			this.processImageAndGenerateTextureFromPath(baseTexturePath)
 		]);
 
 		this.texture = textures[0];
@@ -122,8 +127,7 @@ export default class TextureService {
 		this.texture.wrapT = THREE.RepeatWrapping;
 		this.texture.magFilter = THREE.NearestFilter;
 		this.texture.minFilter = THREE.LinearFilter;
-		this.alphaMap = textures[1];
-		
+
 		this.loaded = true;
 	}
 }

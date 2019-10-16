@@ -1,6 +1,7 @@
 'use strict';
 
 import * as THREE from '../libs/three.module.js';
+import TextureService from './TextureService.js';
 
 export default class GraphicsEngine {
 	constructor(wrapper, canvas, gl) {
@@ -15,6 +16,7 @@ export default class GraphicsEngine {
 		this.continue = true;
 		this.aaScale = 1;
 	}
+
 	resize(width, height) {
 		const aaScale = this.aaScale;
 		if (this.fixedSize) {
@@ -36,6 +38,7 @@ export default class GraphicsEngine {
 			this.renderer.domElement.height = this.height;
 		}
 	}
+
 	static addLightToScene(scene) {
 		const addLight = (name, position, intensity) => {
 			const light = new THREE.DirectionalLight(0xffffff, intensity);
@@ -52,6 +55,7 @@ export default class GraphicsEngine {
 		addLight("Right", { x: 1, y: 0, z: 0 }, 1.7742);
 		addLight("Bottom", { x: 0, y: -1, z: 0 }, 1.5161);
 	}
+
 	async load(width, height) {
 		const camera = this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.01, 255);
 		this.camera.position.z = 1;
@@ -63,7 +67,6 @@ export default class GraphicsEngine {
 		if (!context) {
 			context = this.canvas.getContext('webgl');
 		}
-		const gl = context;
 		const rendererConfig = {
 			canvas: this.canvas,
 			antialias: true,
@@ -75,8 +78,106 @@ export default class GraphicsEngine {
 		renderer.setClearColor(0x333333, 1);
 		renderer.setSize(this.width, this.height);
 
+		const gl = context;
 		gl.enable(gl.CULL_FACE);
 		gl.cullFace(gl.BACK);
+
+		this.loaded = true;
+	}
+
+	static getMaterial() {
+		if (!this.material) {
+			this.material = this.generateMaterial();
+		}
+		return this.material;
+	}
+
+	static generateMaterial() {
+		if (!TextureService.loaded) {
+			return console.warn("TextureService has not loaded yet");
+		}
+		const material = new THREE.ShaderMaterial({
+			uniforms: {
+				texture1: { value: TextureService.texture },
+				time: {value: 0}
+			},
+			vertexShader: `
+				precision lowp float;
+
+				uniform float time;
+
+				attribute vec3 instancePosition;
+				attribute vec2 instanceTile;
+				attribute vec3 instanceRotation;
+
+				varying vec2 vUv;
+
+				#define PI_HALF 1.5707963267949
+				#define IMAGE_SIZE_PIXELS 128.0
+				#define IMAGE_TILE_SIZE 8.0
+
+				mat4 translateXYZ(vec3 v) {
+					return mat4(
+						1.0, 0.0, 0.0, 0.0,
+						0.0, 1.0, 0.0, 0.0,
+						0.0, 0.0, 1.0, 0.0,
+						v.x, v.y, v.z, 1.0
+					);
+				}
+
+				mat4 rotateXYZ(vec3 v) {
+					return mat4(
+						1.0,		0,			0,			0,
+						0, 			cos(v.x),	-sin(v.x),	0,
+						0, 			sin(v.x),	cos(v.x),	0,
+						0,			0,			0, 			1
+					) * mat4(
+						cos(v.z),	-sin(v.z),	0,			0,
+						sin(v.z),	cos(v.z),	0,			0,
+						0,			0,			1,			0,
+						0,			0,			0,			1
+					) * mat4(
+						cos(v.y),	0,			sin(v.y),	0,
+						0,			1.0,		0,			0,
+						-sin(v.y),	0,			cos(v.y),	0,
+						0, 			0,			0,			1
+					);
+				}
+
+				void main() {
+					vec2 topLeftOrigin = (1.0/IMAGE_TILE_SIZE) * uv + vec2(0.0, (IMAGE_TILE_SIZE-1.)/IMAGE_TILE_SIZE);
+					vUv = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0+instanceTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * instanceTile);
+
+					vec3 pos = position + instancePosition;
+
+					mat4 toCenter = translateXYZ(-instancePosition);
+					mat4 fromCenter = translateXYZ(instancePosition);
+					mat4 transformation = fromCenter * rotateXYZ(PI_HALF*instanceRotation) * toCenter;
+
+
+					vec4 resultPos = transformation * vec4(pos, 1.0);
+					gl_Position = projectionMatrix * modelViewMatrix * resultPos;
+				}
+			`,
+			fragmentShader: `
+				precision lowp float;
+
+				uniform sampler2D texture1;
+
+				varying vec2 vUv;
+
+				void main() {
+					vec4 color = texture2D(texture1, vUv);
+					if (color.a != 1.0) {
+						discard;
+					}
+					gl_FragColor = vec4(color.xyz, 1.0);
+				}
+			`,
+			transparent: true
+		});
+		material.side = THREE.FrontSide;
+		return material;
 	}
 
 	draw() {
@@ -87,6 +188,7 @@ export default class GraphicsEngine {
 		}
 		this.renderer.render(this.scene, this.camera);
 	}
+
 	sendCanvasToSaveServer() {
 		if (!this.continue) {
 			return;

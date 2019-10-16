@@ -16,7 +16,9 @@ export default class WorldHandler {
 	}
 
 	async load() {
-		await TextureService.load();
+		if (!TextureService.loaded) {
+			await TextureService.load();
+		}
 	}
 
 	clearBlock(x, y, z) {
@@ -39,7 +41,8 @@ export default class WorldHandler {
 			id: id
 		}
 		if (renderType === "simple" || renderType === undefined) {
-			const texture = data.texture.children[0];
+			const texture = data.texture[0];
+			
 			geometry = TextureService.getCachedResult(texture.x, texture.y);
 			if (!geometry) {
 				geometry = this.geometries.plane.clone();

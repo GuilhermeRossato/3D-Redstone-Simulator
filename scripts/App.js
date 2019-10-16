@@ -8,6 +8,7 @@ import ControlSelectorScreen from "./screens/ControlSelectorScreen.js";
 
 import * as THREE from './libs/three.module.js';
 import TextureService from './graphics/TextureService.js';
+import Chunk from './classes/world/Chunk.js';
 
 export default class App {
 	constructor(canvas, gl, assets, loader) {
@@ -101,7 +102,7 @@ export default class App {
 	}
 	mockWorld() {
 		const size = 8;
-		//this.world.set(0, 1, 0, 1);
+		this.world.set(0, 1, 0, 1);
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
 				//this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
@@ -134,11 +135,13 @@ export default class App {
 	}
 	async addTests() {
 		const scene = this.world.scene;
-		//const material = TextureService.getMaterial();
 		window.scene = scene;
-		//window.material = material;
 		window.THREE = THREE;
-		
+
+		/*
+		//const material = TextureService.getMaterial();
+		//window.material = material;
+
 
 		var geometry = new THREE.PlaneBufferGeometry(1, 1);
 
@@ -154,92 +157,13 @@ export default class App {
 		const rotationAttribute = new THREE.InstancedBufferAttribute( new Float32Array([0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0]), 3);
 		instanced.addAttribute("instanceRotation", rotationAttribute);
 
-		const material2 = new THREE.ShaderMaterial({
-			uniforms: {
-				texture1: { value: TextureService.texture },
-				time: {value: 0}
-			},
-			vertexShader: `
-				precision lowp float;
-
-				uniform float time;
-
-				attribute vec3 instancePosition;
-				attribute vec2 instanceTile;
-				attribute vec3 instanceRotation;
-
-				varying vec2 vUv;
-
-				#define PI_HALF 1.5707963267949
-				#define IMAGE_SIZE_PIXELS 128.0
-				#define IMAGE_TILE_SIZE 8.0
-
-				mat4 translateXYZ(vec3 v) {
-					return mat4(
-						1.0, 0.0, 0.0, 0.0,
-						0.0, 1.0, 0.0, 0.0,
-						0.0, 0.0, 1.0, 0.0,
-						v.x, v.y, v.z, 1.0
-					);
-				}
-
-				mat4 rotateXYZ(vec3 v) {
-					return mat4(
-						1.0,		0,			0,			0,
-						0, 			cos(v.x),	-sin(v.x),	0,
-						0, 			sin(v.x),	cos(v.x),	0,
-						0,			0,			0, 			1
-					) * mat4(
-						cos(v.z),	-sin(v.z),	0,			0,
-						sin(v.z),	cos(v.z),	0,			0,
-						0,			0,			1,			0,
-						0,			0,			0,			1
-					) * mat4(
-						cos(v.y),	0,			sin(v.y),	0,
-						0,			1.0,		0,			0,
-						-sin(v.y),	0,			cos(v.y),	0,
-						0, 			0,			0,			1
-					);
-				}
-
-				void main() {
-					vec2 topLeftOrigin = (1.0/IMAGE_TILE_SIZE) * uv + vec2(0.0, (IMAGE_TILE_SIZE-1.)/IMAGE_TILE_SIZE);
-					vUv = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0+instanceTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * instanceTile);
-
-					vec3 pos = position + instancePosition;
-
-					mat4 toCenter = translateXYZ(-instancePosition);
-					mat4 fromCenter = translateXYZ(instancePosition);
-					mat4 transformation = fromCenter * rotateXYZ(PI_HALF*instanceRotation) * toCenter;
-
-
-					vec4 resultPos = transformation * vec4(pos, 1.0);
-					gl_Position = projectionMatrix * modelViewMatrix * resultPos;
-				}
-			`,
-			fragmentShader: `
-				precision lowp float;
-				
-				uniform sampler2D texture1;
-
-				varying vec2 vUv;
-
-				void main() {
-					vec4 color = texture2D(texture1, vUv);
-					if (color.a != 1.0) {
-						discard;
-					}
-					gl_FragColor = vec4(color.xyz, 1.0);
-				}
-			`,
-			transparent: true
-		});
-		material2.side = THREE.FrontSide;
-
 		const mesh = new THREE.Mesh(instanced, material2);
 		mesh.position.set(0, 1, 0);
 		scene.add(mesh);
-		scene.add(new THREE.AxesHelper(0.2));
+		scene.add(new THREE.AxesHelper(0.2));*/
+		const chunk = new Chunk(0, 0, 0);
+		chunk.set(0, 0, 0, 1);
+		chunk.assignTo(scene);
 	}
 	async loadWorld() {
 		await this.loader.loadWorld();
