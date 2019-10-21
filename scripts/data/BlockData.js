@@ -12,8 +12,15 @@ export default [
 		{x:3, y:0}
 	]
 }, {
-	name: "Minecraft Stone Brick",
-	texture: {x:3, y:5}
+	name: "Wooden Planks",
+	texture: [
+		{x:6, y:0},
+		{x:6, y:0},
+		{x:6, y:0},
+		{x:6, y:0},
+		{x:6, y:0},
+		{x:6, y:0}
+	]
 }, {
 	name: "Stone Brick",
 	texture: {x:6, y:0}

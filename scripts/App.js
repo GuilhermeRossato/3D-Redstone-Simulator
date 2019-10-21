@@ -172,7 +172,7 @@ export default class App {
 
 		for (var i = 0; i < 5; i++) {
 			for (var j = 0; j < 5; j++) {
-				chunk.set(i-2, map[j * 5 + (i < 3 ? i : 4 - i)] * 2 | 0, j-2, 1);
+				chunk.set(i-2, map[j * 5 + (i < 3 ? i : 4 - i)] * 2 | 0, j-2, (map[j * 5 + (i < 3 ? i : 4 - i)] * 2 | 0) >= 1 ? 2 : 1);
 			}
 		}
 
