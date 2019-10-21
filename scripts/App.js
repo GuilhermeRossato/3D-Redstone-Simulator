@@ -48,7 +48,7 @@ export default class App {
 		}
 
 		if (id === 1 || id === 2) {
-			var angle = 2*Math.PI*(id === 1 ? this.frame/200 : this.frame/1000)
+			var angle = 2*Math.PI*(id === 1 ? this.frame/1000 : this.frame/333)
 			var scale = window.scale || 0.35;
 			this.graphics.camera.position.x = Math.cos(angle)*10*scale;
 			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
@@ -86,24 +86,19 @@ export default class App {
 				element.querySelector(".footer-text").innerHTML = "Render Calls:"+this.graphics.renderer.info.render.calls+"<br>Blocks: "+this.world.blockList.length+"<br>Faces:"+(this.world.blockList.length*6);
 			}
 		}
+		if (this.frame < 1000) {
+			this.frame++;
+		} else {
+			this.frame = 0;
+		}
+		
 		if (this.graphics.camera) {
 			const cameraId = window.cameraId || 1;
 			this.updateCamera(cameraId, this.frame);
 		}
 	}
 	draw() {
-		if (this.saving) {
-			return false;
-		}
-		this.saving = false;
-		if (this.frame < 200) {
-			this.frame++;
-		} else {
-			this.frame = 0;
-		}
-		
 		this.graphics.draw();
-		//this.graphics.sendCanvasToSaveServer(this.frame+1).then(() => this.saving = false);
 	}
 	overflow() {
 		// Called when 333ms has been elapsed since last update
@@ -171,7 +166,7 @@ export default class App {
 			random(), random(), random(), random(), random(),
 			random(), random(), random(), random(), random(),
 			random(), random(), random(), random(), random(),
-			random()+0.1, random(), random(), random(), random(),
+			random()+0.5, random(), random(), random(), random(),
 			random(), random(), random(), random(), random(),
 		];
 
