@@ -185,7 +185,7 @@ export default class GraphicsEngine {
 				varying vec2 vLightness;
 				varying vec2 vRelativeUv;
 
-				#define AO_IMPACT 0.2
+				#define AO_IMPACT 0.3
 
 				void main() {
 					vec4 color = texture2D(texture1, vUv);

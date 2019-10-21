@@ -15,7 +15,7 @@ Note that during development, the above link will not always bring you to a work
 ![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/assets/images/releases/v03_normal.gif?raw=true)
  - v 0.4 - Inventory, Hotbar and Procedural Terrain Generation
 ![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/assets/images/releases/v04_normal.gif?raw=true)
- - v 0.5 - ES6 Rewrite and SSAO Implementation
+ - v 0.5 - ES6 Rewrite and Voxel AO Implementation
 ![Preview v0.5](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/assets/images/releases/v05.gif?raw=true)
 
 ## Who is this for

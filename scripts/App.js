@@ -49,10 +49,10 @@ export default class App {
 
 		if (id === 1 || id === 2) {
 			var angle = 2*Math.PI*(id === 1 ? this.frame/1000 : this.frame/333)
-			var scale = window.scale || 0.35;
+			var scale = window.scale || 0.5;
 			this.graphics.camera.position.x = Math.cos(angle)*10*scale;
 			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
-			this.graphics.camera.position.y = 5;
+			this.graphics.camera.position.y = 6;
 			this.graphics.camera.lookAt(0, 0, 0);
 		} else if (id === 3 || id === 4 || id === 5) {
 			var angle;
@@ -170,9 +170,9 @@ export default class App {
 			random(), random(), random(), random(), random(),
 		];
 
-		for (var i = 0; i < 5; i++) {
-			for (var j = 0; j < 5; j++) {
-				chunk.set(i-2, map[j * 5 + (i < 3 ? i : 4 - i)] * 2 | 0, j-2, (map[j * 5 + (i < 3 ? i : 4 - i)] * 2 | 0) >= 1 ? 2 : 1);
+		for (var i = 0; i < 25; i++) {
+			for (var j = 0; j < 25; j++) {
+				chunk.set(i-12, random() * 2 | 0, j-12, (random() * 2 | 0) ? 2 : 1);
 			}
 		}
 
