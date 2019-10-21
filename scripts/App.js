@@ -48,25 +48,31 @@ export default class App {
 		}
 
 		if (id === 1 || id === 2) {
-			var angle = 2*Math.PI*(id === 1 ? this.frame/250 : this.frame/1000)
+			var angle = 2*Math.PI*(id === 1 ? this.frame/200 : this.frame/1000)
 			var scale = window.scale || 0.35;
-			this.graphics.camera.position.x = 0.41+Math.cos(angle)*10*scale;
-			this.graphics.camera.position.z = 0.41+Math.sin(angle)*10*scale;
-			this.graphics.camera.position.y = 2;
+			this.graphics.camera.position.x = Math.cos(angle)*10*scale;
+			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
+			this.graphics.camera.position.y = 5;
 			this.graphics.camera.lookAt(0, 0, 0);
 		} else if (id === 3 || id === 4 || id === 5) {
-			var angle
+			var angle;
 			if (id === 3) {
 				angle = 2*Math.PI*0.1;
 			} else if (id === 4) {
 				angle = 2*Math.PI*0.2;
 			} else if (id === 5) {
-				angle = 2*Math.PI*0.3;
+				angle = 2*Math.PI*0.52;
 			}
 			var scale = window.scale || 0.35;
-			this.graphics.camera.position.x = 0.41+Math.cos(angle)*10*scale;
-			this.graphics.camera.position.z = 0.41+Math.sin(angle)*10*scale;
+			this.graphics.camera.position.x = 0+Math.cos(angle)*10*scale;
+			this.graphics.camera.position.z = 0+Math.sin(angle)*10*scale;
 			this.graphics.camera.position.y = 2;
+			if (id === 5) {
+				this.graphics.camera.position.y = 4;
+			}
+			this.graphics.camera.lookAt(0, 0, 0);
+		} else if (id === 6) {
+			this.graphics.camera.position.set(0, 7, 0);
 			this.graphics.camera.lookAt(0, 0, 0);
 		}
 		document.title = id;
@@ -74,11 +80,6 @@ export default class App {
 	update() {
 		(this.screen) && (this.screen.update) && (this.screen.update());
 		// Update camera around the object
-		if (this.frame < 1000) {
-			this.frame++;
-		} else {
-			this.frame = 0;
-		}
 		if (this.frame%20 === 19) {
 			const element = document.querySelector(".footer");
 			if (!element.classList.contains("closed")) {
@@ -91,7 +92,18 @@ export default class App {
 		}
 	}
 	draw() {
+		if (this.saving) {
+			return false;
+		}
+		this.saving = false;
+		if (this.frame < 200) {
+			this.frame++;
+		} else {
+			this.frame = 0;
+		}
+		
 		this.graphics.draw();
+		//this.graphics.sendCanvasToSaveServer(this.frame+1).then(() => this.saving = false);
 	}
 	overflow() {
 		// Called when 333ms has been elapsed since last update
@@ -102,7 +114,7 @@ export default class App {
 	}
 	mockWorld() {
 		const size = 8;
-		this.world.set(0, 1, 0, 1);
+		//this.world.set(0, 1, 1, 1);
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
 				//this.world.set(i-size/2, (i%3==0||j%3==0)?0:2+j%3-i%3, j-size/2, (i%3==0||j%3==0)?2:3);
@@ -131,6 +143,9 @@ export default class App {
 		} else if (event.code === "Digit6") {
 			window.cameraId = 6;
 			window.localStorage.setItem("camera-id", window.cameraId);
+		} else if (event.code === "Digit7") {
+			window.cameraId = 7;
+			window.localStorage.setItem("camera-id", window.cameraId);
 		}
 	}
 	async addTests() {
@@ -138,32 +153,43 @@ export default class App {
 		window.scene = scene;
 		window.THREE = THREE;
 
-		/*
-		//const material = TextureService.getMaterial();
-		//window.material = material;
-
-
-		var geometry = new THREE.PlaneBufferGeometry(1, 1);
-
-		const instanced = new THREE.InstancedBufferGeometry();
-		instanced.attributes.position = geometry.attributes.position;
-		instanced.attributes.uv = geometry.attributes.uv;
-		instanced.index = geometry.index;
-
-		const positionAttribute = new THREE.InstancedBufferAttribute( new Float32Array([-1.0, -1.0, -0.5, 1.0, 1.0, 0, -1.0, -1.0, 0, 1.0, -1.0, 0]), 3);
-		instanced.addAttribute("instancePosition", positionAttribute);
-		const tileAttribute = new THREE.InstancedBufferAttribute( new Float32Array([0, 0, 0, 1, 3, 1, 1, 1]), 2);
-		instanced.addAttribute("instanceTile", tileAttribute);
-		const rotationAttribute = new THREE.InstancedBufferAttribute( new Float32Array([0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0]), 3);
-		instanced.addAttribute("instanceRotation", rotationAttribute);
-
-		const mesh = new THREE.Mesh(instanced, material2);
-		mesh.position.set(0, 1, 0);
-		scene.add(mesh);
-		scene.add(new THREE.AxesHelper(0.2));*/
 		const chunk = new Chunk(0, 0, 0);
-		chunk.set(0, 0, 0, 1);
+		const size = 0;
+		for (var i = -size/2|0; i <= size/2|0; i++) {
+			for (var j = -size/2|0; j < size/2|0; j++) {
+				chunk.set(i, 1, j, 1);
+			}
+		}
+
+		var seed = 11;
+		function random() {
+			var x = Math.sin(seed++) * 10000;
+			return x - Math.floor(x);
+		}
+
+		var map = [
+			random(), random(), random(), random(), random(),
+			random(), random(), random(), random(), random(),
+			random(), random(), random(), random(), random(),
+			random()+0.1, random(), random(), random(), random(),
+			random(), random(), random(), random(), random(),
+		];
+
+		for (var i = 0; i < 5; i++) {
+			for (var j = 0; j < 5; j++) {
+				chunk.set(i-2, map[j * 5 + (i < 3 ? i : 4 - i)] * 2 | 0, j-2, 1);
+			}
+		}
+
 		chunk.assignTo(scene);
+		/*
+		const value = map[1] + map[5] * 2 + map[7] * 4 + map[3] * 8 + map[2] * 16 + map[8] * 32 + map[6] * 64 + map[0] * 128;
+	
+		setTimeout(()=>{
+			const root = document.querySelector(".root");
+			root && (root.innerText = value.toString());
+		}, 650);
+		*/
 	}
 	async loadWorld() {
 		await this.loader.loadWorld();
