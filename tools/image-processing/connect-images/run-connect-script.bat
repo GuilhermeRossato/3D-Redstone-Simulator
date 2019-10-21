@@ -1,1 +1,1 @@
-@php ./connect.php
+@php ./connect.php || pause

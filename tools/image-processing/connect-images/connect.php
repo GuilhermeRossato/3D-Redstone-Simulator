@@ -2,19 +2,24 @@
 
 $lineBreak = "\n";
 
-$no_ssao_text_path = "./no-ssao-text.png";
-$ssao_text_path = "./ssao-text.png";
+$left_text_path = "./left-text.png";
+$right_text_path = "./right-text.png";
 
-$no_ssao_img = imagecreatefrompng($no_ssao_text_path);
-$ssao_img = imagecreatefrompng($ssao_text_path);
-imagesavealpha($no_ssao_img, true);
-imagesavealpha($ssao_img, true);
+$left_img = imagecreatefrompng($left_text_path);
+$right_img = imagecreatefrompng($right_text_path);
+imagesavealpha($left_img, true);
+imagesavealpha($right_img, true);
+
+if (!file_exists("output")) {
+	mkdir("output");
+}
 
 $i = 0;
-for ($i=0;$i<1000;$i++) {
+for ($i=1;$i<202;$i++) {
 	$number_string = ($i<10)?"00".$i:($i<100?"0".$i:$i);
-	$img1_path = './no-ssao/img'.$number_string.'-no-ssao.png';
-	$img2_path = './ssao/img'.$number_string.'-ssao.png';
+
+	$img1_path = './left/img'.$number_string.'.png';
+	$img2_path = './right/img'.$number_string.'.png';
 	$out_path = './output/img'.$number_string.'.png';
 
 	if (file_exists($img1_path) && file_exists($img2_path)) {
@@ -28,8 +33,10 @@ for ($i=0;$i<1000;$i++) {
 	list($img1_width, $img1_height) = getimagesize($img1_path);
 	list($img2_width, $img2_height) = getimagesize($img2_path);
 
-	$merged_width  = ($img1_width + $img2_width)/2;
+	$merged_width  = ($img1_width + $img2_width);
 	$merged_height = $img1_height > $img2_height ? $img1_height : $img2_height;
+
+	$merged_height = 384;
 
 	$merged_image = imagecreatetruecolor($merged_width, $merged_height);
 
@@ -39,18 +46,19 @@ for ($i=0;$i<1000;$i++) {
 	$img1 = imagecreatefrompng($img1_path);
 	$img2 = imagecreatefrompng($img2_path);
 	// place left image
-	imagecopyresampled($merged_image, $img1, 0, 0, 0, 0, $img1_width/2, $img1_height, $img1_width/2, $img1_height);
+	$left_vertical_height = abs($merged_height - $img1_height) / 2;
+	imagecopyresampled($merged_image, $img1, 0, 0, 0, $left_vertical_height, $img1_width, $img1_height - $left_vertical_height, $img1_width, $img1_height - $left_vertical_height);
 	//place right
-	imagecopyresampled($merged_image, $img2, $img1_width/2, 0, $img2_width/2, 0, $img2_width, $img2_height, $img2_width, $img2_height);
+	$right_vertical_height = abs($merged_height - $img2_height) / 2;
+	imagecopyresampled($merged_image, $img2, $img1_width, 0, 0, $right_vertical_height, $img2_width, $img2_height - $right_vertical_height, $img2_width, $img2_height - $right_vertical_height);
 
 	// place left text
-	imagecopyresampled($merged_image, $no_ssao_img, 0, 0, 0, 0, $img2_width/2, 127, $img2_width/2, 127);
+	imagecopyresampled($merged_image, $left_img, 0, 0, 0, 0, $img2_width, 127, $img2_width, 127);
 	// place right text
-	imagecopyresampled($merged_image, $ssao_img, $img1_width/2, 0, 0, 0, $img2_width/2, 127, $img2_width/2, 127);
+	imagecopyresampled($merged_image, $right_img, $img1_width, 0, 0, 0, $img2_width, 127, $img2_width, 127);
 
-    $save_path = $out_path;
-    imagepng($merged_image,$save_path);
-    echo $save_path."".$lineBreak."";
+    imagepng($merged_image, $out_path);
+    echo $out_path."".$lineBreak."";
 	// show file to browser like so:
 	//header('Content-Type: image/png');
 	//imagepng($merged_image);
@@ -61,5 +69,5 @@ for ($i=0;$i<1000;$i++) {
 	imagedestroy($img2);
 }
 
-imagedestroy($no_ssao_img);
-imagedestroy($ssao_img);
+imagedestroy($left_img);
+imagedestroy($right_img);
