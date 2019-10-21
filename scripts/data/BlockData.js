@@ -4,12 +4,12 @@ export default [
 }, {
 	name: "Stone",
 	texture: [
-		{x:0, y:0},
-		{x:0, y:0},
-		{x:0, y:0},
-		{x:0, y:0},
-		{x:0, y:0},
-		{x:0, y:0}
+		{x:3, y:0},
+		{x:3, y:0},
+		{x:3, y:0},
+		{x:3, y:0},
+		{x:3, y:0},
+		{x:3, y:0}
 	]
 }, {
 	name: "Minecraft Stone Brick",

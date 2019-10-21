@@ -41,7 +41,7 @@ export default class WorldHandler {
 			id: id
 		}
 		if (renderType === "simple" || renderType === undefined) {
-			const texture = data.texture[0];
+			const texture = data.texture[5];
 			
 			geometry = TextureService.getCachedResult(texture.x, texture.y);
 			if (!geometry) {
