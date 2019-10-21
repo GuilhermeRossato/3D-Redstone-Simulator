@@ -13,7 +13,7 @@ export default class GraphicsEngine {
 		this.height = canvas.height;
 		this.width = 856;
 		this.height = 384;
-		this.continue = true;
+		this.canSend = true;
 		this.aaScale = 1;
 	}
 
@@ -69,8 +69,8 @@ export default class GraphicsEngine {
 		}
 		const rendererConfig = {
 			canvas: this.canvas,
-			antialias: true,
-			antialiasing: true,
+			antialias: false,
+			antialiasing: false,
 			alpha: false,
 			context: context
 		};
@@ -108,9 +108,11 @@ export default class GraphicsEngine {
 
 				attribute vec3 instancePosition;
 				attribute vec2 instanceTile;
-				attribute vec3 instanceRotation;
+				attribute vec3 instanceVisual;
 
 				varying vec2 vUv;
+				varying vec2 vLightness;
+				varying vec2 vRelativeUv;
 
 				#define PI_HALF 1.5707963267949
 				#define IMAGE_SIZE_PIXELS 128.0
@@ -146,32 +148,259 @@ export default class GraphicsEngine {
 
 				void main() {
 					vec2 topLeftOrigin = (1.0/IMAGE_TILE_SIZE) * uv + vec2(0.0, (IMAGE_TILE_SIZE-1.)/IMAGE_TILE_SIZE);
-					vUv = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0+instanceTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * instanceTile);
-
+					vRelativeUv = uv;
+					vUv = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0 + instanceTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * instanceTile);
+					vLightness = instanceVisual.yz;
 					vec3 pos = position + instancePosition;
 
 					mat4 toCenter = translateXYZ(-instancePosition);
 					mat4 fromCenter = translateXYZ(instancePosition);
-					mat4 transformation = fromCenter * rotateXYZ(PI_HALF*instanceRotation) * toCenter;
 
+					vec3 rot;
+
+					if (instanceVisual.x == 0.0) {
+						rot = vec3(0.0, 0.0, 0.0);
+					} else if (instanceVisual.x == 1.0) {
+						rot = vec3(0.0, -2.0, 0.0);
+					} else if (instanceVisual.x == 2.0) {
+						rot = vec3(0.0, -1.0, 0.0);
+					} else if (instanceVisual.x == 3.0) {
+						rot = vec3(0.0, 1.0, 0.0);
+					} else if (instanceVisual.x == 4.0) {
+						rot = vec3(1.0, 0.0, 0.0);
+					} else if (instanceVisual.x == 5.0) {
+						rot = vec3(-1.0, 0.0, 0.0);
+					}
+
+					mat4 transformation = fromCenter * rotateXYZ(PI_HALF*rot) * toCenter;
 
 					vec4 resultPos = transformation * vec4(pos, 1.0);
 					gl_Position = projectionMatrix * modelViewMatrix * resultPos;
 				}
 			`,
 			fragmentShader: `
-				precision lowp float;
-
 				uniform sampler2D texture1;
 
 				varying vec2 vUv;
+				varying vec2 vLightness;
+				varying vec2 vRelativeUv;
+
+				#define AO_IMPACT 0.2
 
 				void main() {
 					vec4 color = texture2D(texture1, vUv);
 					if (color.a != 1.0) {
 						discard;
 					}
-					gl_FragColor = vec4(color.xyz, 1.0);
+
+					vec3 aoMult;
+
+					if (vLightness.y == 0.0) { // nothing
+						aoMult = vec3(1.0);
+					} else if (vLightness.y == 208.0) {
+						// all corners but bottom right
+						aoMult = vec3(1.0 - max(min(vRelativeUv.y, vRelativeUv.x),max(min(vRelativeUv.y, 1.0 - vRelativeUv.x),min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x))) * AO_IMPACT);
+					} else if (vLightness.y == 176.0) {
+						// all corners but bottom left
+						aoMult = vec3(1.0 - max(min(vRelativeUv.y, vRelativeUv.x),max(min(vRelativeUv.y, 1.0 - vRelativeUv.x),min(1.0 - vRelativeUv.y, vRelativeUv.x))) * AO_IMPACT);
+					} else if (vLightness.y == 112.0) {
+						// all corners but top left
+						aoMult = vec3(1.0 - max(min(vRelativeUv.y, vRelativeUv.x),max(min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),min(1.0 - vRelativeUv.y, vRelativeUv.x))) * AO_IMPACT);
+					} else if (vLightness.y == 224.0) {
+						// all corners but top right
+						aoMult = vec3(1.0 - max(min(vRelativeUv.y, 1.0 - vRelativeUv.x),max(min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),min(1.0 - vRelativeUv.y, vRelativeUv.x))) * AO_IMPACT);
+					} else if (vLightness.y == 128.0) {
+						 // top left
+						aoMult = vec3(1.0 - (1.0 - max(1.0 - vRelativeUv.y, vRelativeUv.x)) * AO_IMPACT);
+					} else if (vLightness.y == 1.0 || vLightness.y == 17.0 || vLightness.y == 129.0 || vLightness.y == 145.0) {
+						// top
+						aoMult = vec3(1.0 - vRelativeUv.y * AO_IMPACT);
+					} else if (vLightness.y == 16.0) {
+						// top right
+						aoMult = vec3(1.0 - (1.0 - max(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x)) * AO_IMPACT);
+					} else if (vLightness.y == 8.0 || vLightness.y == 72.0 || vLightness.y == 136.0 || vLightness.y == 200.0) {
+						// left
+						aoMult = vec3(1.0 - (1.0 - vRelativeUv.x) * AO_IMPACT);
+					} else if (vLightness.y == 2.0 || vLightness.y == 18.0 || vLightness.y == 34.0 || vLightness.y == 50.0) {
+						// right
+						aoMult = vec3(1.0 - vRelativeUv.x * AO_IMPACT);
+					} else if (vLightness.y == 64.0) {
+						// bottom left
+						aoMult = vec3(1.0 - (1.0 - max(vRelativeUv.y, vRelativeUv.x)) * AO_IMPACT);
+					} else if (vLightness.y == 4.0 || vLightness.y == 36.0 || vLightness.y == 68.0 || vLightness.y == 100.0) {
+						// bottom
+						aoMult = vec3(1.0 - (1.0 - vRelativeUv.y) * AO_IMPACT);
+					} else if (vLightness.y == 32.0) {
+						// bottom right
+						aoMult = vec3(1.0 - (1.0 - max(vRelativeUv.y, 1.0 - vRelativeUv.x)) * AO_IMPACT);
+					} else if (vLightness.y == 9.0 || vLightness.y == 25.0 || vLightness.y == 73.0 || vLightness.y == 89.0 || vLightness.y == 137.0 || vLightness.y == 153.0 || vLightness.y == 201.0 || vLightness.y == 217.0) {
+						// top, left
+						aoMult = vec3(1.0 - (1.0 - min(1.0 - vRelativeUv.y, vRelativeUv.x)) * AO_IMPACT);
+					} else if (vLightness.y == 3.0 || vLightness.y == 19.0 || vLightness.y == 35.0 || vLightness.y == 51.0 || vLightness.y == 131.0 || vLightness.y == 147.0 || vLightness.y == 163.0 || vLightness.y == 179.0) {
+						// top, right
+						aoMult = vec3(1.0 - (1.0 - min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x)) * AO_IMPACT);
+					} else if (vLightness.y == 6.0 || vLightness.y == 22.0 || vLightness.y == 38.0 || vLightness.y == 54.0 || vLightness.y == 70.0 || vLightness.y == 86.0 || vLightness.y == 102.0 || vLightness.y == 118.0) {
+						// bottom, right
+						aoMult = vec3(1.0 - (1.0 - min(vRelativeUv.y, 1.0 - vRelativeUv.x)) * AO_IMPACT);
+					} else if (vLightness.y == 12.0 || vLightness.y == 44.0 || vLightness.y == 76.0 || vLightness.y == 108.0 || vLightness.y == 140.0 || vLightness.y == 172.0 || vLightness.y == 204.0 || vLightness.y == 236.0) {
+						// bottom, left
+						aoMult = vec3(1.0 - (1.0 - min(vRelativeUv.y, vRelativeUv.x)) * AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 0.0) {
+						// top, right, bottom, no left
+						aoMult = vec3(1.0 - (1.0 - min(0.5-abs(vRelativeUv.y-0.5), 1.0-vRelativeUv.x))*AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 0.0 && mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0) {
+						// right, bottom, left, no right
+						aoMult = vec3(1.0 - (1.0 - min(0.5-abs(vRelativeUv.x-0.5), vRelativeUv.y))*AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/2.0), 2.0) == 0.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0) {
+						// top, bottom, left, no right
+						aoMult = vec3(1.0 - (1.0 - min(0.5-abs(vRelativeUv.y-0.5), vRelativeUv.x))*AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 0.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0) {
+						// top, right, left, no bottom
+						aoMult = vec3(1.0 - (1.0 - min(0.5-abs(vRelativeUv.x-0.5), 1.0-vRelativeUv.y))*AO_IMPACT);
+					} else if (vLightness.y == 144.0) {
+						// top left, top right
+						aoMult = vec3(1.0 - max(
+							min(vRelativeUv.y, 1.0 - vRelativeUv.x),
+							min(vRelativeUv.y, vRelativeUv.x)
+						) * AO_IMPACT);
+					} else if (vLightness.y == 48.0) {
+						// top right, bottom right
+						aoMult = vec3(1.0 - max(
+							min(1.0 - vRelativeUv.y, vRelativeUv.x),
+							min(vRelativeUv.y, vRelativeUv.x)
+						) * AO_IMPACT);
+					} else if (vLightness.y == 96.0) {
+						// bottom left, bottom right
+						aoMult = vec3(1.0 - max(
+							min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),
+							min(1.0 - vRelativeUv.y, vRelativeUv.x)
+						) * AO_IMPACT);
+					} else if (vLightness.y == 192.0) {
+						// top left, bottom left
+						aoMult = vec3(1.0 - max(
+							min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),
+							min(vRelativeUv.y, 1.0 - vRelativeUv.x)
+						) * AO_IMPACT);
+					} else if (vLightness.y == 65.0 || vLightness.y == 81.0 || vLightness.y == 193.0 || vLightness.y == 209.0) {
+						// top, bottom left
+						aoMult = vec3(1.0 - max(
+							min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),
+							vRelativeUv.y
+						) * AO_IMPACT);
+					} else if (vLightness.y == 33.0 || vLightness.y == 49.0 || vLightness.y == 161.0 || vLightness.y == 177.0) {
+						// top, bottom right
+						aoMult = vec3(1.0 - max(
+							min(1.0 - vRelativeUv.y, vRelativeUv.x),
+							vRelativeUv.y
+						) * AO_IMPACT);
+					} else if (vLightness.y == 130.0 || vLightness.y == 146.0 || vLightness.y == 162.0 || vLightness.y == 178.0) {
+						// right, top left
+						aoMult = vec3(1.0 - max(
+							min(vRelativeUv.y, 1.0 - vRelativeUv.x),
+							vRelativeUv.x
+						) * AO_IMPACT);
+					} else if (vLightness.y == 66.0 || vLightness.y == 82.0 || vLightness.y == 98.0 || vLightness.y == 114.0) {
+						// right, bottom left
+						aoMult = vec3(1.0 - max(
+							min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),
+							vRelativeUv.x
+						) * AO_IMPACT);
+					} else if (vLightness.y == 132.0 || vLightness.y == 164.0 || vLightness.y == 196.0 || vLightness.y == 228.0) {
+						// bottom, top left
+						aoMult = vec3(1.0 - max(
+							min(1.0 - vRelativeUv.x, vRelativeUv.y),
+							1.0 - vRelativeUv.y
+						) * AO_IMPACT);
+					} else if (vLightness.y == 20.0 || vLightness.y == 52.0 || vLightness.y == 84.0 || vLightness.y == 116.0) {
+						// bottom, top right
+						aoMult = vec3(1.0 - max(
+							min(vRelativeUv.x, vRelativeUv.y),
+							1.0 - vRelativeUv.y
+						) * AO_IMPACT);
+					} else if (vLightness.y == 24.0 || vLightness.y == 88.0 || vLightness.y == 152.0 || vLightness.y == 216.0) {
+						// left, top right
+						aoMult = vec3(1.0 - max(
+							min(vRelativeUv.x, vRelativeUv.y),
+							1.0 - vRelativeUv.x
+						) * AO_IMPACT);
+					} else if (vLightness.y == 40.0 || vLightness.y == 104.0 || vLightness.y == 168.0 || vLightness.y == 232.0) {
+						// left, bottom right
+						aoMult = vec3(1.0 - max(
+							min(vRelativeUv.x, 1.0 - vRelativeUv.y),
+							1.0 - vRelativeUv.x
+						) * AO_IMPACT);
+					} else if (vLightness.y == 97.0 || vLightness.y == 113.0 || vLightness.y == 225.0 || vLightness.y == 241.0) {
+						// top, bottom left, bottom right
+						aoMult = vec3(1.0 - max(
+							max(
+								min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),
+								min(1.0 - vRelativeUv.y, vRelativeUv.x)
+							),
+							vRelativeUv.y
+						) * AO_IMPACT);
+					} else if (vLightness.y == 194.0 || vLightness.y == 210.0 || vLightness.y == 226.0 || vLightness.y == 242.0) {
+						// top, bottom left, bottom right
+						aoMult = vec3(1.0 - max(
+							max(
+								min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x),
+								min(vRelativeUv.y, 1.0 - vRelativeUv.x)
+							),
+							vRelativeUv.x
+						) * AO_IMPACT);
+					} else if (vLightness.y == 148.0 || vLightness.y == 180.0 || vLightness.y == 212.0 || vLightness.y == 244.0) {
+						// bottom, top left, top right
+						aoMult = vec3(1.0 - max(
+							max(
+								min(vRelativeUv.y, 1.0 - vRelativeUv.x),
+								min(vRelativeUv.y, vRelativeUv.x)
+							),
+							1.0 - vRelativeUv.y
+						) * AO_IMPACT);
+					} else if (vLightness.y == 56.0 || vLightness.y == 120.0 || vLightness.y == 184.0 || vLightness.y == 248.0) {
+						// bottom, top left, top right
+						aoMult = vec3(1.0 - max(
+							max(
+								min(1.0 - vRelativeUv.y, vRelativeUv.x),
+								min(vRelativeUv.y, vRelativeUv.x)
+							),
+							1.0 - vRelativeUv.x
+						) * AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 && mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0) {
+						// all 4 sides						
+						aoMult = vec3(1.0 - max(max(max(vRelativeUv.y, 1.0-vRelativeUv.x), vRelativeUv.x), 1.0 - vRelativeUv.y) * AO_IMPACT);
+					} else if ( mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 ) {
+						// top, bottom
+						aoMult = vec3(1.0 - max(vRelativeUv.y, 1.0 - vRelativeUv.y) * AO_IMPACT);
+					} else if ( mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0 ) {
+						// left, right
+						aoMult = vec3(1.0 - max(vRelativeUv.x, 1.0 - vRelativeUv.x) * AO_IMPACT);
+					} else if (vLightness.y == 240.0) {
+						// all corners
+						aoMult = vec3(1.0 - max(max(
+							min(vRelativeUv.y, vRelativeUv.x),
+							min(1.0 - vRelativeUv.y, vRelativeUv.x)
+						), max(
+							min(vRelativeUv.y, 1.0 - vRelativeUv.x),
+							min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x)
+						)) * AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/2.0), 2.0) == 0.0 && mod(floor(vLightness.y/4.0), 2.0) == 0.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0) {
+						// top, left, probably bottom right
+						aoMult = vec3(1.0 - (1.0 - min(max(vRelativeUv.y, 1.0 - vRelativeUv.x), min(1.0 - vRelativeUv.y, vRelativeUv.x))) * AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 0.0 && mod(floor(vLightness.y/8.0), 2.0) == 0.0) {
+						// top, right, probably bottom left
+						aoMult = vec3(1.0 - (1.0 - min(max(vRelativeUv.y, vRelativeUv.x), min(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x))) * AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 0.0 && mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 0.0) {
+						// bottom, right, probably top left
+						aoMult = vec3(1.0 - (1.0 - min(max(1.0 - vRelativeUv.y, vRelativeUv.x), min(vRelativeUv.y, 1.0 - vRelativeUv.x))) * AO_IMPACT);
+					} else if (mod(vLightness.y, 2.0) == 0.0 && mod(floor(vLightness.y/2.0), 2.0) == 0.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0) {
+						// left, bottom, probably top right
+						aoMult = vec3(1.0 - (1.0 - min(max(1.0 - vRelativeUv.y, 1.0 - vRelativeUv.x), min(vRelativeUv.y, vRelativeUv.x))) * AO_IMPACT);
+					}
+
+					gl_FragColor = vec4(color.xyz * vLightness.x * aoMult, 1.0);
+					
+					// disable texture and use only AO
+					// if (vLightness.y >= 0.0 && vLightness.y <= 1288.0) { gl_FragColor = vec4(aoMult.xyz, 1.0); }
 				}
 			`,
 			transparent: true
@@ -181,42 +410,36 @@ export default class GraphicsEngine {
 	}
 
 	draw() {
-		if (this.frame < 20000) {
-			this.frame++;
-		} else {
-			this.frame = 0;
-		}
 		this.renderer.render(this.scene, this.camera);
 	}
 
-	sendCanvasToSaveServer() {
-		if (!this.continue) {
+	sendCanvasToSaveServer(photoNum = 0) {
+		if (!this.canSend) {
 			return;
 		}
-		this.continue = false;
+		this.canSend = false;
 
 		if (this.image_downloads < 20000) {
 			this.image_downloads++;
 		} else {
 			this.image_downloads = 0;
 		}
-		if (this.image_downloads > 250) {
+		if (this.image_downloads > 5000) {
 			return false;
 		}
 		const self = this;
 		const data = new FormData();
-		const countStr = (this.image_downloads<10)?"00"+this.image_downloads:((this.image_downloads<100)?"0"+this.image_downloads:this.image_downloads);
+		const countStr = photoNum ? photoNum.toString().padStart(3, '0') : (this.image_downloads<10)?"00"+this.image_downloads:((this.image_downloads<100)?"0"+this.image_downloads:this.image_downloads);
 		data.append("content", this.renderer.domElement.toDataURL());
 		data.append("filename", 'img'+countStr+'.png');
-		fetch("http://localhost:8081", {
-			method: "post",
-			body: data
-		}).then(r=>r.text()).then((txt) => {
-			/*txt = txt.substr(txt.indexOf("<pre>")+5);
-			txt = txt.substr(0, txt.length-6);
-			const json = JSON.parse(txt);
-			console.log(json);*/
-			self.continue = true;
+		return new Promise(resolve => {
+			fetch("http://localhost:8081", {
+				method: "post",
+				body: data
+			}).then(r=>r.text()).then((txt) => {
+				self.canSend = true;
+				resolve();
+			}).catch(resolve);
 		});
 	}
 }
