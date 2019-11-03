@@ -99,11 +99,11 @@ export default class FatalErrorDisplayErrorDisplay {
 		}
 		
 		if (!String.prototype.replaceAll) {
-			String.prototype.replaceAll = function(str1, str2, ignore) {
-				return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
+			stack.replaceAll = function(str1, str2, ignoreCase) {
+				return stack.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignoreCase?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
 			}
 		}
-		paragraph.innerText = stack.replaceAll(window.location.href, '/');
+		paragraph.innerText = stack.replaceAll(window.location.origin, '');
 		document.body.appendChild(wrapper);
 	}
 }
