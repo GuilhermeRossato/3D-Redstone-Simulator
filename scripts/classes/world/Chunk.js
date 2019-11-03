@@ -17,7 +17,8 @@ const SIDE_DISPLACEMENT = [
 const primitive = new THREE.PlaneBufferGeometry(1, 1);
 
 export default class Chunk {
-	constructor(cx, cy, cz) {
+	constructor(world, cx, cy, cz) {
+		this.world = world;
 		this.cx = cx;
 		this.cy = cy;
 		this.cz = cz;
@@ -26,10 +27,26 @@ export default class Chunk {
 		this.mesh = undefined;
 	}
 	assignTo(scene) {
-		return this._rebuildMesh(scene);
+		this.scene = scene;
+		if (this.blockList.length !== 0) {
+			return this._rebuildMesh();
+		}
+		return null;
 	}
 	isSolidBlock(x, y, z) {
-		return !!(this.blocks && this.blocks[z] && this.blocks[z][x] && this.blocks[z][x][y]);
+		const external = this.world.isSolidBlock(x + this.cx * 16, y + this.cy * 16, z + this.cz * 16);
+		if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16) {
+			if (x === 0 & y === 0 && z === 2 && external) {
+				debugger;
+			}
+			const internal = !!(this.blocks && this.blocks[z] && this.blocks[z][x] && this.blocks[z][x][y]);
+			if (internal !== external) {
+				debugger;
+				this.world.isSolidBlock(x + this.cx * 16, y + this.cy * 16, z + this.cz * 16);
+			}
+			return internal;
+		}
+		return external;
 	}
 	_getOcclusion(position, side) {
 		let t, tr, r, br, b, bl, l, tl;
@@ -92,62 +109,7 @@ export default class Chunk {
 			return 0;
 		}
 
-		if (position.x === 0 && position.y === 0 && position.z === 0) {
-			console.log(t + r * 2 + b * 4 + l * 8 + tr * 16 + br * 32 + bl * 64 + tl * 128, t+0, r * 2, b * 4, l * 8, tr * 16, br * 32, bl * 64, tl * 128);
-		}
-
 		return t + r * 2 + b * 4 + l * 8 + tr * 16 + br * 32 + bl * 64 + tl * 128;
-
-		// side 2 bits
-		// corners = 8 bits = 10 bits
-
-		if (side === 4) {
-			const
-				right = this.isSolidBlock(position.x+1, position.y+1, position.z),
-				left = this.isSolidBlock(position.x-1, position.y+1, position.z),
-				bottom = this.isSolidBlock(position.x, position.y+1, position.z+1),
-				top = this.isSolidBlock(position.x, position.y+1, position.z-1);
-			if (right && left && bottom && top) {
-				return 33;
-			} else if (right && left && bottom && !top) {
-				return 13;
-			} else if (right && left && !bottom && top) {
-				return 15;
-			} else if (right && !left && bottom && top) {
-				return 16;
-			} else if (!right && left && bottom && top) {
-				return 14;
-			}
-			const
-				br = this.isSolidBlock(position.x+1, position.y+1, position.z+1),
-				tr = this.isSolidBlock(position.x+1, position.y+1, position.z-1),
-				bl = this.isSolidBlock(position.x-1, position.y+1, position.z+1),
-				tl = this.isSolidBlock(position.x-1, position.y+1, position.z-1);
-			if (!right && left && !bottom && top) {
-				return br ? 17 : 10;
-			} else if (right && !left && !bottom && top) {
-				return bl ? 18 : 11;
-			} else if (right && !left && bottom && !top) {
-				return tl ? 19 : 12;
-			} else if (!right && left && bottom && !top) {
-				return tr ? 20 : 9;
-			} else if (!right && left && !bottom && !top) {
-				return tr ? 21 : (br ? 22 : 3);
-			} else if (!right && !left && !bottom && top) {
-				return bl ? 23 : (br ? 24 : 2);
-			} else if (right && !left && !bottom && !top) {
-				return bl ? 23 : (br ? 24 : 2);
-			} else if (!right && !left && !bottom && !top && !br && tr && !bl && !tl) {
-				return 0*7;
-			} else if (!right && !left && !bottom && !top && br && !tr && !bl && !tl) {
-				return 0*8;
-			} else if (!right && !left && !bottom && !top && !br && !tr && bl && !tl) {
-				return 0*5;
-			} else if (!right && !left && !bottom && !top && !br && !tr && !bl && tl) {
-				return 0*6;
-			}
-		}
-		return 0;
 	}
 
 	_buildMesh(skipAo = false) {
@@ -170,6 +132,7 @@ export default class Chunk {
 		instanced.attributes.position = geometry.attributes.position;
 		instanced.attributes.uv = geometry.attributes.uv;
 		instanced.index = geometry.index;
+		instanced.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 17);
 
 		const planeCount = this.blockList.length * 6;
 
@@ -184,42 +147,9 @@ export default class Chunk {
 				arrayPos[i1++] = this.blockList[i].y;
 				arrayPos[i1++] = this.blockList[i].z;
 				arrayPos[(i1 - 3) + SIDE_DISPLACEMENT[j].origin[0]] += SIDE_DISPLACEMENT[j].origin[1]/2;
-				//const key = i1 - 3 + SIDE_DISPLACEMENT[j].origin[0];
-				//console.log(key);
-				//arrayPos[i1 - 3 + SIDE_DISPLACEMENT[j].origin[0]] += SIDE_DISPLACEMENT[j].origin[1]/2;
-				//arrayPos[i * 3 + j * 6 + SIDE_DISPLACEMENT[j].origin[0]] += SIDE_DISPLACEMENT[j].origin[1]/2;
 				arrayVisual[i2++] = SIDE_DISPLACEMENT[j].rotation;
 				arrayVisual[i2++] = SIDE_DISPLACEMENT[j].lightness;
-
 				arrayVisual[i2++] = skipAo ? 0 : this._getOcclusion(this.blockList[i], j);
-				/*
-				if (skipAo) {
-					arrayVisual[i2++] = 0;
-				} else if (j === 4) {
-					const
-						right = this.isSolidBlock(this.blockList[i].x+1, this.blockList[i].y+1, this.blockList[i].z),
-						s2 = this.isSolidBlock(this.blockList[i].x-1, this.blockList[i].y+1, this.blockList[i].z),
-						s3 = this.isSolidBlock(this.blockList[i].x, this.blockList[i].y+1, this.blockList[i].z+1),
-						s4 = this.isSolidBlock(this.blockList[i].x, this.blockList[i].y+1, this.blockList[i].z-1);
-					if (s1 && s2 && s3 && s4) {
-						arrayVisual[i2++] = 17+4;
-					} else if (s1 && s2 && s3 && !s4) {
-						arrayVisual[i2++] = 13;
-					} else if (s1 && s2 && !s3 && s4) {
-						arrayVisual[i2++] = 15;
-					} else if (s1 && !s2 && s3 && s4) {
-						arrayVisual[i2++] = 16;
-					} else if (!s1 && s2 && s3 && s4) {
-						arrayVisual[i2++] = 14;
-					} else if (!s1 && s2 && !s3 && s4) {
-						arrayVisual[i2++] = 14;
-					} else {
-						arrayVisual[i2++] = 0;
-					}
-				} else {
-					arrayVisual[i2++] = 0;
-				}
-				*/
 				arrayTile[i3++] = this.blockList[i].texture[j].x;
 				arrayTile[i3++] = this.blockList[i].texture[j].y;
 			}
@@ -236,14 +166,14 @@ export default class Chunk {
 
 		const mesh = new THREE.Mesh(instanced, material);
 		mesh.position.set(this.cx * 16, this.cy * 16, this.cz * 16);
-		scene.add(mesh);
+		this.scene.add(mesh);
 
 		this.instanced = instanced;
 		this.mesh = mesh;
 		return mesh;
 	}
-	_rebuildMesh(target) {
-		const parent = target ? target : this.mesh.parent
+	_rebuildMesh() {
+		const parent = this.scene;
 		if (!parent) {
 			return null;
 		}
@@ -255,30 +185,37 @@ export default class Chunk {
 		return mesh;
 	}
 	set(x, y, z, id) {
+		let result = 0;
 		if (id === 0) {
 			this.clearBlock(x, y, z);
+			result = 1;
 		} else if (this.blocks[z] && this.blocks[z][x] && this.blocks[z][x][y]) {
 			if (!BlockData[id]) {
 				throw new Error(`Block id ${id} does not exist on BlockData`);
 			}
 			this.replaceBlock(x, y, z, id);
+			result = 0;
 		} else {
 			if (!BlockData[id]) {
 				throw new Error(`Block id ${id} does not exist on BlockData`);
 			}
 			this.addBlock(x, y, z, id);
+			result = 1;
 		}
-		this.mesh && this._rebuildMesh();
+		this._rebuildMesh();
+		return result;
+	}
+	get(x, y, z) {
+		return this.blocks[z] && this.blocks[z][x] ? this.blocks[z][x][y] : null;
 	}
 	clearBlock(x, y, z) {
 
 	}
 	replaceBlock(x, y, z, id) {
-
+		this.blocks[z][x][y].texture = BlockData[id].texture;
 	}
 	addBlock(x, y, z, id) {
-		const data = BlockData[id];
-		const texture = data.texture;
+		const texture = BlockData[id].texture;
 		const blockObj = { x, y, z, texture };
 		if (!this.blocks[z]) {
 			this.blocks[z] = [];

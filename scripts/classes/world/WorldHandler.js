@@ -3,16 +3,12 @@
 import TextureService from '../../graphics/TextureService.js';
 import * as THREE from '../../libs/three.module.js';
 import BlockData from '../../data/BlockData.js';
+import Chunk from '../world/Chunk.js';
 
 export default class WorldHandler {
 	constructor(graphicsEngine) {
 		this.scene = graphicsEngine.scene;
-		this.blocks = [];
-		this.blockList = [];
-		this.allFaces = [];
-		this.faces = [];
-		this.sidesDisplacement = WorldHandler.SIDE_DISPLACEMENT;
-		this.geometries = WorldHandler.GEOMETRIES;
+		this.chunks = [];
 	}
 
 	async load() {
@@ -21,86 +17,75 @@ export default class WorldHandler {
 		}
 	}
 
-	clearBlock(x, y, z) {
-		if (!this.blocks[x] || !this.blocks[x][y] || !!this.blocks[x][y][z]) {
-			return true;
+	isSolidBlock(x, y, z) {
+		return !!(this.get(x, y, z));
+	}
+
+	getChunk(cx, cy, cz, createOnMissing = true) {
+		if (!this.chunks[cz]) {
+			this.chunks[cz] = [];
 		}
-		console.warn("Unimplemented clearBlock");
+		if (!this.chunks[cz][cx]) {
+			this.chunks[cz][cx] = [];
+		}
+		if (createOnMissing && !this.chunks[cz][cx][cy]) {
+			this.chunks[cz][cx][cy] = new Chunk(this, cx, cy, cz);
+			this.chunks[cz][cx][cy].assignTo(this.scene);
+		}
+		return this.chunks[cz][cx][cy];
+	}
+
+	get(x, y, z) {
+		const cx = x >= 0 ? Math.floor( x / 16 ) : Math.floor( - x / 16 - 1 );
+		const cy = y >= 0 ? Math.floor( y / 16 ) : Math.floor( - y / 16 - 1 );
+		const cz = z >= 0 ? Math.floor( z / 16 ) : Math.floor( - z / 16 - 1 );
+		const chunk = this.getChunk(cx, cy, cz, false);
+		if (!chunk) {
+			return null;
+		}
+		const rx = (x|0) - cx * 16;
+		const ry = (y|0) - cy * 16;
+		const rz = (z|0) - cz * 16;
+		return chunk.get(rx, ry, rz);
 	}
 
 	set(x, y, z, id) {
-		var geometry, ix, iy, iz, i, side;
-		if (id === 0) {
-			return this.clearBlock(x, y, z);
+		const cx = x >= 0 ? Math.floor( x / 16 ) : Math.floor( - x / 16 - 1 );
+		const cy = y >= 0 ? Math.floor( y / 16 ) : Math.floor( - y / 16 - 1 );
+		const cz = z >= 0 ? Math.floor( z / 16 ) : Math.floor( - z / 16 - 1 );
+		const chunk = this.getChunk(cx, cy, cz, id !== 0);
+		if (!chunk) {
+			return; // id is zero or chunk could not be created
 		}
-		const data = BlockData[id];
-		const renderType = data.render;
-		const material = TextureService.getMaterial();
-		const block = {
-			faces: undefined,
-			id: id
-		}
-		if (renderType === "simple" || renderType === undefined) {
-			const texture = data.texture[5];
-			
-			geometry = TextureService.getCachedResult(texture.x, texture.y);
-			if (!geometry) {
-				geometry = this.geometries.plane.clone();
-				TextureService.applyUv(geometry, texture.x, texture.y);
-			}
-			block.faces = [];
-			for (i=0;i<this.sidesDisplacement.length;i++) {
-				side = this.sidesDisplacement[i];
-				const mesh = new THREE.Mesh(geometry, material);
-				mesh.matrixAutoUpdate = false;
-				mesh.position.set((x|0), (y|0), (z|0));
-				mesh.position[side.origin[0]] += side.origin[1]/2;
-				mesh.rotation[side.rotation[0]] += side.rotation[1]*Math.PI;
-				mesh.updateMatrix();
-				// Face culling (hidden faces by other blocks)
-				ix = x-side.inverse[0];
-				iy = y-side.inverse[1];
-				iz = z-side.inverse[2];
-				if (this.blocks[ix] && this.blocks[ix][iz] && this.blocks[ix][iz][iy]) {
-					mesh.visible = false;
-					if (this.blocks[ix][iz][iy].faces.length === 6) {
-						this.blocks[ix][iz][iy].faces[side.inverseId].visible = false;
-					}
+		const rx = (x|0) - cx * 16;
+		const ry = (y|0) - cy * 16;
+		const rz = (z|0) - cz * 16;
+
+		const result = chunk.set(rx, ry, rz, id);
+
+		// Update neighboor chunks (only needed if AO is on or if this block id interacts with others)
+		if (result === 1) {
+			let neighboorChunk;
+			if (rx == 0 || rx == 15) {
+				neighboorChunk = this.getChunk(cx + (rx == 0 ? -1 : 1), cy, cz);
+				if (neighboorChunk) {
+					neighboorChunk.mesh && neighboorChunk._rebuildMesh();
 				}
-				block.faces.push(mesh);
 			}
-			(!this.blocks[x]) && (this.blocks[x] = []);
-			(!this.blocks[x][z]) && (this.blocks[x][z] = []);
-			this.blocks[x][z][y] = block;
-		} else {
-			block.faces = [];
-			console.warn("Ignored invalid render type: "+renderType);
+			if (ry == 0 || ry == 15) {
+				neighboorChunk = this.getChunk(cx, cy + (ry == 0 ? -1 : 1), cz);
+				if (neighboorChunk) {
+					neighboorChunk.mesh && neighboorChunk._rebuildMesh();
+				}
+			}
+			if (rz == 0 || rz == 15) {
+				neighboorChunk = this.getChunk(cx, cy, cz + (rz == 0 ? -1 : 1));
+				if (neighboorChunk) {
+					neighboorChunk.mesh && neighboorChunk._rebuildMesh();
+				}
+			}
 		}
-		this.blockList.push(block);
-		this.scene.add(...block.faces);
-	}
 
-	static get SIDE_DISPLACEMENT() {
-		return [
-			{"name": "Front",	"origin": ["z", 1],		"rotation": ["y", 0],		"inverse": [0, 0, -1],	"inverseId": 1},
-			{"name": "Back",	"origin": ["z", -1],	"rotation": ["y", 1],		"inverse": [0, 0, 1],	"inverseId": 0},
-			{"name": "Right",	"origin": ["x", 1],		"rotation": ["y", 0.5],		"inverse": [-1, 0, 0],	"inverseId": 3},
-			{"name": "Left",	"origin": ["x", -1],	"rotation": ["y", -0.5],	"inverse": [1, 0, 0],	"inverseId": 2},
-			{"name": "Top",		"origin": ["y", 1],		"rotation": ["x", -0.5],	"inverse": [0, -1, 0],	"inverseId": 5},
-			{"name": "Bottom",	"origin": ["y", -1],	"rotation": ["x", 0.5],		"inverse": [0, 1, 0],	"inverseId": 4}
-		];
-	}
-
-	static get GEOMETRIES() {
-		return {
-			/*
-			"plane": new THREE.PlaneGeometry(0.5,0.5,1,1),
-			"half": new THREE.PlaneGeometry(0.5,0.25,1,1),
-			"quarter": new THREE.PlaneGeometry(0.5,0.125,1,1)
-			*/
-			"plane": new THREE.PlaneGeometry(1,1,1,1),
-			"half": new THREE.PlaneGeometry(1,0.5,1,1),
-			"quarter": new THREE.PlaneGeometry(1,0.25,1,1)
-		}
+		return result;
 	}
 }
