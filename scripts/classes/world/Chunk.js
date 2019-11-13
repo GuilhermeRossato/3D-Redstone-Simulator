@@ -113,6 +113,10 @@ export default class Chunk {
 	}
 
 	_buildMesh(skipAo = false) {
+		if (this.blockList.length === 0) {
+			return;
+		}
+		console.log("Building chunk ", this.cx, this.cy, this.cz);
 		if (this.mesh) {
 			if (this.mesh.parent) {
 				this.mesh.parent.remove(this.mesh);
@@ -166,20 +170,21 @@ export default class Chunk {
 
 		const mesh = new THREE.Mesh(instanced, material);
 		mesh.position.set(this.cx * 16, this.cy * 16, this.cz * 16);
-		this.scene.add(mesh);
 
 		this.instanced = instanced;
 		this.mesh = mesh;
 		return mesh;
 	}
 	_rebuildMesh() {
+		console.log("Rebuilding chunk ", this.cx, this.cy, this.cz);
 		const parent = this.scene;
 		if (!parent) {
 			return null;
 		}
 		const mesh = this._buildMesh();
 		if (!mesh) {
-			return console.warn("Could not generate chunk mesh");
+			console.log("Discarting chunk");
+			return;
 		}
 		parent.add(mesh);
 		return mesh;
@@ -223,6 +228,7 @@ export default class Chunk {
 		if (!this.blocks[z][x]) {
 			this.blocks[z][x] = [];
 		}
-		this.blockList.push(this.blocks[z][x][y] = blockObj);
+		this.blocks[z][x][y] = blockObj;
+		this.blockList.push(blockObj);
 	}
 }

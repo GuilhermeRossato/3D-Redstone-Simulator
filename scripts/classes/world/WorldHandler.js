@@ -66,22 +66,54 @@ export default class WorldHandler {
 		// Update neighboor chunks (only needed if AO is on or if this block id interacts with others)
 		if (result === 1) {
 			let neighboorChunk;
+			let step;
+			// Check directly neighboor chunks
 			if (rx == 0 || rx == 15) {
 				neighboorChunk = this.getChunk(cx + (rx == 0 ? -1 : 1), cy, cz);
 				if (neighboorChunk) {
-					neighboorChunk.mesh && neighboorChunk._rebuildMesh();
+					neighboorChunk._rebuildMesh();
 				}
 			}
 			if (ry == 0 || ry == 15) {
 				neighboorChunk = this.getChunk(cx, cy + (ry == 0 ? -1 : 1), cz);
 				if (neighboorChunk) {
-					neighboorChunk.mesh && neighboorChunk._rebuildMesh();
+					neighboorChunk._rebuildMesh();
 				}
 			}
 			if (rz == 0 || rz == 15) {
 				neighboorChunk = this.getChunk(cx, cy, cz + (rz == 0 ? -1 : 1));
 				if (neighboorChunk) {
-					neighboorChunk.mesh && neighboorChunk._rebuildMesh();
+					neighboorChunk._rebuildMesh();
+				}
+			}
+			console.log("Checking relatives of ", x, y, z, " that are ", rx, ry, rz);
+			// Check diagonal chunks
+			if (rx == ry && (rx == 0 || rx == 15)) {
+				step = rx == 0 ? -1 : 1;
+				neighboorChunk = this.getChunk(cx + step, cy + step, cz);
+				if (neighboorChunk) {
+					neighboorChunk._rebuildMesh();
+				}
+			}
+			if (ry == rz && (ry == 0 || ry == 15)) {
+				step = ry == 0 ? -1 : 1;
+				neighboorChunk = this.getChunk(cx, cy + step, cz + step);
+				if (neighboorChunk) {
+					neighboorChunk._rebuildMesh();
+				}
+			}
+			if (rx == rz && (rz == 0 || rz == 15)) {
+				step = rz == 0 ? -1 : 1;
+				neighboorChunk = this.getChunk(cx + step, cy, cz + step);
+				if (neighboorChunk) {
+					neighboorChunk._rebuildMesh();
+				}
+			}
+			// Super corners neighboor chunks
+			if ((rx == 0 || rx == 15) && (ry == 0 || ry == 15) && (rz == 0 || rz == 15)) {
+				neighboorChunk = this.getChunk(cx + (rx == 0 ? -1 : 1), cy + (ry == 0 ? -1 : 1), cz + (rx == 0 ? -1 : 1));
+				if (neighboorChunk) {
+					neighboorChunk._rebuildMesh();
 				}
 			}
 		}

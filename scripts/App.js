@@ -59,21 +59,21 @@ export default class App {
 			if (id === 3) {
 				angle = 2*Math.PI*0.1;
 			} else if (id === 4) {
-				angle = 2*Math.PI*(1.4);
+				angle = 2*Math.PI*1.45;
 			} else if (id === 5) {
 				angle = 2*Math.PI*0.52;
 			}
 			var scale = window.scale || 0.35;
-			this.graphics.camera.position.x = 0+Math.cos(angle)*10*scale;
-			this.graphics.camera.position.z = 0+Math.sin(angle)*10*scale;
+			this.graphics.camera.position.x = Math.cos(angle)*10*scale;
 			this.graphics.camera.position.y = 2;
+			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
 			if (id === 5) {
 				this.graphics.camera.position.y = 4;
 			}
-			this.graphics.camera.lookAt(0, 0, 0);
+			this.graphics.camera.lookAt(-1, -1, -2);
 		} else if (id === 6) {
 			this.graphics.camera.position.set(0, 7, 0);
-			this.graphics.camera.lookAt(0, 0, 0);
+			this.graphics.camera.lookAt(0, 0, 3);
 		}
 		document.title = id;
 	}
@@ -110,11 +110,12 @@ export default class App {
 		return await this.loader.loadGraphics();
 	}
 	mockWorld() {
-		for (var x = -1; x <= 0; x++) {
-			const y = 0;
-			const z = 0;
-			this.world.set(x, (x % 2), z, (x%3==0)?1:2);
-		}
+		//this.world.set(-1, -1, -2, 1);
+		this.world.set(-1, -1, -1, 1);
+		//this.world.set(-1, -1, 0, 1);
+		//this.world.set(-1, -1, -1, 1);
+		//this.world.set(-1, -1, -2, 1);
+		//this.world.set(0, 0, 0, 2);
 		
 		return;
 		this.world.set(0, 1, 1, 1);
