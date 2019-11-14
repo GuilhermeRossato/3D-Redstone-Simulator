@@ -7,11 +7,13 @@ export default {
 		default: "unknown",
 		options: ["unknown", "desktop", "mobile", "gamepad"]
 	}),
-	computerPerformance: new EnumSetting({
-		default: "slow",
-		options: ["very slow", "slow", "medium", "fast", "very fast"]
-	}),
 	camera: {
 		pov: new FloatSetting({min: 70, max: 120, default: 80})
+	},
+	rendering: {
+		ao: new EnumSetting({
+			default: "enabled",
+			options: ["enabled", "disabled"]
+		}),
 	}
 };

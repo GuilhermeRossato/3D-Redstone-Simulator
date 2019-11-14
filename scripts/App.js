@@ -5,6 +5,7 @@ import Configuration from "./data/Configuration.js";
 import LocalStorageService from "./services/LocalStorageService.js";
 import ScreenService from "./screens/ScreenService.js";
 import ControlSelectorScreen from "./screens/ControlSelectorScreen.js";
+import MainMenuScreen from "./screens/MainMenuScreen.js";
 
 import * as THREE from './libs/three.module.js';
 import TextureService from './graphics/TextureService.js';
@@ -230,12 +231,12 @@ export default class App {
 		await this.loader.loadScreens();
 	}
 	onInputTypeSelected(selection) {
-		ScreenService.setScreen(this, undefined);
 		LocalStorageService.save("inputType", selection);
 		this.setupInputType(selection);
 	}
 	setupInputType(name) {
 		Configuration.inputType.value = name;
+		ScreenService.setScreen(this, MainMenuScreen);
 	}
 	async loadLoop() {
 		this.loader.loadLoop(this.draw, this.update, this.overflow, this.performancer);
@@ -249,10 +250,14 @@ export default class App {
 		}
 	}
 	start() {
-		ScreenService.clearScreen();
+		this.screen = {
+			hide: function() {
+				document.querySelector(".loading-screen").style.display = "none";
+			}
+		}
 
 		const inputType = this.loadInputType();
-		
+
 		if (inputType === "unknown") {
 			ScreenService.setScreen(this, ControlSelectorScreen);
 			ControlSelectorScreen.once("select", this.onInputTypeSelected.bind(this));

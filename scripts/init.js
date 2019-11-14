@@ -15,7 +15,6 @@ function setLoadingText(str) {
 	try {
 		setLoadingText("Creating WebGL Context");
 		const canvas = document.createElement('canvas');
-		canvas.style.position = "absolute";
 		const gl = canvas.getContext("webgl");
 		if (gl == null) {
 			throw new Error("WebGL Context could not be created");

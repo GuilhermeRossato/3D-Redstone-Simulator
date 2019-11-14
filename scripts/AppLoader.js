@@ -3,6 +3,7 @@ import LoopHandler from './LoopHandler.js';
 import WorldHandler from './classes/world/WorldHandler.js';
 import Performancer from './Performancer.js';
 import ControlSelectorScreen from './screens/ControlSelectorScreen.js';
+import MainMenuScreen from "./screens/MainMenuScreen.js";
 
 export default class AppLoader {
 	constructor(parent, canvas) {
@@ -15,7 +16,7 @@ export default class AppLoader {
 		}
 	}
 	async loadGraphics() {
-		const wrapper = document.querySelector(".wrapper");
+		const wrapper = document.querySelector(".background-game-canvas");
 		if (!wrapper) {
 			throw new Error("Missing canvas object DOM element");
 		}
@@ -33,10 +34,9 @@ export default class AppLoader {
 		this.parent.world = new WorldHandler(this.parent.graphics);
 		await this.parent.world.load();
 	}
-	async loadScreens(selectFunc) {
-		ControlSelectorScreen.init({
-			onSelect: selectFunc
-		});
+	async loadScreens() {
+		ControlSelectorScreen.init();
+		MainMenuScreen.init();
 	}
 	async loadLoop(drawFn, updateFn, overflowFn, performancerObject) {
 		this.parent.loop = new LoopHandler({

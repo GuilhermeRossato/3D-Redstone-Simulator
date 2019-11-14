@@ -1,0 +1,79 @@
+.control-selector-screen {
+	z-index: 100;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	transition: background-color 0.2s ease-in-out 0s;
+	background-color: rgba(0, 0, 0, 0.61);
+	pointer-events: none;
+}
+
+.control-selector-screen .list-wrapper {
+	z-index: 100;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: Verdana, Geneva, sans-serif;
+	pointer-events: none;
+}
+
+.control-selector-screen .list-wrapper.list-hidden {
+	opacity: 0;
+}
+
+.control-selector-screen .option-list, .control-selector-screen .notice-list {
+	color: rgb(221, 221, 221);
+	display: flex;
+	align-items: flex-start;
+	align-content: space-around;
+	opacity: 1;
+	transition: opacity 0.3s ease-in-out 0.1s, transform 0.4s ease-out 0s;
+}
+
+.control-selector-screen .option, .control-selector-screen .notice {
+	order: 1;
+    min-width: 20vmax;
+    text-align: center;
+    flex: 1 1 auto;
+    margin: 5px;
+    background-color: rgba(99,99,99,0.5);
+    border-radius: 2px;
+}
+
+.control-selector-screen .option-title, .control-selector-screen .notice-title {
+	font-size:1.5em;
+	padding:7px;
+}
+
+.control-selector-screen .option-image, .control-selector-screen .notice-image {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content:center;
+	white-space: nowrap;
+}
+
+.control-selector-screen .option-description, .control-selector-screen .notice-description {
+	font-size:0.75em;
+	padding:8px 10px;
+	white-space: nowrap;
+}
+
+.background-game-canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+}
+
+.background-game-canvas canvas {
+	position: absolute;
+}

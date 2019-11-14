@@ -97,13 +97,12 @@ export default class FatalErrorDisplayErrorDisplay {
 		} else {
 			stack = error.stack.toString().substr(error.name.length+2);
 		}
-		
-		if (!String.prototype.replaceAll) {
-			stack.replaceAll = function(str1, str2, ignoreCase) {
-				return stack.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignoreCase?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
-			}
+
+		function replaceAll(original, str1, str2, ignoreCase = false) {
+			return original.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignoreCase?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
 		}
-		paragraph.innerText = stack.replaceAll(window.location.origin, '');
+
+		paragraph.innerText = replaceAll(stack, window.location.origin, '');
 		document.body.appendChild(wrapper);
 	}
 }

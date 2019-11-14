@@ -1,16 +1,10 @@
 export default class ScreenService {
-	static clearScreen() {
-		const elements = document.querySelector(".content").children;
-		for (let i = elements.length-1; i>=0; i--) {
-			elements[i].remove();
-		}
-	}
-	static setScreen(object, desiredScreen) {
-		if (object.screen && object.screen.hide) {
-			object.screen.hide();
+	static setScreen(app, desiredScreen) {
+		if (app.screen && app.screen.hide) {
+			app.screen.hide();
 		}
 		if (desiredScreen) {
-			object.screen = desiredScreen;
+			app.screen = desiredScreen;
 			desiredScreen.show();
 		}
 	}
