@@ -176,14 +176,14 @@ export default class Chunk {
 		return mesh;
 	}
 	_rebuildMesh() {
-		console.log("Rebuilding chunk ", this.cx, this.cy, this.cz);
+		//console.log("Rebuilding chunk ", this.cx, this.cy, this.cz);
 		const parent = this.scene;
 		if (!parent) {
 			return null;
 		}
 		const mesh = this._buildMesh();
 		if (!mesh) {
-			console.log("Discarting chunk");
+			//console.log("Discarting chunk");
 			return;
 		}
 		parent.add(mesh);

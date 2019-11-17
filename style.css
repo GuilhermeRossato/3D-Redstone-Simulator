@@ -74,6 +74,73 @@
 	height: 100vh;
 }
 
+.main-menu {
+
+}
+
+.main-menu .list-wrapper.list-hidden {
+	display: none;
+}
+
+.main-menu .option-list {
+	padding: 50px;
+}
+
+.main-menu .option-list .option {
+	padding: 20px 30px;
+	margin: 10px;
+	text-align: center;
+	font-size: 2em;
+	font-family: monospace;
+	background-color: rgba(255, 255, 255, 0.2);
+	opacity: 0.8;
+	cursor: pointer;
+}
+
+.main-menu .option-list .option:hover {
+	opacity: 0.95;
+}
+
+.main-menu .option-list .option:active {
+	transform: translate(1px, 1px);
+	opacity: 1;
+}
+
+.main-menu .option-list .option.selected {
+	background-color: rgba(255, 255, 255, 0.4);
+	opacity: 1;
+}
+
+.main-menu .setting-list {
+	padding: 20px;
+}
+
+.main-menu .setting-list .setting {
+	margin: 5px;
+	padding: 10px;
+	background-color: rgba(255, 255, 255, 0.125);
+	display: flex;
+	flex-direction: column;
+}
+
+.main-menu .setting-list .setting label {
+	display: block;
+	padding: 5px;
+	font-family: monosppace;
+	font-size: 1.5em;
+}
+
+.main-menu .setting-list .setting input, .main-menu .setting-list .setting select {
+	padding: 5px;
+	margin-top: 5px;
+	font-size: 1em;
+	font-family: monospace;
+}
+
+.main-menu .actions {
+	padding: 50px;
+}
+
 .background-game-canvas canvas {
 	position: absolute;
 }

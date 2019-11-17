@@ -57,8 +57,8 @@ export default class AbstractSetting {
 		}
 
 		if (typeof f === "object" && typeof g === "string") {
-			if (f[g] != value) {
-				f[g] = value;
+			if (f[g] != this.value) {
+				f[g] = this.value;
 			}
 			this.addListener(this.setterFunction.bind(this, f, g));
 			return true;

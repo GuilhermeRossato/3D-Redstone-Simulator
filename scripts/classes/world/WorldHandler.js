@@ -86,7 +86,7 @@ export default class WorldHandler {
 					neighboorChunk._rebuildMesh();
 				}
 			}
-			console.log("Checking relatives of ", x, y, z, " that are ", rx, ry, rz);
+			//console.log("Checking relatives of ", x, y, z, " that are ", rx, ry, rz);
 			// Check diagonal chunks
 			if (rx == ry && (rx == 0 || rx == 15)) {
 				step = rx == 0 ? -1 : 1;
