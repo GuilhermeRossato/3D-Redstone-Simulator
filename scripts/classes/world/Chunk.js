@@ -36,9 +36,6 @@ export default class Chunk {
 	isSolidBlock(x, y, z) {
 		const external = this.world.isSolidBlock(x + this.cx * 16, y + this.cy * 16, z + this.cz * 16);
 		if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16) {
-			if (x === 0 & y === 0 && z === 2 && external) {
-				debugger;
-			}
 			const internal = !!(this.blocks && this.blocks[z] && this.blocks[z][x] && this.blocks[z][x][y]);
 			if (internal !== external) {
 				debugger;

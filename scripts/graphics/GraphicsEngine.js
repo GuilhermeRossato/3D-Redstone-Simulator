@@ -381,7 +381,7 @@ export default class GraphicsEngine {
 							1.0 - vRelativeUv.x
 						) * AO_IMPACT);
 					} else if (mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 && mod(floor(vLightness.y/2.0), 2.0) == 1.0 && mod(floor(vLightness.y/8.0), 2.0) == 1.0) {
-						// all 4 sides						
+						// all 4 sides
 						aoMult = (1.0 - max(max(max(vRelativeUv.y, 1.0-vRelativeUv.x), vRelativeUv.x), 1.0 - vRelativeUv.y) * AO_IMPACT);
 					} else if ( mod(vLightness.y, 2.0) == 1.0 && mod(floor(vLightness.y/4.0), 2.0) == 1.0 ) {
 						// top, bottom
@@ -413,7 +413,7 @@ export default class GraphicsEngine {
 					}
 
 					gl_FragColor = vec4(color.xyz * vLightness.x * aoMult, 1.0);
-					
+
 					// disable texture and use only AO
 					// if (vLightness.y >= 0.0 && vLightness.y <= 1288.0) { gl_FragColor = vec4(aoMult.xyz, 1.0); }
 				}

@@ -1,8 +1,6 @@
-list.bat
 side_base_down.png
 side_outer_left.png
 side_outer_right.png
-text.txt
 top_base_down.png
 top_base_left.png
 top_base_right.png

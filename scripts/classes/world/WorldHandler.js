@@ -63,11 +63,12 @@ export default class WorldHandler {
 
 		const result = chunk.set(rx, ry, rz, id);
 
-		// Update neighboor chunks (only needed if AO is on or if this block id interacts with others)
 		if (result === 1) {
+			// Update neighboor chunks (chunks of touching blocks)
+			// only needed if AO is enabled or if this block id interacts with others
+
 			let neighboorChunk;
 			let step;
-			// Check directly neighboor chunks
 			if (rx == 0 || rx == 15) {
 				neighboorChunk = this.getChunk(cx + (rx == 0 ? -1 : 1), cy, cz);
 				if (neighboorChunk) {

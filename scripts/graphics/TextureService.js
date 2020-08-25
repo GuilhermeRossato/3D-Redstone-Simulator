@@ -76,6 +76,7 @@ export default class TextureService {
 			resolve(canvas);
 		});
 	}
+
 	static async addMarginToCanvas(canvas, img) {
 		const ctx = canvas.getContext("2d");
 		let sx, sy, swidth, sheight, dx, dy, dwidth, dheight;
@@ -101,7 +102,7 @@ export default class TextureService {
 
 		await new Promise(resolve=>setTimeout(resolve, 60));
 	}
-	// Loaded function, but whatever
+
 	static async processImageAndGenerateTextureFromPath(sourcePath, addCanvasToScreen = false) {
 		const image = await this.loadImage(sourcePath);
 		const canvas = await this.createEmptyCanvasFromImage(image, addCanvasToScreen);

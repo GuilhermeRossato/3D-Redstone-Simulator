@@ -6,7 +6,7 @@ import ControlSelectorScreen from './screens/ControlSelectorScreen.js';
 import MainMenuScreen from "./screens/MainMenuScreen.js";
 
 export default class AppLoader {
-	constructor(parent, canvas) {
+	constructor(parent) {
 		this.parent = parent;
 		if (!this.parent.canvas) {
 			throw new Error("Parent must have a canvas DOM object as property");

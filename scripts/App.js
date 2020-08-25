@@ -76,7 +76,6 @@ export default class App {
 			this.graphics.camera.position.set(0, 7, 0);
 			this.graphics.camera.lookAt(0, 0, 3);
 		}
-		document.title = id;
 	}
 	update() {
 		(this.screen) && (this.screen.update) && (this.screen.update());
@@ -94,7 +93,7 @@ export default class App {
 		} else {
 			this.frame = 0;
 		}
-		
+
 		if (this.graphics.camera) {
 			const cameraId = window.cameraId || 1;
 			this.updateCamera(cameraId, this.frame);
@@ -117,7 +116,7 @@ export default class App {
 		//this.world.set(-1, -1, -1, 1);
 		//this.world.set(-1, -1, -2, 1);
 		//this.world.set(0, 0, 0, 2);
-		
+
 		return;
 		this.world.set(0, 1, 1, 1);
 		for (var i = 0; i < size; i++) {
@@ -132,7 +131,7 @@ export default class App {
 			var x = Math.sin(seed++) * 10000;
 			return x - Math.floor(x);
 		}
-		
+
 		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
 				const [x, y, z] = [(i-size/2)|0, 1, (j-size/2)|0];
@@ -207,7 +206,7 @@ export default class App {
 
 		chunk.assignTo(scene);
 		const value = map[1] + map[5] * 2 + map[7] * 4 + map[3] * 8 + map[2] * 16 + map[8] * 32 + map[6] * 64 + map[0] * 128;
-	
+
 		setTimeout(()=>{
 			const root = document.querySelector(".root");
 			root && (root.innerText = value.toString());
@@ -220,7 +219,7 @@ export default class App {
 				chunk.set(x, y, z, random() > 0.5 ? 1 : 2);
 			}
 		}, 1000);
-		
+
 	}
 	async loadWorld() {
 		await this.loader.loadWorld();
