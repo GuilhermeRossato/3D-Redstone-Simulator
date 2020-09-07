@@ -26,23 +26,17 @@ export default class App {
 		this.draw = this.draw.bind(this);
 		this.overflow = this.overflow.bind(this);
 
-		window.cameraId = parseInt(window.localStorage.getItem("camera-id") || "1");
+		// window.cameraId = parseInt(window.localStorage.getItem("camera-id") || "1");
 	}
-	debounce(func, delay) {
-		let inDebounce
-		return function(...args) {
-			const context = this;
-			(inDebounce !== undefined) && clearTimeout(inDebounce);
-			inDebounce = setTimeout(() => func.apply(context, args), delay);
-		}
-	}
+
 	attachEvents() {
-		window.addEventListener("resize", this.debounce(this.resize.bind(this), 200));
+		window.addEventListener("resize", debounce(this.resize.bind(this), 200));
 		//window.addEventListener("mousemove", this.debounce(this.mousemove.bind(this), 1));
 		window.addEventListener("mousemove", this.mousemove.bind(this));
-		window.addEventListener("mousedown", this.debounce(this.mousedown.bind(this), 100));
+		window.addEventListener("mousedown", debounce(this.mousedown.bind(this), 100));
 		window.addEventListener("keydown", this.keydown.bind(this));
 	}
+
 	updateCamera(id, frame) {
 		if (this.lastCameraId === id && id >= 2 && id <= 4) {
 			return;
@@ -111,11 +105,11 @@ export default class App {
 	}
 	mockWorld() {
 		//this.world.set(-1, -1, -2, 1);
-		this.world.set(-1, -1, -1, 1);
+		//this.world.set(-1, -1, -1, 1);
 		//this.world.set(-1, -1, 0, 1);
 		//this.world.set(-1, -1, -1, 1);
 		//this.world.set(-1, -1, -2, 1);
-		//this.world.set(0, 0, 0, 2);
+		this.world.set(0, 0, 0, 1);
 
 		return;
 		this.world.set(0, 1, 1, 1);

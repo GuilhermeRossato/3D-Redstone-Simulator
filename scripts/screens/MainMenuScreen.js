@@ -7,7 +7,7 @@ import EnumSetting from "../classes/settings/EnumSetting.js";
 import Configuration from '../data/Configuration.js';
 
 const MainMenuScreen = {
-	init: function() {
+	init() {
 		this.shown = false;
 		this.wrapper = document.querySelector(".main-menu");
 		this.optionList = document.querySelector(".main-menu .option-list");
@@ -139,11 +139,11 @@ const MainMenuScreen = {
 	update() {
 
 	},
-	show: function() {
+	show() {
 		this.wrapper.style.display = "";
 
 	},
-	hide: function() {
+	hide() {
 		this.wrapper.style.display = "none";
 	}
 }
