@@ -1,35 +1,33 @@
-export default [
-{
+export default [{
 	name: "Air"
 }, {
 	name: "Stone",
 	texture: [
-		{x:3, y:0},
-		{x:3, y:0},
-		{x:3, y:0},
-		{x:3, y:0},
-		{x:3, y:0},
-		{x:3, y:0}
+		"stone0.png",
+		"stone0.png",
+		"stone0.png",
+		"stone0.png",
+		"stone0.png",
+		"stone0.png"
 	]
 }, {
 	name: "Wooden Planks",
 	texture: [
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0}
+		"plank.png",
+		"plank.png",
+		"plank.png",
+		"plank.png",
+		"plank.png",
+		"plank.png"
 	]
 }, {
 	name: "Stone Brick",
 	texture: [
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0},
-		{x:6, y:0}
+		"stonebrick.png",
+		"stonebrick.png",
+		"stonebrick.png",
+		"stonebrick.png",
+		"stonebrick.png",
+		"stonebrick.png"
 	]
-}
-];
+}];

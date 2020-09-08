@@ -15,6 +15,7 @@ export default class MainLoop {
 
 		this.update = this.update.bind(this);
 	}
+
 	start() {
 		if (this.running) {
 			return console.warn("Main loop is already running.");
@@ -23,14 +24,16 @@ export default class MainLoop {
 
 		this.last = performance.now();
 		this.extra = 0;
-		requestAnimationFrame(this.update)
+		requestAnimationFrame(this.update);
 	}
+
 	stop() {
 		if (!this.running) {
 			return console.warn("Main loop is already not running.");
 		}
 		this.running = false;
 	}
+
 	update() {
 		const period = this.period;
 		var delta = this.extra - this.last + (this.last = performance.now());

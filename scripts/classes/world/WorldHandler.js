@@ -1,13 +1,14 @@
 'use strict';
 
 import TextureService from '../../graphics/TextureService.js';
-import * as THREE from '../../libs/three.module.js';
 import BlockData from '../../data/BlockData.js';
 import Chunk from '../world/Chunk.js';
 
 export default class WorldHandler {
 	constructor(graphicsEngine) {
+		this.graphics = graphicsEngine;
 		this.scene = graphicsEngine.scene;
+		/** @type {Record<number, Record<number, Record<number, Chunk>>>} */
 		this.chunks = [];
 	}
 
@@ -17,10 +18,37 @@ export default class WorldHandler {
 		}
 	}
 
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 */
 	isSolidBlock(x, y, z) {
 		return !!(this.get(x, y, z));
 	}
 
+	/**
+	 * Get a chunk by its world position
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 */
+	getChunkAtWorldPosition(x, y, z) {
+		return this.getChunk(
+			this.worldPositionToChunk(x),
+			this.worldPositionToChunk(y),
+			this.worldPositionToChunk(z),
+			false
+		);
+	}
+
+	/**
+	 * Get a chunk by its chunk position
+	 * @param {number} cz
+	 * @param {number} cy
+	 * @param {number} cz
+	 * @param {boolean} [createOnMissing]
+	 */
 	getChunk(cx, cy, cz, createOnMissing = true) {
 		if (!this.chunks[cz]) {
 			this.chunks[cz] = [];
@@ -29,16 +57,29 @@ export default class WorldHandler {
 			this.chunks[cz][cx] = [];
 		}
 		if (createOnMissing && !this.chunks[cz][cx][cy]) {
-			this.chunks[cz][cx][cy] = new Chunk(this, cx, cy, cz);
+			this.chunks[cz][cx][cy] = new Chunk(this.graphics, this, cx, cy, cz);
 			this.chunks[cz][cx][cy].assignTo(this.scene);
 		}
 		return this.chunks[cz][cx][cy];
 	}
 
+	/**
+	 * Converts a world position dimension into its chunk position equivalent
+	 * @param {number} v
+	 */
+	worldPositionToChunk(v) {
+		return v >= 0 ? Math.floor( v / 16 ) : Math.floor( - v / 16 - 1 );
+	}
+
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 */
 	get(x, y, z) {
-		const cx = x >= 0 ? Math.floor( x / 16 ) : Math.floor( - x / 16 - 1 );
-		const cy = y >= 0 ? Math.floor( y / 16 ) : Math.floor( - y / 16 - 1 );
-		const cz = z >= 0 ? Math.floor( z / 16 ) : Math.floor( - z / 16 - 1 );
+		const cx = this.worldPositionToChunk(x);
+		const cy = this.worldPositionToChunk(y);
+		const cz = this.worldPositionToChunk(z);
 		const chunk = this.getChunk(cx, cy, cz, false);
 		if (!chunk) {
 			return null;
@@ -49,10 +90,16 @@ export default class WorldHandler {
 		return chunk.get(rx, ry, rz);
 	}
 
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 * @param {number} id
+	 */
 	set(x, y, z, id) {
-		const cx = x >= 0 ? Math.floor( x / 16 ) : Math.floor( - x / 16 - 1 );
-		const cy = y >= 0 ? Math.floor( y / 16 ) : Math.floor( - y / 16 - 1 );
-		const cz = z >= 0 ? Math.floor( z / 16 ) : Math.floor( - z / 16 - 1 );
+		const cx = this.worldPositionToChunk(x);
+		const cy = this.worldPositionToChunk(y);
+		const cz = this.worldPositionToChunk(z);
 		const chunk = this.getChunk(cx, cy, cz, id !== 0);
 		if (!chunk) {
 			return; // id is zero or chunk could not be created

@@ -1,7 +1,7 @@
 {
   "name": "3d-redstone-simulator",
   "version": "0.3.0",
-  "description": "A 3D Redstone Simulator for the web to simulate digital boolean logic in the same environment as minecraft's",
+  "description": "Web app to simulate the digital boolean logic mechanic (redstone) in a similar environment as the game in which it was implemented",
   "main": "index.js",
   "scripts": {
     "start": "http-server --gzip -c-1",
@@ -33,11 +33,14 @@
   },
   "homepage": "https://github.com/GuilhermeRossato/3D-Redstone-Simulator#readme",
   "devDependencies": {
-    "@babel/preset-env": "^7.8.4",
+    "@babel/preset-env": "7.8.4",
     "babel-core": "*",
     "babel-minify": "0.5.1",
-    "http-server": "0.12.1",
+    "http-server": "0.12.3",
     "webpack": "4.41.6",
     "webpack-cli": "*"
+  },
+  "dependencies": {
+    "three": "0.120.1"
   }
 }

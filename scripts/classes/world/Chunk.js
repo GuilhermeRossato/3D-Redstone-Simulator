@@ -1,9 +1,10 @@
 'use strict';
 
-import * as THREE from '../../libs/three.module.js';
+import * as THREE from '../../../node_modules/three/src/Three.js';
 import TextureService from '../../graphics/TextureService.js';
 import GraphicsEngine from '../../graphics/GraphicsEngine.js';
 import BlockData from '../../data/BlockData.js';
+import WorldHandler from './WorldHandler.js';
 
 const SIDE_DISPLACEMENT = [
 	{"name": "Front",	"origin": [2, 1],	"rotation": 0,		"inverse": [0, 0, -1],	"inverseId": 1, lightness: 0.784},
@@ -17,13 +18,26 @@ const SIDE_DISPLACEMENT = [
 const primitive = new THREE.PlaneBufferGeometry(1, 1);
 
 export default class Chunk {
-	constructor(world, cx, cy, cz) {
+
+	/**
+	 * @param {GraphicsEngine} graphics
+	 * @param {WorldHandler} world
+	 * @param {number} cx
+	 * @param {number} cy
+	 * @param {number} cz
+	 */
+	constructor(graphics, world, cx, cy, cz) {
+		this.graphics = graphics;
 		this.world = world;
 		this.cx = cx;
 		this.cy = cy;
 		this.cz = cz;
+
+		/** @type {Record<number, Record<number, Record<number, { x: number, y: number, z: number, texture: any[] }>>>} */
 		this.blocks = [];
+		/** @type {{ x: number, y: number, z: number, texture: any[] }[]} */
 		this.blockList = [];
+		/** @type {THREE.Mesh} */
 		this.mesh = undefined;
 	}
 	assignTo(scene) {
@@ -45,6 +59,10 @@ export default class Chunk {
 		}
 		return external;
 	}
+	/**
+	 * @param {{x: number, y: number, z: number}} position
+	 * @param {number} side
+	 */
 	_getOcclusion(position, side) {
 		let t, tr, r, br, b, bl, l, tl;
 
@@ -106,6 +124,7 @@ export default class Chunk {
 			return 0;
 		}
 
+		// @ts-ignore
 		return t + r * 2 + b * 4 + l * 8 + tr * 16 + br * 32 + bl * 64 + tl * 128;
 	}
 
@@ -122,7 +141,7 @@ export default class Chunk {
 				this.instanced.dispose();
 			}
 		}
-		const material = GraphicsEngine.getMaterial();
+		const material = this.graphics.getMaterial();
 		const geometry = primitive;
 
 		if (!material || !geometry) {
@@ -151,19 +170,23 @@ export default class Chunk {
 				arrayVisual[i2++] = SIDE_DISPLACEMENT[j].rotation;
 				arrayVisual[i2++] = SIDE_DISPLACEMENT[j].lightness;
 				arrayVisual[i2++] = skipAo ? 0 : this._getOcclusion(this.blockList[i], j);
-				arrayTile[i3++] = this.blockList[i].texture[j].x;
-				arrayTile[i3++] = this.blockList[i].texture[j].y;
+				if (arrayVisual[i2-1] && this.blockList[i].x === 0 && this.blockList[i].y === 0 && this.blockList[i].z === 0) {
+					console.log(this.blockList[i],  SIDE_DISPLACEMENT[j].name, arrayVisual[i2-1]);
+				}
+				const {tx, ty} = TextureService.getTexturePosition(this.blockList[i].texture[j]);
+				arrayTile[i3++] = tx;
+				arrayTile[i3++] = ty;
 			}
 		}
 
 		const attributePos = new THREE.InstancedBufferAttribute(arrayPos, 3);
-		instanced.addAttribute("instancePosition", attributePos);
+		instanced.setAttribute("instancePosition", attributePos);
 
 		const attributeRotation = new THREE.InstancedBufferAttribute(arrayVisual, 3);
-		instanced.addAttribute("instanceVisual", attributeRotation);
+		instanced.setAttribute("instanceVisual", attributeRotation);
 
 		const attributeTile = new THREE.InstancedBufferAttribute(arrayTile, 2);
-		instanced.addAttribute("instanceTile", attributeTile);
+		instanced.setAttribute("instanceTile", attributeTile);
 
 		const mesh = new THREE.Mesh(instanced, material);
 		mesh.position.set(this.cx * 16, this.cy * 16, this.cz * 16);
@@ -172,6 +195,7 @@ export default class Chunk {
 		this.mesh = mesh;
 		return mesh;
 	}
+
 	_rebuildMesh() {
 		//console.log("Rebuilding chunk ", this.cx, this.cy, this.cz);
 		const parent = this.scene;
@@ -186,6 +210,7 @@ export default class Chunk {
 		parent.add(mesh);
 		return mesh;
 	}
+
 	set(x, y, z, id) {
 		let result = 0;
 		if (id === 0) {
@@ -207,15 +232,19 @@ export default class Chunk {
 		this._rebuildMesh();
 		return result;
 	}
+
 	get(x, y, z) {
 		return this.blocks[z] && this.blocks[z][x] ? this.blocks[z][x][y] : null;
 	}
+
 	clearBlock(x, y, z) {
 
 	}
+
 	replaceBlock(x, y, z, id) {
 		this.blocks[z][x][y].texture = BlockData[id].texture;
 	}
+
 	addBlock(x, y, z, id) {
 		const texture = BlockData[id].texture;
 		const blockObj = { x, y, z, texture };

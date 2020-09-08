@@ -10,26 +10,19 @@ export default class EnumSetting extends AbstractSetting {
 			throw new Error("Enum setting starting value must exist on options array, got '"+config.default+"'");
 		}
 
-		const value = (typeof config.default !== "undefined")?config.default:config.options[0];
-		super(value, "transformValue");
+		const value = (typeof config.default !== "undefined") ? config.default : config.options[0];
+
+		super(value, (newValue) => {
+			if (!config.options.contains(newValue)) {
+				console.warn(`Invalid option for enum setting: ${newValue}`);
+				return this.value;
+			}
+			return newValue;
+		});
 
 		this.options = config.options;
 	}
-	transformValue(newValue) {
-		if (typeof newValue === "string") {
-			if (this.options.indexOf(newValue) !== -1) {
-				return newValue;
-			} else {
-				console.warn("Invalid option for enum setting: "+newValue);
-			}
-		} else if (typeof newValue === "number") {
-			if (typeof this.options[newValue] === "string") {
-				return this.options[newValue];
-			} else {
-				console.warn("Invalid id for enum setting: "+newValue);
-			}
-		}
-	}
+
 	getEnumIndex() {
 		return this.options.indexOf(this.value);
 	}

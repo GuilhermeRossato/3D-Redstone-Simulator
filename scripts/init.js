@@ -1,14 +1,15 @@
 'use strict';
 
 import App from './App.js';
-import AssetLoader from './AssetLoader.js';
+import AssetLoader from './classes/AssetLoader.js';
 import FatalErrorDisplay from './FatalErrorDisplay.js';
 
 function setLoadingText(str) {
-	if (!document.querySelector(".text")) {
+	const textElement = document.querySelector(".text");
+	if (!(textElement instanceof HTMLElement)) {
 		return console.warn('Could not find loading text to display "'+str+'"');
 	}
-	document.querySelector(".text").innerText = str
+	textElement.innerText = str
 }
 
 (async function() {
@@ -20,25 +21,24 @@ function setLoadingText(str) {
 			throw new Error("WebGL Context could not be created");
 		}
 
-		setLoadingText("Loading Assets");
-		const aLoader = new AssetLoader();
-		const assets = {
-			"textures": await aLoader.loadImage("assets/textures.png")
-		};
+		const app = new App(canvas, gl);
 
-		window.app = new App(canvas, assets);
+		window["app"] = app;
+
+		setLoadingText("Loading Textures");
+		await app.loader.loadTextures();
 
 		setLoadingText("Initializing the Graphics Engine");
-		await app.loadGraphics();
+		await app.loader.loadGraphics();
 
 		setLoadingText("Initializing the World");
-		await app.loadWorld();
+		await app.loader.loadWorld();
 
 		setLoadingText("Initializing the Main Loop");
-		await app.loadLoop();
+		await app.loader.loadLoop();
 
 		setLoadingText("Initializing the GUI");
-		await app.loadScreens();
+		await app.loader.loadScreens();
 
 		await new Promise(r=>setTimeout(r, 250));
 		app.start();

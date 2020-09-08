@@ -1,5 +1,5 @@
 const ControlSelectorScreen = {
-	init: function() {
+	init() {
 		this.shown = false;
 		this.wrapper = document.querySelector(".control-selector-screen");
 		this.optionList = document.querySelector(".control-selector-screen .option-list");
@@ -8,18 +8,18 @@ const ControlSelectorScreen = {
 		this.onGamepadKey = this.onGamepadKey.bind(this);
 		this.onMouseDown = this.onMouseDown.bind(this);
 	},
-	onTouchStart: function(ev) {
+	onTouchStart(ev) {
 		this.lastEvent = "touchscreen";
 	},
-	onGamepadKey: function(btn) {
+	onGamepadKey(btn) {
 		this.lastEvent = "gamepad";
 	},
-	onMouseDown: function(ev) {
+	onMouseDown(ev) {
 		if (ev.button === 0) {
 			this.lastEvent = "desktop";
 		}
 	},
-	requestFullscreen: function() {
+	requestFullscreen() {
 		let elem = this.main;
 		if (elem.requestFullscreen) {
 			elem.requestFullscreen();
@@ -33,13 +33,13 @@ const ControlSelectorScreen = {
 			throw new Error("Could not request fullscreen access to the browser");
 		}
 	},
-	checkGamepadEvent: function() {
+	checkGamepadEvent() {
 		let gamepad = navigator.getGamepads()[0];
 		if (gamepad && gamepad.buttons) {
 			gamepad.buttons.forEach(button => (button.pressed && this.onGamepadKey(button)));
 		}
 	},
-	update: function() {
+	update() {
 		this.checkGamepadEvent();
 		let index = ["desktop", "touchscreen", "gamepad"].indexOf(this.lastEvent);
 		if (index !== -1) {
@@ -50,7 +50,7 @@ const ControlSelectorScreen = {
 			this.lastEvent = undefined;
 		}
 	},
-	show: function() {
+	show() {
 		if (this.shown)
 			return;
 		this.shown = true;
@@ -78,7 +78,7 @@ const ControlSelectorScreen = {
 
 		return this;
 	},
-	resize: function() {
+	resize() {
 		if (window.innerWidth < window.innerHeight && this.enabledList != this.noticeList) {
 			this.enabledList = this.noticeList;
 			this.disabledList = this.optionList;
@@ -91,7 +91,7 @@ const ControlSelectorScreen = {
 			this.disabledList.parentNode.classList.add("list-hidden");
 		}
 	},
-	hide: function() {
+	hide() {
 		if (!this.shown)
 			return;
 		this.shown = false;
@@ -99,7 +99,7 @@ const ControlSelectorScreen = {
 		document.removeEventListener("touchstart", this.onTouchStart);
 		window.removeEventListener("mousedown", this.onMouseDown);
 	},
-	once: function(eventType, callback) {
+	once(eventType, callback) {
 		if (eventType === "select") {
 			this.onSelect = callback;
 		} else {

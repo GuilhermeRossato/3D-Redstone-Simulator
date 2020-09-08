@@ -66,14 +66,6 @@
 	white-space: nowrap;
 }
 
-.background-game-canvas {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
-}
-
 .main-menu {
 
 }
@@ -139,6 +131,31 @@
 
 .main-menu .actions {
 	padding: 50px;
+}
+
+.foreground-game {
+	pointer-events: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 2;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+}
+
+.background-game-canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 1;
 }
 
 .background-game-canvas canvas {

@@ -1,4 +1,4 @@
-export function debounce(func, delay) {
+export default function debounce(func, delay) {
 	let inDebounce
 	return function(...args) {
 		const context = this;
