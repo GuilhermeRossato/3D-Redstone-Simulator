@@ -7,8 +7,9 @@ attribute vec2 instanceTile;
 attribute vec3 instanceVisual;
 
 varying vec2 vUv;
-varying vec2 vLightness;
+varying float vLightness;
 varying vec2 vRelativeUv;
+varying vec2 vAO;
 
 #define PI_HALF 1.5707963267949
 #define IMAGE_SIZE_PIXELS 128.0
@@ -48,7 +49,11 @@ void main() {
 	vec2 topLeftOrigin = (1.0/IMAGE_TILE_SIZE) * uv + vec2(0.0, (IMAGE_TILE_SIZE-1.)/IMAGE_TILE_SIZE);
 	vUv = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0 + instanceTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * instanceTile);
 
-	vLightness = instanceVisual.yz;
+	vLightness = instanceVisual.y;
+
+	vec2 aoTile = vec2(mod(instanceVisual.z, 7.0), floor(instanceVisual.z / 7.0));
+	vAO = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0 + aoTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * aoTile);
+
 	vec3 pos = position + instancePosition;
 
 	mat4 toCenter = translateXYZ(-instancePosition);

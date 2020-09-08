@@ -122,7 +122,9 @@ export default class App {
 		//this.world.set(-1, -1, 0, 1);
 		//this.world.set(-1, -1, -1, 1);
 		//this.world.set(-1, -1, -2, 1);
-		this.world.set(0, 0, 0, 1);
+		this.world.set(0, 0, 0, 2);
+		this.world.set(0, 1, -1, 1);
+		this.world.set(0, 1, 1, 1);
 		this.world.set(1, 1, 0, 1);
 
 		return;
