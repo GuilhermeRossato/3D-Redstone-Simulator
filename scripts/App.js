@@ -58,11 +58,12 @@ export default class App {
 		}
 
 		if (id === 0 || id === 1 || id === 2) {
-			var angle = 2*Math.PI*(id === 1 ? this.frame/2000 : this.frame/333)
-			var scale = window['scale'] || 0.1;
-			this.graphics.camera.position.x = Math.cos(angle)*36*scale;
-			this.graphics.camera.position.z = Math.sin(angle)*36*scale;
-			this.graphics.camera.position.y = 3;
+			let frame = Math.cos(2 * Math.PI * (this.frame % 500) / 500);
+			let angle = 1.4+frame;
+			let scale = window['scale'] || 0.1;
+			this.graphics.camera.position.x = Math.cos(angle)*10*scale;
+			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
+			this.graphics.camera.position.y = 8;
 			this.graphics.camera.lookAt(0, 0, 0);
 		} else if (id === 3 || id === 4 || id === 5) {
 			let angle = 0;
@@ -73,7 +74,7 @@ export default class App {
 			} else if (id === 5) {
 				angle = 2*Math.PI*0.52;
 			}
-			var scale = window['scale'] || 0.35;
+			let scale = window['scale'] || 0.35;
 			this.graphics.camera.position.x = Math.cos(angle)*10*scale;
 			this.graphics.camera.position.y = 2;
 			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
@@ -122,29 +123,47 @@ export default class App {
 		//this.world.set(-1, -1, 0, 1);
 		//this.world.set(-1, -1, -1, 1);
 		//this.world.set(-1, -1, -2, 1);
-		this.world.set(0, 0, 0, 2);
-		this.world.set(0, 1, -1, 1);
-		this.world.set(0, 1, 1, 1);
-		this.world.set(1, 1, 0, 1);
+		let desired = Math.random()*255|0;
+		[
+			[-1, -1],
+			[0, -1],
+			[1, -1],
+			[1, 0],
+			[1, 1],
+			[0, 1],
+			[-1, 1],
+			[-1, 0]
+		].forEach((pair) => {
+			console.log(desired);
+			if (desired % 2 === 1) {
+				this.world.set(pair[0], 1, pair[1], 2);
+			}
+			desired = Math.floor(desired / 2);
+		});
+
+		this.world.set(0, 0, 0, 1);
+		//this.world.set(0, 1, -1, 1);
+		//this.world.set(0, 1, 1, 1);
+		//this.world.set(-1, 1, 0, 2);
 
 		return;
 		/*
 		this.world.set(0, 1, 1, 1);
-		for (var i = 0; i < size; i++) {
-			for (var j = 0; j < size; j++) {
+		for (let i = 0; i < size; i++) {
+			for (let j = 0; j < size; j++) {
 				const [x, y, z] = [(i-size/2)|0, 0, (j-size/2)|0];
 				this.world.set(x, y, z, (i%3==0||j%3==0)?1:2);
 			}
 		}
 
-		var seed = 11;
+		let seed = 11;
 		function random() {
-			var x = Math.sin(seed++) * 10000;
+			let x = Math.sin(seed++) * 10000;
 			return x - Math.floor(x);
 		}
 
-		for (var i = 0; i < size; i++) {
-			for (var j = 0; j < size; j++) {
+		for (let i = 0; i < size; i++) {
+			for (let j = 0; j < size; j++) {
 				const [x, y, z] = [(i-size/2)|0, 1, (j-size/2)|0];
 				this.world.set(x, y, z, (i%3==0||j%3==0)?1:2);
 			}

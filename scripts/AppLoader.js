@@ -17,7 +17,6 @@ export default class AppLoader {
 	}
 
 	async loadTextures() {
-		console.log("Loading textures");
 		await TextureService.load();
 	}
 

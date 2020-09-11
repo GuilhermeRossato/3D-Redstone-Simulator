@@ -125,7 +125,7 @@ export default class Chunk {
 		}
 
 		// @ts-ignore
-		return t + r * 2 + b * 4 + l * 8 + tr * 16 + br * 32 + bl * 64 + tl * 128;
+		return tl + t * 2 + tr * 4 + r * 8 + br * 16 + b * 32 + bl * 64 + l * 128;
 	}
 
 	_buildMesh(skipAo = false) {

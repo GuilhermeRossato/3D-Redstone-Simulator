@@ -3,8 +3,9 @@ uniform sampler2D texture1;
 
 varying vec2 vUv;
 varying float vLightness;
-varying vec2 vRelativeUv;
+// varying vec2 vRelativeUv;
 varying vec2 vAO;
+varying float aoChannel;
 
 #define AO_IMPACT 2.0
 
@@ -14,9 +15,18 @@ void main() {
     if (color.a < 0.5) { discard; }
 
     vec4 aoColor = texture2D(texture1, vAO);
-    float aoMult = (1.0 - AO_IMPACT * aoColor.a);
+    float aoValue;
+    if (aoChannel == 1.0) {
+        aoValue = aoColor.g;
+    } else if (aoChannel == 2.0) {
+        aoValue = aoColor.b;
+    } else {
+        aoValue = aoColor.r;
+    }
+    float aoMult = 1.0 - ((1.0 - aoValue) * 1.1);
 
-    gl_FragColor = vec4(color.rgb * aoMult * vLightness * aoMult, 1.0);
+    gl_FragColor = vec4(color.rgb * aoMult * vLightness, 1.0);
+    //gl_FragColor = vec4(color.rgb * aoMult * vLightness * aoMult, 1.0);
     //gl_FragColor = vec4(aoColor.rgb * vLightness * aoMult, 1.0);
 
     // disable texture and use only AO

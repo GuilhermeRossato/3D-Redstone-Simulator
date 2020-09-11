@@ -87,7 +87,7 @@ export default class TextureService {
 			this.texture.minFilter = THREE.LinearFilter;
 		}
 
-		this.aoTexture = await this.processImageAndGenerateTextureFromPath("assets/ambient-occlusion.png", true);
+		this.aoTexture = await this.processImageAndGenerateTextureFromPath("assets/ambient-occlusion.png", false);
 		this.aoTexture.wrapS = THREE.RepeatWrapping;
 		this.aoTexture.wrapT = THREE.RepeatWrapping;
 		this.aoTexture.magFilter = THREE.NearestFilter;
@@ -227,7 +227,7 @@ export default class TextureService {
 				let r = 0;
 				dx = x+1+(x/16|0)*2;
 				dy = y+1+(y/16|0)*2;
-				if (x > 100 || y > 100) {
+				if (x >= target.width || y >= target.height) {
 					continue;
 				}
 				ctx.drawImage(origin, x, y, 16, 16, dx, dy, 16, 16);
@@ -243,6 +243,7 @@ export default class TextureService {
 
 	static async processImageAndGenerateTextureFromPath(sourcePath, addCanvasToScreen = false) {
 		const image = await this.loadImage(sourcePath);
+		console.log(sourcePath, image.width, image.height);
 		const canvas = await this.createCanvas(image.width, image.height, addCanvasToScreen);
 		await this.addMarginToCanvas(canvas, image);
 		return await this.createTextureFromCanvas(canvas);

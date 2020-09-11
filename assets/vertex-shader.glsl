@@ -8,7 +8,8 @@ attribute vec3 instanceVisual;
 
 varying vec2 vUv;
 varying float vLightness;
-varying vec2 vRelativeUv;
+varying float aoChannel;
+// varying vec2 vRelativeUv;
 varying vec2 vAO;
 
 #define PI_HALF 1.5707963267949
@@ -44,15 +45,17 @@ mat4 rotateXYZ(vec3 v) {
 }
 
 void main() {
-	vRelativeUv = uv;
+// 	vRelativeUv = uv;
 
 	vec2 topLeftOrigin = (1.0/IMAGE_TILE_SIZE) * uv + vec2(0.0, (IMAGE_TILE_SIZE-1.)/IMAGE_TILE_SIZE);
 	vUv = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0 + instanceTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * instanceTile);
 
 	vLightness = instanceVisual.y;
 
-	vec2 aoTile = vec2(mod(instanceVisual.z, 7.0), floor(instanceVisual.z / 7.0));
-	vAO = topLeftOrigin + vec2(1.0, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0 + aoTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * aoTile);
+	vec2 aoTile = vec2(mod(mod(instanceVisual.z, 98.0), 14.0), floor(mod(instanceVisual.z, 98.0) / 14.0));
+	vAO = topLeftOrigin * vec2(0.5, 1.0) + vec2(0.5, -1.0) * (1.0/IMAGE_SIZE_PIXELS * (1.0 + aoTile*2.0) + vec2(1.0 / IMAGE_TILE_SIZE) * aoTile);
+	aoChannel = floor(instanceVisual.z / 98.0);
+	//vAO = topLeftOrigin + vec2(0.0, 0.0);
 
 	vec3 pos = position + instancePosition;
 
@@ -60,9 +63,7 @@ void main() {
 	mat4 fromCenter = translateXYZ(instancePosition);
 
 	vec3 rot;
-	if (instanceVisual.x == 0.0) {
-		rot = vec3(0.0, 0.0, 0.0);
-	} else if (instanceVisual.x == 1.0) {
+	if (instanceVisual.x == 1.0) {
 		rot = vec3(0.0, -2.0, 0.0);
 	} else if (instanceVisual.x == 2.0) {
 		rot = vec3(0.0, -1.0, 0.0);
