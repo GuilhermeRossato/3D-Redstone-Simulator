@@ -60,10 +60,11 @@ export default class App {
 		if (id === 0 || id === 1 || id === 2) {
 			let frame = Math.cos(2 * Math.PI * (this.frame % 500) / 500);
 			let angle = 1.4+frame;
+			// angle = 1.4;
 			let scale = window['scale'] || 0.1;
-			this.graphics.camera.position.x = Math.cos(angle)*10*scale;
-			this.graphics.camera.position.z = Math.sin(angle)*10*scale;
-			this.graphics.camera.position.y = 8;
+			this.graphics.camera.position.x = Math.cos(angle)*64*scale;
+			this.graphics.camera.position.z = Math.sin(angle)*64*scale;
+			this.graphics.camera.position.y = 5;
 			this.graphics.camera.lookAt(0, 0, 0);
 		} else if (id === 3 || id === 4 || id === 5) {
 			let angle = 0;
@@ -110,99 +111,35 @@ export default class App {
 			this.updateCamera(cameraId, this.frame);
 		}
 	}
+
 	draw() {
 		this.graphics.draw();
 	}
+
 	overflow() {
 		// Called when 333ms has been elapsed since last update
 		console.log('overflow');
 	}
+
 	mockWorld() {
-		//this.world.set(-1, -1, -2, 1);
-		//this.world.set(-1, -1, -1, 1);
-		//this.world.set(-1, -1, 0, 1);
-		//this.world.set(-1, -1, -1, 1);
-		//this.world.set(-1, -1, -2, 1);
-		let desired = Math.random()*255|0;
-		[
-			[-1, -1],
-			[0, -1],
-			[1, -1],
-			[1, 0],
-			[1, 1],
-			[0, 1],
-			[-1, 1],
-			[-1, 0]
-		].forEach((pair) => {
-			console.log(desired);
-			if (desired % 2 === 1) {
-				this.world.set(pair[0], 1, pair[1], 2);
-			}
-			desired = Math.floor(desired / 2);
-		});
-
-		this.world.set(0, 0, 0, 1);
-		//this.world.set(0, 1, -1, 1);
-		//this.world.set(0, 1, 1, 1);
-		//this.world.set(-1, 1, 0, 2);
-
-		return;
-		/*
-		this.world.set(0, 1, 1, 1);
+		const size = 16;
+		//this.world.set(0, 1, 0, 1);
 		for (let i = 0; i < size; i++) {
 			for (let j = 0; j < size; j++) {
 				const [x, y, z] = [(i-size/2)|0, 0, (j-size/2)|0];
-				this.world.set(x, y, z, (i%3==0||j%3==0)?1:2);
+				this.world.set(x, y + Math.floor((x - z * 1.23) / 5), z, (i%3==0||j%3==0) ? 2 : 1);
 			}
 		}
-
-		let seed = 11;
-		function random() {
-			let x = Math.sin(seed++) * 10000;
-			return x - Math.floor(x);
-		}
-
-		for (let i = 0; i < size; i++) {
-			for (let j = 0; j < size; j++) {
-				const [x, y, z] = [(i-size/2)|0, 1, (j-size/2)|0];
-				this.world.set(x, y, z, (i%3==0||j%3==0)?1:2);
-			}
-		}
-
-		setInterval(() => {
-			if (!this.world.get(x, y, z)) {
-				this.world.set(x, y, z, random() > 0.5 ? 1 : 2);
-			}
-		}, 1000);
-		*/
-		//this.addTests();
-	}
-
-	keydown(event) {
-		if (event.code === 'Digit1') {
-			this.cameraId = 1;
-			this.frame = 0;
-			window.localStorage.setItem('camera-id', this.cameraId.toString());
-		} else if (event.code === 'Digit2') {
-			this.cameraId = 2;
-			this.frame = 0.5;
-			window.localStorage.setItem('camera-id', this.cameraId.toString());
-		} else if (event.code === 'Digit3') {
-			this.cameraId = 3;
-			window.localStorage.setItem('camera-id', this.cameraId.toString());
-		} else if (event.code === 'Digit4') {
-			this.cameraId = 4;
-			window.localStorage.setItem('camera-id', this.cameraId.toString());
-		} else if (event.code === 'Digit5') {
-			this.cameraId = 5;
-			window.localStorage.setItem('camera-id', this.cameraId.toString());
-		} else if (event.code === 'Digit6') {
-			this.cameraId = 6;
-			window.localStorage.setItem('camera-id', this.cameraId.toString());
-		} else if (event.code === 'Digit7') {
-			this.cameraId = 7;
-			window.localStorage.setItem('camera-id', this.cameraId.toString());
-		}
+		this.world.set(0, 0, 1, 5);
+		//this.world.set(0, 2, 1, 4);
+		this.world.set(0, 0, 2, 5);
+		//setTimeout(() => {
+			//this.world.set(0, 1, 0, 5);
+		//}, 1000);
+		//setTimeout(() => {
+			this.world.set(1, 0, 1, 5);
+			this.world.set(-1, 0, 1, 5);
+		//}, 2000);
 	}
 
 	/**

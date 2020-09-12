@@ -7,7 +7,7 @@ varying float vLightness;
 varying vec2 vAO;
 varying float aoChannel;
 
-#define AO_IMPACT 2.0
+#define AO_IMPACT 1.15
 
 void main() {
     vec4 color = texture2D(texture0, vUv);
@@ -23,7 +23,7 @@ void main() {
     } else {
         aoValue = aoColor.r;
     }
-    float aoMult = 1.0 - ((1.0 - aoValue) * 1.1);
+    float aoMult = 1.0 - ((1.0 - aoValue) * AO_IMPACT);
 
     gl_FragColor = vec4(color.rgb * aoMult * vLightness, 1.0);
     //gl_FragColor = vec4(color.rgb * aoMult * vLightness * aoMult, 1.0);

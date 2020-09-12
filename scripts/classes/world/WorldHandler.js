@@ -1,10 +1,15 @@
 'use strict';
 
 import TextureService from '../../graphics/TextureService.js';
-import BlockData from '../../data/BlockData.js';
+import SimplexNoise from '../../third-party/SimplexNoise.js';
+import GraphicsEngine from '../../graphics/GraphicsEngine.js';
 import Chunk from '../world/Chunk.js';
 
 export default class WorldHandler {
+	/**
+	 *
+	 * @param {GraphicsEngine} graphicsEngine
+	 */
 	constructor(graphicsEngine) {
 		this.graphics = graphicsEngine;
 		this.scene = graphicsEngine.scene;
@@ -16,6 +21,7 @@ export default class WorldHandler {
 		if (!TextureService.loaded) {
 			await TextureService.load();
 		}
+		this.simplex = new SimplexNoise();
 	}
 
 	/**
@@ -24,7 +30,8 @@ export default class WorldHandler {
 	 * @param {number} z
 	 */
 	isSolidBlock(x, y, z) {
-		return !!(this.get(x, y, z));
+		const worldBlock = this.get(x, y, z);
+		return (worldBlock && !worldBlock.data.isRedstone) === true;
 	}
 
 	/**
@@ -119,19 +126,19 @@ export default class WorldHandler {
 			if (rx == 0 || rx == 15) {
 				neighboorChunk = this.getChunk(cx + (rx == 0 ? -1 : 1), cy, cz);
 				if (neighboorChunk) {
-					neighboorChunk._rebuildMesh();
+					neighboorChunk.requestMeshUpdate();
 				}
 			}
 			if (ry == 0 || ry == 15) {
 				neighboorChunk = this.getChunk(cx, cy + (ry == 0 ? -1 : 1), cz);
 				if (neighboorChunk) {
-					neighboorChunk._rebuildMesh();
+					neighboorChunk.requestMeshUpdate();
 				}
 			}
 			if (rz == 0 || rz == 15) {
 				neighboorChunk = this.getChunk(cx, cy, cz + (rz == 0 ? -1 : 1));
 				if (neighboorChunk) {
-					neighboorChunk._rebuildMesh();
+					neighboorChunk.requestMeshUpdate();
 				}
 			}
 			//console.log("Checking relatives of ", x, y, z, " that are ", rx, ry, rz);
@@ -140,28 +147,28 @@ export default class WorldHandler {
 				step = rx == 0 ? -1 : 1;
 				neighboorChunk = this.getChunk(cx + step, cy + step, cz);
 				if (neighboorChunk) {
-					neighboorChunk._rebuildMesh();
+					neighboorChunk.requestMeshUpdate();
 				}
 			}
 			if (ry == rz && (ry == 0 || ry == 15)) {
 				step = ry == 0 ? -1 : 1;
 				neighboorChunk = this.getChunk(cx, cy + step, cz + step);
 				if (neighboorChunk) {
-					neighboorChunk._rebuildMesh();
+					neighboorChunk.requestMeshUpdate();
 				}
 			}
 			if (rx == rz && (rz == 0 || rz == 15)) {
 				step = rz == 0 ? -1 : 1;
 				neighboorChunk = this.getChunk(cx + step, cy, cz + step);
 				if (neighboorChunk) {
-					neighboorChunk._rebuildMesh();
+					neighboorChunk.requestMeshUpdate();
 				}
 			}
 			// Super corners neighboor chunks
 			if ((rx == 0 || rx == 15) && (ry == 0 || ry == 15) && (rz == 0 || rz == 15)) {
 				neighboorChunk = this.getChunk(cx + (rx == 0 ? -1 : 1), cy + (ry == 0 ? -1 : 1), cz + (rx == 0 ? -1 : 1));
 				if (neighboorChunk) {
-					neighboorChunk._rebuildMesh();
+					neighboorChunk.requestMeshUpdate();
 				}
 			}
 		}

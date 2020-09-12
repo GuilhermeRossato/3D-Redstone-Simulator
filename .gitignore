@@ -39,3 +39,5 @@ $RECYCLE.BIN/
 project.code-workspace
 
 .vscode/
+
+tools/ao-extractor/images/

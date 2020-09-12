@@ -12,7 +12,7 @@ varying float aoChannel;
 // varying vec2 vRelativeUv;
 varying vec2 vAO;
 
-#define PI_HALF 1.5707963267949
+#define PI_HALF_HALF 0.7853981633974483
 #define IMAGE_SIZE_PIXELS 128.0
 #define IMAGE_TILE_SIZE 8.0
 
@@ -62,22 +62,9 @@ void main() {
 	mat4 toCenter = translateXYZ(-instancePosition);
 	mat4 fromCenter = translateXYZ(instancePosition);
 
-	vec3 rot;
-	if (instanceVisual.x == 1.0) {
-		rot = vec3(0.0, -2.0, 0.0);
-	} else if (instanceVisual.x == 2.0) {
-		rot = vec3(0.0, -1.0, 0.0);
-	} else if (instanceVisual.x == 3.0) {
-		rot = vec3(0.0, 1.0, 0.0);
-	} else if (instanceVisual.x == 4.0) {
-		rot = vec3(1.0, 0.0, 0.0);
-	} else if (instanceVisual.x == 5.0) {
-		rot = vec3(-1.0, 0.0, 0.0);
-	} else {
-		rot = vec3(0.0, 0.0, 0.0);
-	}
+	vec3 rot = vec3(mod(instanceVisual.x, 10.0) - 4.0, mod(floor(instanceVisual.x / 10.0), 10.0) - 4.0, mod(floor(instanceVisual.x / 100.0), 10.0) - 4.0);
 
-	mat4 transformation = fromCenter * rotateXYZ(PI_HALF * rot) * toCenter;
+	mat4 transformation = fromCenter * rotateXYZ(PI_HALF_HALF * rot) * toCenter;
 
 	vec4 resultPos = transformation * vec4(pos, 1.0);
 	gl_Position = projectionMatrix * modelViewMatrix * resultPos;
