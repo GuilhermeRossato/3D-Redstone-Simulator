@@ -3,8 +3,6 @@
 import BlockData from '../data/BlockData.js';
 import * as THREE from '../../node_modules/three/src/Three.js';
 
-const baseTexturePath = "../assets/textures.png";
-
 export default class TextureService {
 
 	static async load() {
@@ -32,7 +30,7 @@ export default class TextureService {
 					} else if (texture instanceof Array) {
 						// @ts-ignore
 						for (let subTexture of texture) {
-							if (typeof texture === "string") {
+							if (typeof subTexture === "string") {
 								textureFilenameList.push(subTexture);
 							} else {
 								throw new Error(`Could not interpret sub texture of block "${block.name}"`);
@@ -62,7 +60,7 @@ export default class TextureService {
 				image: await TextureService.loadImage("assets/textures/" + filename)
 			}
 			tx++;
-			if (tx >= 8) {
+			if (tx >= 7) {
 				tx = 0;
 				ty++;
 				if (ty >= 8) {
@@ -97,11 +95,18 @@ export default class TextureService {
 	}
 
 	/**
-	 * Returns the position of a given texture filename
-	 * @param {string} filename
+	 * Returns the position of a given texture filename, or the position of a random one if a array is given
+	 * @param {string | string[] | string[][]} filename
+	 * @param {number} [randomUid] A number that correspond to a seed value to choose the random texture if it is an array
 	 * @returns {{tx: number, ty: number}}
 	 */
-	static getTexturePosition(filename) {
+	static getTexturePosition(filename, randomUid) {
+		if (filename instanceof Array) {
+			filename = filename[0];
+		}
+		if (filename instanceof Array) {
+			filename = filename[0];
+		}
 		const t = this.textureLookup[filename]
 		if (!t) {
 			return {tx: 0, ty: 0};
@@ -243,7 +248,6 @@ export default class TextureService {
 
 	static async processImageAndGenerateTextureFromPath(sourcePath, addCanvasToScreen = false) {
 		const image = await this.loadImage(sourcePath);
-		console.log(sourcePath, image.width, image.height);
 		const canvas = await this.createCanvas(image.width, image.height, addCanvasToScreen);
 		await this.addMarginToCanvas(canvas, image);
 		return await this.createTextureFromCanvas(canvas);
