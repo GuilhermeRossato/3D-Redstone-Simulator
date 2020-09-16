@@ -58,13 +58,13 @@ export default class App {
 		}
 
 		if (id === 0 || id === 1 || id === 2) {
-			let frame = Math.cos(2 * Math.PI * (this.frame % 500) / 500);
+			let frame = Math.cos(2 * Math.PI * (this.frame % 1000) / 1000);
 			let angle = 1.4+frame;
 			// angle = 1.4;
 			let scale = window['scale'] || 0.1;
 			this.graphics.camera.position.x = Math.cos(angle)*64*scale;
 			this.graphics.camera.position.z = Math.sin(angle)*64*scale;
-			this.graphics.camera.position.y = 5;
+			this.graphics.camera.position.y = 3;
 			this.graphics.camera.lookAt(0, 0, 0);
 		} else if (id === 3 || id === 4 || id === 5) {
 			let angle = 0;
@@ -130,15 +130,18 @@ export default class App {
 				this.world.set(x, y + Math.floor((x - z * 1.23) / 5), z, (i%3==0||j%3==0) ? 2 : 1);
 			}
 		}
-		this.world.set(0, 0, 1, 5);
+		this.world.set(0, 0, 1, 6);
 		//this.world.set(0, 2, 1, 4);
-		this.world.set(0, 0, 2, 5);
+		this.world.set(0, 0, 2, 6);
 		//setTimeout(() => {
-			//this.world.set(0, 1, 0, 5);
+			//this.world.set(0, 1, 0, 6);
 		//}, 1000);
 		//setTimeout(() => {
-			this.world.set(1, 0, 1, 5);
-			this.world.set(-1, 0, 1, 5);
+			this.world.set(1, 0, 1, 6);
+			this.world.set(-1, 0, 1, 6);
+			this.world.set(-2, 0, 1, 8);
+			this.world.set(-2, 1, 1, 3);
+			this.world.set(-2, 2, 1, 7);
 		//}, 2000);
 	}
 

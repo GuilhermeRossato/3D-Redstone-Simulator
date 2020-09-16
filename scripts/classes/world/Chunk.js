@@ -57,6 +57,9 @@ export default class Chunk {
 		this.rebuildMesh = this.rebuildMesh.bind(this);
 	}
 
+	/**
+	 * @param {THREE.Scene} scene
+	 */
 	assignTo(scene) {
 		this.scene = scene;
 		if (this.blockList.length !== 0) {
@@ -153,9 +156,9 @@ export default class Chunk {
 			const texture = block.texture;
 
 			for (let j = 0; j < sides; j++) {
-				if (!skipFaceOcclusion || block.data.isRedstone) {
+				if (!skipFaceOcclusion || block.data.isSolid !== false) {
 					const inverseBlock = this.world.get(gx + SIDE_DISPLACEMENT[j].inverse[0], gy + SIDE_DISPLACEMENT[j].inverse[1], gz + SIDE_DISPLACEMENT[j].inverse[2]);
-					if (inverseBlock && !inverseBlock.data.isRedstone) {
+					if (inverseBlock && inverseBlock.data.isSolid !== false) {
 						continue;
 					}
 				}
@@ -220,6 +223,12 @@ export default class Chunk {
 				};
 				if (block.data.isRedstone) {
 					obj.y -= 14/32;
+				} else if (block.data.isTorch && j !== 5) {
+					if (j === 4) {
+						obj[SIDE_DISPLACEMENT[j].originAxis] += SIDE_DISPLACEMENT[j].originValue * 2/16;
+					} else {
+						obj[SIDE_DISPLACEMENT[j].originAxis] += SIDE_DISPLACEMENT[j].originValue * 1/16;
+					}
 				} else {
 					obj[SIDE_DISPLACEMENT[j].originAxis] += SIDE_DISPLACEMENT[j].originValue / 2;
 				}
@@ -298,15 +307,15 @@ export default class Chunk {
 		if (!parent) {
 			return null;
 		}
-		if (!this.shouldRebuildMesh) {
-			this.shouldRebuildMesh = true;
+		if (!this.willRebuildMesh) {
+			this.willRebuildMesh = true;
 			this.updateMeshTimer = setTimeout(this.rebuildMesh, 1);
 			// this.rebuildMesh();
 		}
 	}
 
 	rebuildMesh() {
-		this.shouldRebuildMesh = false;
+		this.willRebuildMesh = false;
 		const parent = this.scene;
 		if (!parent) {
 			return null;

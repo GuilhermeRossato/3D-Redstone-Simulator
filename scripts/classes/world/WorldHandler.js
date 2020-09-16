@@ -31,7 +31,7 @@ export default class WorldHandler {
 	 */
 	isSolidBlock(x, y, z) {
 		const worldBlock = this.get(x, y, z);
-		return (worldBlock && !worldBlock.data.isRedstone) === true;
+		return (worldBlock && worldBlock.data.isSolid !== false) === true;
 	}
 
 	/**
