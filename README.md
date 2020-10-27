@@ -2,7 +2,7 @@
 
 A javascript experiment to simulate minecraft's redstone logic in a similar 3D environment.
 
-[Click here to run the current version](https://guilherme-rossato.com/3D-Redstone-Simulator/)
+[Click here to run the current version](https://grossato.com/3D-Redstone-Simulator/)
 
 Note that during development, the above link will not always bring you to a working release, if you want you can download the most recent [release](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/releases) and run it yourself, this experiment doesn't need building, it works out of the box.
 
