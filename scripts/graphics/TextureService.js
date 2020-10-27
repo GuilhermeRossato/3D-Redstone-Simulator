@@ -1,7 +1,7 @@
 'use strict';
 
 import BlockData from '../data/BlockData.js';
-import * as THREE from '../../node_modules/three/src/Three.js';
+import * as THREE from '../../scripts/third-party/three.module.js';
 
 export default class TextureService {
 

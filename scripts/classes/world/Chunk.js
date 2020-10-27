@@ -1,6 +1,6 @@
 'use strict';
 
-import * as THREE from '../../../node_modules/three/src/Three.js';
+import * as THREE from '../../../scripts/third-party/three.module.js';
 import TextureService from '../../graphics/TextureService.js';
 import GraphicsEngine from '../../graphics/GraphicsEngine.js';
 import BlockData from '../../data/BlockData.js';

@@ -1,6 +1,6 @@
 'use strict';
 
-import * as THREE from '../../node_modules/three/src/Three.js';
+import * as THREE from '../../scripts/third-party/three.module.js';
 import TextureService from './TextureService.js';
 import ResourceLoader from '../classes/ResourceLoader.js';
 
