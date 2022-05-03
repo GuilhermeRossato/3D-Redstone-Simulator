@@ -1,10 +1,7 @@
 'use strict';
 
 import Chunk from '../classes/world/Chunk.js';
-import SimplexNoise from '../libs/SimplexNoise.js';
 import * as THREE from '../libs/three.module.js';
-
-const simplex = new SimplexNoise();
 
 /** @type {Record<number, Record<number, Record<number, Chunk>>>} */
 const chunks = [];
@@ -37,23 +34,23 @@ export function getChunkAtWorldPosition(x, y, z) {
 
 /**
  * Get a chunk by its chunk position
- * @param {number} cz
+ * @param {number} cx
  * @param {number} cy
  * @param {number} cz
  * @param {boolean} [createOnMissing]
  */
 export function getChunk(cx, cy, cz, createOnMissing = true) {
-    if (!chunks[cz]) {
-        chunks[cz] = [];
+    if (!chunks[cx]) {
+        chunks[cx] = [];
     }
-    if (!chunks[cz][cx]) {
-        chunks[cz][cx] = [];
+    if (!chunks[cx][cy]) {
+        chunks[cx][cy] = [];
     }
-    let chunk = chunks[cz][cx][cy];
+    let chunk = chunks[cx][cy][cy];
     if (!chunk && createOnMissing) {
         chunk = new Chunk(cx, cy, cz);
         chunk.assignTo(scene);
-        chunks[cz][cx][cy] = chunk;
+        chunks[cx][cy][cy] = chunk;
     }
     return chunk;
 }
