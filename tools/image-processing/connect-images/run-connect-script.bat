@@ -1,1 +1,0 @@
-@php ./connect.php || pause
