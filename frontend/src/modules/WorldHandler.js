@@ -40,17 +40,17 @@ export function getChunkAtWorldPosition(x, y, z) {
  * @param {boolean} [createOnMissing]
  */
 export function getChunk(cx, cy, cz, createOnMissing = true) {
-    if (!chunks[cx]) {
-        chunks[cx] = [];
+    if (!chunks[cz]) {
+        chunks[cz] = [];
     }
-    if (!chunks[cx][cy]) {
-        chunks[cx][cy] = [];
+    if (!chunks[cz][cx]) {
+        chunks[cz][cx] = [];
     }
-    let chunk = chunks[cx][cy][cy];
+    let chunk = chunks[cz][cx][cy];
     if (!chunk && createOnMissing) {
         chunk = new Chunk(cx, cy, cz);
         chunk.assignTo(scene);
-        chunks[cx][cy][cy] = chunk;
+        chunks[cz][cx][cy] = chunk;
     }
     return chunk;
 }
