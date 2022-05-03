@@ -1,5 +1,3 @@
-import { noise4d } from "../libs/SimplexNoise.js";
-
 export const FALLBACK_TEXTURE = 'unknown.png';
 
 /**
