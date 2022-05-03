@@ -104,8 +104,15 @@ async function load() {
     }
 
     let textureFilenameList = [FALLBACK_TEXTURE];
+    
     for (let block of BlockData) {
+        if (block.name === 'Air') {
+            continue;
+        }
         const textureList = getTextureListFromBlock(block);
+        if (!(textureList instanceof Array)) {
+            throw new Error("Invalid texture list from block");
+        }
         textureFilenameList.push(...textureList);
     }
 
