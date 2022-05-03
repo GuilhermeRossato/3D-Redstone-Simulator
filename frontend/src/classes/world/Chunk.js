@@ -440,8 +440,7 @@ export default class Chunk {
 	 * @param {number} id 
 	 */
 	addBlock(x, y, z, id) {
-		const texture = BlockData[id].texture;
-		const blockObj = { id, data: BlockData[id], x, y, z, texture };
+		const blockObj = { id, data: BlockData[id], x, y, z };
 		if (!this.blocks[z]) {
 			this.blocks[z] = [];
 		}
