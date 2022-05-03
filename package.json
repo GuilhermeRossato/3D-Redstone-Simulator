@@ -1,16 +1,10 @@
 {
   "name": "3d-redstone-simulator",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Web app to simulate the digital boolean logic mechanic (redstone) in a similar environment as the game in which it was implemented",
   "main": "index.js",
   "scripts": {
-    "start": "http-server --gzip -c-1",
-    "start-php": "php -S localhost:80",
-    "build": "npm run webpack && npm run babel && npm run compress",
-    "webpack": "webpack --config webpack.config.js",
-    "babel": "babel --presets es2015 build/index.min.js -o build/index.min.js",
-    "compress": "minify build -d build",
-    "test": "node --experimental-modules test/bootstrap.js"
+    "start-frontend": "node index.js --host localhost --port 8080 --path frontend"
   },
   "repository": {
     "type": "git",
@@ -32,15 +26,6 @@
     "url": "https://github.com/GuilhermeRossato/3D-Redstone-Simulator/issues"
   },
   "homepage": "https://github.com/GuilhermeRossato/3D-Redstone-Simulator#readme",
-  "devDependencies": {
-    "@babel/preset-env": "7.8.4",
-    "babel-core": "*",
-    "babel-minify": "0.5.1",
-    "http-server": "0.12.3",
-    "webpack": "4.41.6",
-    "webpack-cli": "*"
-  },
-  "dependencies": {
-    "three": "0.120.1"
-  }
+  "devDependencies": {},
+  "dependencies": {}
 }

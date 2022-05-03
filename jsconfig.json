@@ -1,6 +1,11 @@
 {
 	"compilerOptions": {
+		"module": "ES2020",
+		"target": "es6",
 		"checkJs": true
 	},
-	"exclude": ["node_modules", "**/node_modules/*"]
+	"exclude": [
+		"node_modules",
+		"**/node_modules/*"
+	]
 }

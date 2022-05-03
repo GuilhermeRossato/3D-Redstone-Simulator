@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<html>
+	<head>
+		<title>3D Redstone Simulator</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		<style>@media only screen and (max-width: 460px) {.description > .text {min-width: 300px !important}}</style>
+		<link rel='shortcut icon' type='image/x-icon' href='/favicon.ico' />
+		<link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<link href="style.css" rel="stylesheet">
+		<script src="./src/polyfill.js"></script>
+	</head>
+	<body style="background-color:#222;color:#DDD;text-shadow: 2px 2px 12px #000;width:100vw;height:100vh;margin:0px;padding:0px;overflow:hidden;cursor:default">
+		<div class="app-sections" style="z-index:10;position:absolute;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Verdana,Geneva,sans-serif">
+			<section class="loading-screen" style="display: block">
+				<h1 class="title" style="text-align:center;font-size:48px;font-weight:normal;margin:0">Loading</h1>
+				<div class="description" style="pointer-events:none;margin:15px 0 5px;font-size:14px;text-align:center">
+					<span class="text" style="min-width:320px;">Downloading javascript files</span>
+				</div>
+			</section>
+			<section class="control-selector-screen" style="display: none">
+				<div class="list-wrapper list-hidden">
+					<div class="notice-list">
+						<div class="notice">
+							<div class="notice-title">Rotate Screen</div>
+							<div class="notice-image">
+								<i class="material-icons" style="font-size:6.2em; max-height: 144px;">refresh</i>
+								<i class="material-icons" style="font-size:9.2em; max-height: 144px;">stay_current_landscape</i>
+							</div>
+							<div class="notice-description">Rotate your screen in landscape mode (horizontal)</div>
+						</div>
+					</div>
+				</div>
+				<div class="list-wrapper">
+					<div class="option-list">
+						<div class="option">
+							<div class="option-title">Touch</div>
+							<div class="option-image">
+								<i class="material-icons" style="font-size:9em; height: 154px; margin-top: -10px">touch_app</i>
+							</div>
+							<div class="option-description">Touch anywhere to select</div>
+						</div>
+						<div class="option">
+							<div class="option-title">Click</div>
+							<div class="option-image">
+								<i class="material-icons" style="font-size:9.2em; max-height: 144px;">keyboard</i>
+								<i class="material-icons" style="font-size:5.2em; max-height: 144px;">mouse</i>
+							</div>
+							<div class="option-description">Left click anywhere to select</div>
+						</div>
+						<div class="option">
+							<div class="option-title">Press</div>
+							<div class="option-image">
+								<i class="material-icons" style="font-size:9em; max-height: 144px;">videogame_asset</i>
+							</div>
+							<div class="option-description">Press any button to select</div>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section class="main-menu" style="display: none">
+				<div class="list-wrapper configuration-wrapper list-hidden">
+					<div class="setting-list"></div>
+					<div class="actions">
+						<div class="option back">
+							<span>Back</span>
+						</div>
+					</div>
+				</div>
+				<div class="list-wrapper credits-wrapper list-hidden">
+					<div class="credits">
+						<p>This web tool was created by Guilherme M Rossato in 2019</p>
+						<p>Minecraft is a Mojang trademark and is not affiliated in any way with this project, it is not responsible for any content here and none of its content has been used in the making of this app.</p>
+						<p><a href="http://threejs.org/">Three.js</a> is a mrdoobs project.</p>
+					</div>
+				</div>
+				<div class="list-wrapper main-wrapper">
+					<div class="option-list">
+						<div class="option start-simulation selected">
+							<span>Start</span>
+						</div>
+						<div class="option configuration">
+							<span>Options</span>
+						</div>
+						<div class="option credits">
+							<span>Credits</span>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section class="foreground-game" style="display: none">
+				<img src="assets/crosshair.png" />
+			</section>
+			<section class="background-game-canvas" style="display: none"></section>
+		</div>
+		<script>((location.origin === "file://")&&(document.querySelector(".text").innerHTML = "This cannot run from the file system.<br><br>Serve this application from an http server."));setTimeout(function(){if(document.querySelector(".text") && document.querySelector(".text").innerText==="Downloading javascript files"){ document.querySelector(".text").innerHTML = "Something wen't wrong while downloading the javascript files" }}, 4000)</script>
+		<div class="footer" style="z-index:12;position:absolute;top:90%;display:block;width:100vw;text-align:center;transition:0.3s opacity ease-in-out">
+			<span class="footer-text" style="font-size:16px;text-shadow:2px 2px 9px #000;">javascript must be enabled</span>
+		</div>
+		<script src="./src/index.js" async defer type="module"></script>
+		<script>document.querySelector(".footer").classList.add("closed");</script>
+	<style>.footer.closed {opacity: 0 !important;}</style>
+	</body>
+</html>

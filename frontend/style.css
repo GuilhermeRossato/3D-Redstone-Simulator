@@ -1,0 +1,165 @@
+.control-selector-screen {
+	z-index: 100;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	transition: background-color 0.2s ease-in-out 0s;
+	background-color: rgba(0, 0, 0, 0.61);
+	pointer-events: none;
+}
+
+.control-selector-screen .list-wrapper {
+	z-index: 100;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: Verdana, Geneva, sans-serif;
+	pointer-events: none;
+}
+
+.control-selector-screen .list-wrapper.list-hidden {
+	opacity: 0;
+}
+
+.control-selector-screen .option-list, .control-selector-screen .notice-list {
+	color: rgb(221, 221, 221);
+	display: flex;
+	align-items: flex-start;
+	align-content: space-around;
+	opacity: 1;
+	transition: opacity 0.3s ease-in-out 0.1s, transform 0.4s ease-out 0s;
+}
+
+.control-selector-screen .option, .control-selector-screen .notice {
+	order: 1;
+    min-width: 20vmax;
+    text-align: center;
+    flex: 1 1 auto;
+    margin: 5px;
+    background-color: rgba(99,99,99,0.5);
+    border-radius: 2px;
+}
+
+.control-selector-screen .option-title, .control-selector-screen .notice-title {
+	font-size:1.5em;
+	padding:7px;
+}
+
+.control-selector-screen .option-image, .control-selector-screen .notice-image {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content:center;
+	white-space: nowrap;
+}
+
+.control-selector-screen .option-description, .control-selector-screen .notice-description {
+	font-size:0.75em;
+	padding:8px 10px;
+	white-space: nowrap;
+}
+
+.main-menu {
+
+}
+
+.main-menu .list-wrapper.list-hidden {
+	display: none;
+}
+
+.main-menu .option-list {
+	padding: 50px;
+}
+
+.main-menu .option-list .option {
+	padding: 20px 30px;
+	margin: 10px;
+	text-align: center;
+	font-size: 2em;
+	font-family: monospace;
+	background-color: rgba(255, 255, 255, 0.2);
+	opacity: 0.8;
+	cursor: pointer;
+}
+
+.main-menu .option-list .option:hover {
+	opacity: 0.95;
+}
+
+.main-menu .option-list .option:active {
+	transform: translate(1px, 1px);
+	opacity: 1;
+}
+
+.main-menu .option-list .option.selected {
+	background-color: rgba(255, 255, 255, 0.4);
+	opacity: 1;
+}
+
+.main-menu .setting-list {
+	padding: 20px;
+}
+
+.main-menu .setting-list .setting {
+	margin: 5px;
+	padding: 10px;
+	background-color: rgba(255, 255, 255, 0.125);
+	display: flex;
+	flex-direction: column;
+}
+
+.main-menu .setting-list .setting label {
+	display: block;
+	padding: 5px;
+	font-family: monosppace;
+	font-size: 1.5em;
+}
+
+.main-menu .setting-list .setting input, .main-menu .setting-list .setting select {
+	padding: 5px;
+	margin-top: 5px;
+	font-size: 1em;
+	font-family: monospace;
+}
+
+.main-menu .actions {
+	padding: 50px;
+}
+
+.foreground-game {
+	pointer-events: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 2;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+}
+
+.background-game-canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 1;
+}
+
+.background-game-canvas canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
