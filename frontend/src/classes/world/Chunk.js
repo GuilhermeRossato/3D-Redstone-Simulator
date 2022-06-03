@@ -137,8 +137,11 @@ export default class Chunk {
 		return tl + t * 2 + tr * 4 + (r + (br + (b + (bl + l * 2) * 2) * 2) * 2) * 8;
 	}
 
-	getFaces(skipAo = false, skipFaceOcclusion = false) {
-		/** @type {{ref: WorldBlock, x: number, y: number, z: number, rotationId: number, lightness: number, occlusionId: number, textureX: number, textureY:number}[]} */
+	getFaces(useCached = false, skipAo = false, skipFaceOcclusion = false) {
+		if (useCached && this._cachedFaces) {
+			return this._cachedFaces;
+		}
+		/** @type {{ref: WorldBlock, x: number, y: number, z: number, rotationId: number, lightness: number, occlusionId: number, textureX: number, textureY: number, sideId: number}[]} */
 		const faces = [];
 		const get = WorldHandler.get;
 		for(let i = this.blockList.length-1; i >= 0; i--) {
@@ -201,6 +204,7 @@ export default class Chunk {
 				const {tx, ty} = TextureHandler.getTexturePositionFromName(faceTexture);
 				const obj = {
 					ref: block,
+					sideId: j,
 					x: block.x,
 					y: block.y,
 					z: block.z,
@@ -218,18 +222,17 @@ export default class Chunk {
 				} else {
 					obj[SIDE_DISPLACEMENT[j].originAxis] += SIDE_DISPLACEMENT[j].originValue / 2;
 				}
-
 				faces.push(obj);
 			}
-
 		}
+		this._cachedFaces = faces;
 		return faces;
 	}
 
 	/**
 	 * @param {boolean} skipAo
 	 */
-	_buildMesh(skipAo = false) {
+	_buildMesh() {
 		if (this.blockList.length === 0) {
 			return null;
 		}
@@ -268,7 +271,7 @@ export default class Chunk {
 		instanced.attributes.uv = geometry.attributes.uv;
 		instanced.index = geometry.index;
 
-		const faces = this.getFaces(skipAo);
+		const faces = this.getFaces(false, false, false);
 		const faceCount = faces.length;
 
 		instanced.setDrawRange(0, faceCount + 2);
@@ -277,29 +280,8 @@ export default class Chunk {
 		const arrayVisual = new Float32Array(faceCount * 3);
 		const arrayTile = new Float32Array(faceCount * 2);
 
-		const minimalOrigin = new THREE.Vector3(Infinity, Infinity, Infinity);
-		const maximalOrigin = new THREE.Vector3(- Infinity, - Infinity, - Infinity);
-
 		let i1 = 0, i2 = 0, i3 = 0;
 		for(let i = faces.length-1; i >= 0; i--) {
-			if (faces[i].x > maximalOrigin.x) {
-				maximalOrigin.x = faces[i].x;
-			}
-			if (faces[i].y > maximalOrigin.y) {
-				maximalOrigin.y = faces[i].y;
-			}
-			if (faces[i].z > maximalOrigin.z) {
-				maximalOrigin.z = faces[i].z;
-			}
-			if (faces[i].x < minimalOrigin.x) {
-				minimalOrigin.x = faces[i].x;
-			}
-			if (faces[i].y < minimalOrigin.y) {
-				minimalOrigin.y = faces[i].y;
-			}
-			if (faces[i].z < minimalOrigin.z) {
-				minimalOrigin.z = faces[i].z;
-			}
 			arrayPos[i1++] = faces[i].x;
 			arrayPos[i1++] = faces[i].y;
 			arrayPos[i1++] = faces[i].z;
@@ -337,8 +319,9 @@ export default class Chunk {
 		if (!this.willRebuildMesh) {
 			this.willRebuildMesh = true;
 			this.updateMeshTimer = setTimeout(this.rebuildMesh, 1);
-			// this.rebuildMesh();
+			// debug instant rebuild mesh on request - this.rebuildMesh();
 		}
+		// debug auto update mesh - setTimeout(() => this.requestMeshUpdate(), 500);
 	}
 
 	rebuildMesh() {
