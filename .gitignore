@@ -41,3 +41,5 @@ project.code-workspace
 .vscode/
 
 tools/ao-extractor/images/
+
+.idea/

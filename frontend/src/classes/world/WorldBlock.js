@@ -6,6 +6,7 @@ export default class WorldBlock {
      * @param {number} y
      * @param {number} z
      * @param {number} id
+     * @param {any} data
      */
     constructor(x, y, z, id) {
         this.x = x;

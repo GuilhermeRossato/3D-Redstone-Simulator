@@ -1,10 +1,191 @@
 import * as THREE from '../libs/three.module.js';
 import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHandler.js';
+import { getChunkAtWorldPosition } from './WorldHandler.js';
+import { createMarker } from '../utils/createMarker.js';
+import getFaceBounds from '../utils/getFaceBounds.js'
 
 let isPointerlocked = false;
 let isFullScreen = false;
 let isFirstClick = false;
 let yawObject;
+
+function getTargetBlock() {
+    const position = camera.parent.parent.position;
+    // createMarker(position.x, position.y, position.z, undefined, undefined, 2);
+
+    // vertical angle
+    const pitch = camera.parent.rotation.x;
+    // horizontal angle
+    const yaw = camera.parent.parent.rotation.y;
+    
+    const dx = Math.sin(Math.PI + yaw) * Math.cos(pitch);
+    const dy = Math.sin(pitch);
+    const dz = Math.cos(Math.PI + yaw) * Math.cos(pitch);
+
+    const chunkList = raycastChunkList(position.x, position.y, position.z, dx, dy, dz, 4, true);
+    const ray = new THREE.Ray(new THREE.Vector3(position.x, position.y, position.z), new THREE.Vector3(dx, dy, dz));
+
+    const point = new THREE.Vector3(0, 0, 0);
+
+    /** @type {{x: number; y: number; z: number; weight: number, fx: number, fy: number, fz: number, sideId: number} | null} */
+    let collision = null;
+
+    for (const chunk of chunkList) {
+        const c = WorldHandler.getChunk(chunk[0], chunk[1], chunk[2]);
+        if (!c) {
+            continue;
+        }
+        const faces = c.getFaces(true, false, false);
+        if (!faces || faces.length === 0) {
+            continue;
+        }
+        for (let i = 0; i < faces.length; i++) {
+            const face = faces[i];
+            const bounds = getFaceBounds(face, chunk[0], chunk[1], chunk[2]);
+            // createMarker(bounds[0].x, bounds[0].y, bounds[0].z, 0xFF0000, undefined, 0.2);
+            // createMarker(bounds[1].x, bounds[1].y, bounds[1].z, 0xFF0000, undefined, 0.2);
+            // createMarker(bounds[2].x, bounds[2].y, bounds[2].z, 0xFF0000, undefined, 0.2);
+            for (const triangle of [[bounds[2], bounds[1], bounds[0]], [bounds[3], bounds[2], bounds[0]]]) {
+                const result = ray.intersectTriangle(triangle[0], triangle[1], triangle[2], false, point);
+                if (result) {
+                    const weight = (point.x - position.x) / dx;
+                    if (collision === null) {
+                        collision = {
+                            x: point.x,
+                            y: point.y,
+                            z: point.z,
+                            weight,
+                            fx: face.x + chunk[0] * 16,
+                            fy: face.y + chunk[1] * 16,
+                            fz: face.z + chunk[2] * 16,
+                            sideId: face.sideId,
+                        }
+                    } else if (collision.weight >= weight) {
+                        collision.x = point.x;
+                        collision.y = point.y;
+                        collision.z = point.z;
+                        collision.weight = weight;
+                        collision.fx = face.x + chunk[0] * 16;
+                        collision.fy = face.y + chunk[1] * 16;
+                        collision.fz = face.z + chunk[2] * 16;
+                        collision.sideId = face.sideId;
+                    }
+                }
+            }
+        }
+    }
+
+    if (collision) {
+        // createMarker(collision.bx, collision.by, collision.bz, 0xFF0000, undefined, 0.2);
+        createMarker(collision.x, collision.y, collision.z, 0x00FF00, undefined, 2);
+    }
+
+    return collision;
+}
+
+/**
+ * Get a list of all chunks that intersect a point (oy,oy,oz) and a direction (dx, dy, dz)
+ * Up to a specific amount of chunks (maxChunkCount) optionally adding the origin chunk (includeSelf)
+ */
+function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf = true) {
+    // createMarker(ox, oy, oz, 0xFF0000, undefined, 4);
+
+    const c = [
+        Math.floor((ox + 0.5)/16), 
+        Math.floor((oy + 0.5)/16),
+        Math.floor((oz + 0.5)/16)
+    ];
+
+    const chunkList = [];
+    if (includeSelf) {
+        chunkList.push([c[0], c[1], c[2]]);
+    }
+    
+    // createMarker(c[0] * 16 - 0.5, c[1] * 16 - 0.5, c[2] * 16 - 0.5, 0xFFFFFF, undefined, 0.4);
+    // createMarker(c[0] * 16 + 1 - 0.5, c[1] * 16 - 0.5, c[2] * 16 - 0.5, 0x00FF00, undefined, 0.4);
+    // createMarker(c[0] * 16 - 0.5, c[1] * 16 - 0.5, c[2] * 16 + 1 - 0.5, 0xFF0000, undefined, 0.4);
+    // createMarker(c[0] * 16 - 0.5, c[1] * 16 + 1 - 0.5, c[2] * 16 - 0.5, 0x0000FF, undefined, 0.4);
+
+    const l = [
+        ((dx > 0) ? (c[0] + 1) * 16 : c[0] * 16) - ox - 0.5,
+        ((dy > 0) ? (c[1] + 1) * 16 : c[1] * 16) - oy - 0.5,
+        ((dz > 0) ? (c[2] + 1) * 16 : c[2] * 16) - oz - 0.5
+    ];
+
+    const tList = [l[0]/dx, l[1]/dy, l[2]/dz];
+    
+    let nextChunkIsFoundByWhichAxis = 0;
+    if (Math.abs(tList[0]) < Math.abs(tList[1])) {
+        if (Math.abs(tList[2]) < Math.abs(tList[0])) {
+            nextChunkIsFoundByWhichAxis = 2;
+        } else {
+            nextChunkIsFoundByWhichAxis = 0;
+        }
+    } else if (Math.abs(tList[0]) < Math.abs(tList[2])) {
+        if (Math.abs(tList[1]) < Math.abs(tList[0])) {
+            nextChunkIsFoundByWhichAxis = 1;
+        } else {
+            nextChunkIsFoundByWhichAxis = 0;
+        }
+    } else if (Math.abs(tList[2]) < Math.abs(tList[0])) {
+        if (Math.abs(tList[1]) < Math.abs(tList[2])) {
+            nextChunkIsFoundByWhichAxis = 1;
+        } else {
+            nextChunkIsFoundByWhichAxis = 2;
+        }
+    }
+
+    const t = tList[nextChunkIsFoundByWhichAxis];
+    
+    const nextChunkOffset = [dx * t, dy * t, dz * t];
+
+    const o = [ox, oy, oz];
+    o[0] += nextChunkOffset[0];
+    o[1] += nextChunkOffset[1];
+    o[2] += nextChunkOffset[2];
+
+    // createMarker(o[0], o[1], o[2], undefined, undefined, 20);
+
+    for (let i = 0; i < maxChunkCount - (includeSelf ? 1 : 0); i++) {
+        c[nextChunkIsFoundByWhichAxis] += l[nextChunkIsFoundByWhichAxis] > 0 ? 1 : -1;
+        chunkList.push([c[0], c[1], c[2]]);
+        l[0] = ((dx > 0) ? (c[0] + 1) * 16 : c[0] * 16) - o[0] - 0.5;
+        l[1] = ((dy > 0) ? (c[1] + 1) * 16 : c[1] * 16) - o[1] - 0.5;
+        l[2] = ((dz > 0) ? (c[2] + 1) * 16 : c[2] * 16) - o[2] - 0.5;
+        tList[0] = l[0]/dx;
+        tList[1] = l[1]/dy;
+        tList[2] = l[2]/dz;
+        if (Math.abs(tList[0]) < Math.abs(tList[1])) {
+            if (Math.abs(tList[2]) < Math.abs(tList[0])) {
+                nextChunkIsFoundByWhichAxis = 2;
+            } else {
+                nextChunkIsFoundByWhichAxis = 0;
+            }
+        } else if (Math.abs(tList[0]) < Math.abs(tList[2])) {
+            if (Math.abs(tList[1]) < Math.abs(tList[0])) {
+                nextChunkIsFoundByWhichAxis = 1;
+            } else {
+                nextChunkIsFoundByWhichAxis = 0;
+            }
+        } else if (Math.abs(tList[2]) < Math.abs(tList[0])) {
+            if (Math.abs(tList[1]) < Math.abs(tList[2])) {
+                nextChunkIsFoundByWhichAxis = 1;
+            } else {
+                nextChunkIsFoundByWhichAxis = 2;
+            }
+        }
+        const t = tList[nextChunkIsFoundByWhichAxis];
+        nextChunkOffset[0] = dx * t;
+        nextChunkOffset[1] = dy * t;
+        nextChunkOffset[2] = dz * t;
+        o[0] += nextChunkOffset[0];
+        o[1] += nextChunkOffset[1];
+        o[2] += nextChunkOffset[2];
+        // createMarker(o[0], o[1], o[2], i % 2 === 0 ? 0xFF0000 : 0x00FF00, undefined, 120);
+    }
+    return chunkList;
+    //console.log(nextChunkIsFoundByWhichAxis, t);
+}
 
 function requestPointerlock() {
     document.body.requestPointerLock();
@@ -21,7 +202,10 @@ let backward = 0;
 let up = 0;
 let down = 0;
 
+const pointer = new THREE.Vector2(0, 0);
+
 export async function load(canvas, scene, camera) {
+    
     canvas.addEventListener("click", (_event) => {
         if (isFirstClick && !isFullScreen) {
             isFirstClick = false;
@@ -35,15 +219,17 @@ export async function load(canvas, scene, camera) {
     });
 
     const pitchObject = new THREE.Object3D();
+    pitchObject.rotation.set(camera.rotation.x, camera.rotation.y, camera.rotation.z);
     pitchObject.add(camera);
 
     yawObject = new THREE.Object3D();
     yawObject.name = 'Camera Wrapper';
     yawObject.position.set(camera.position.x, camera.position.y, camera.position.z);
+    yawObject.add(pitchObject);
+
     camera.position.set(0, 0, 0);
     camera.rotation.set(0, 0, 0);
-    yawObject.add(pitchObject);
-    
+
 /*
     const pitchObject = camera;
     const yawObject = camera;
@@ -139,7 +325,7 @@ const angleByMovementId = {
     '15': Math.PI * (0),
 }
 
-function update() {
+function update(frame) {
     let movementId = forward * 8 + backward * 4 + right * 2 + left;
     if (movementId != 0) {
         moveTowardsAngle(angleByMovementId[movementId]);
@@ -148,6 +334,9 @@ function update() {
         moveVertically(1);
     } else if (down && !up) {
         moveVertically(-1);
+    }
+    if (frame % 10 === 0) {
+        const targetBlock = getTargetBlock();
     }
 }
 
