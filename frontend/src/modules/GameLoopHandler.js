@@ -12,11 +12,14 @@ let updateFunc;
 let drawFunc;
 let overflowFunc;
 
+let frame = 0;
+
 function update() {
     let delta = extraMs - lastTime + (lastTime = performance.now());
     performancer.update(delta);
     if (isConstantTime) {
-        updateFunc();
+        updateFunc(frame);
+        frame++;
         drawFunc();
     } else {
         if (delta < period) {
@@ -25,14 +28,17 @@ function update() {
             if (delta > 3000) {
                 overflowFunc(delta);
             } else {
-                updateFunc();
-                updateFunc();
+                updateFunc(frame);
+                frame++;
+                updateFunc(frame);
+                frame++;
             }
             delta = 0;
         } else {
             while (delta > period) {
                 delta -= period;
-                updateFunc();
+                updateFunc(frame);
+                frame++;
             }
             drawFunc();
         }
