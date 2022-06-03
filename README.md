@@ -2,21 +2,21 @@
 
 A javascript experiment to simulate minecraft's redstone logic in a similar 3D environment.
 
-[Click here to run the current version](https://grossato.com.br/3D-Redstone-Simulator/)
+[Click here to run the current version](https://grossato.com.br/static/3D-Redstone-Simulator/)
 
 Note that during development, the above link will not always bring you to a working release, if you want you can download the most recent [release](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/releases) and run it yourself, this experiment doesn't need building, it works out of the box.
 
 # Releases
  - v 0.1 - Performance Viability Release
-![Preview v0.1](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/assets/images/releases/v01_normal.gif?raw=true)
+![Preview v0.1](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v01_normal.gif)
  - v 0.2 - Primitive Block Distinction
-![Preview v0.2](https://cdn.rawgit.com/GuilhermeRossato/3D-Redstone-Simulator/master/assets/images/releases/v02_normal.png)
+![Preview v0.2](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v02_normal.png)
  - v 0.3 - Collision Detection and Block Selection
-![Preview v0.3](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/assets/images/releases/v03_normal.gif?raw=true)
+![Preview v0.3](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v03_normal.gif)
  - v 0.4 - Inventory, Hotbar and Procedural Terrain Generation
-![Preview v0.4](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/assets/images/releases/v04_normal.gif?raw=true)
+![Preview v0.4](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v04_normal.gif)
  - v 0.5 - ES6 Rewrite and Voxel AO Implementation
-![Preview v0.5](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/blob/master/assets/images/releases/v05.gif?raw=true)
+![Preview v0.5](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v05.gif)
 
 ## Who is this for
 
