@@ -47,9 +47,9 @@ There are no dependencies, so you don't need to call `npm install`.
 
 1. Menu (done)
 2. 3D Controls similar to minecraft (done)
-3. Correct Block Drawing (done)
+3. Correct Block Rendering (done)
 4. Crosshair and Block Selection (done)
-5. Collision Detection (needs recreation)
+5. Collision Detection (removed)
 6. Procedural Terrain Generation (release v0.4 only)
 7. Inventory and Hotbar system (in progress)
 8. **Major update** - rewrote everything with modern technology (done)
