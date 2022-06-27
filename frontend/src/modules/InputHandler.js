@@ -1,13 +1,16 @@
 import * as THREE from '../libs/three.module.js';
 import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHandler.js';
-import { getChunkAtWorldPosition } from './WorldHandler.js';
-import { createMarker } from '../utils/createMarker.js';
+import { getChunkAtWorldPosition, set, get } from './WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
+import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
 
 let isPointerlocked = false;
 let isFullScreen = false;
 let isFirstClick = false;
 let yawObject;
+let selectionBox;
+let targetBlock;
+let selectedBlockType = 2;
 
 function getTargetBlock() {
     const position = camera.parent.parent.position;
@@ -42,9 +45,6 @@ function getTargetBlock() {
         for (let i = 0; i < faces.length; i++) {
             const face = faces[i];
             const bounds = getFaceBounds(face, chunk[0], chunk[1], chunk[2]);
-            // createMarker(bounds[0].x, bounds[0].y, bounds[0].z, 0xFF0000, undefined, 0.2);
-            // createMarker(bounds[1].x, bounds[1].y, bounds[1].z, 0xFF0000, undefined, 0.2);
-            // createMarker(bounds[2].x, bounds[2].y, bounds[2].z, 0xFF0000, undefined, 0.2);
             for (const triangle of [[bounds[2], bounds[1], bounds[0]], [bounds[3], bounds[2], bounds[0]]]) {
                 const result = ray.intersectTriangle(triangle[0], triangle[1], triangle[2], false, point);
                 if (result) {
@@ -59,7 +59,13 @@ function getTargetBlock() {
                             fy: face.y + chunk[1] * 16,
                             fz: face.z + chunk[2] * 16,
                             sideId: face.sideId,
-                        }
+                            tx: 0,
+                            ty: 0,
+                            tz: 0
+                        };
+                        collision.tx = collision.fx - SIDE_DISPLACEMENT[collision.sideId].inverse[0] / 2;
+                        collision.ty = collision.fy - SIDE_DISPLACEMENT[collision.sideId].inverse[1] / 2;
+                        collision.tz = collision.fz - SIDE_DISPLACEMENT[collision.sideId].inverse[2] / 2;
                     } else if (collision.weight >= weight) {
                         collision.x = point.x;
                         collision.y = point.y;
@@ -69,15 +75,13 @@ function getTargetBlock() {
                         collision.fy = face.y + chunk[1] * 16;
                         collision.fz = face.z + chunk[2] * 16;
                         collision.sideId = face.sideId;
+                        collision.tx = collision.fx - SIDE_DISPLACEMENT[collision.sideId].inverse[0] / 2;
+                        collision.ty = collision.fy - SIDE_DISPLACEMENT[collision.sideId].inverse[1] / 2;
+                        collision.tz = collision.fz - SIDE_DISPLACEMENT[collision.sideId].inverse[2] / 2;
                     }
                 }
             }
         }
-    }
-
-    if (collision) {
-        // createMarker(collision.bx, collision.by, collision.bz, 0xFF0000, undefined, 0.2);
-        createMarker(collision.x, collision.y, collision.z, 0x00FF00, undefined, 2);
     }
 
     return collision;
@@ -88,8 +92,6 @@ function getTargetBlock() {
  * Up to a specific amount of chunks (maxChunkCount) optionally adding the origin chunk (includeSelf)
  */
 function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf = true) {
-    // createMarker(ox, oy, oz, 0xFF0000, undefined, 4);
-
     const c = [
         Math.floor((ox + 0.5)/16), 
         Math.floor((oy + 0.5)/16),
@@ -101,11 +103,6 @@ function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf
         chunkList.push([c[0], c[1], c[2]]);
     }
     
-    // createMarker(c[0] * 16 - 0.5, c[1] * 16 - 0.5, c[2] * 16 - 0.5, 0xFFFFFF, undefined, 0.4);
-    // createMarker(c[0] * 16 + 1 - 0.5, c[1] * 16 - 0.5, c[2] * 16 - 0.5, 0x00FF00, undefined, 0.4);
-    // createMarker(c[0] * 16 - 0.5, c[1] * 16 - 0.5, c[2] * 16 + 1 - 0.5, 0xFF0000, undefined, 0.4);
-    // createMarker(c[0] * 16 - 0.5, c[1] * 16 + 1 - 0.5, c[2] * 16 - 0.5, 0x0000FF, undefined, 0.4);
-
     const l = [
         ((dx > 0) ? (c[0] + 1) * 16 : c[0] * 16) - ox - 0.5,
         ((dy > 0) ? (c[1] + 1) * 16 : c[1] * 16) - oy - 0.5,
@@ -143,8 +140,6 @@ function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf
     o[0] += nextChunkOffset[0];
     o[1] += nextChunkOffset[1];
     o[2] += nextChunkOffset[2];
-
-    // createMarker(o[0], o[1], o[2], undefined, undefined, 20);
 
     for (let i = 0; i < maxChunkCount - (includeSelf ? 1 : 0); i++) {
         c[nextChunkIsFoundByWhichAxis] += l[nextChunkIsFoundByWhichAxis] > 0 ? 1 : -1;
@@ -184,7 +179,6 @@ function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf
         // createMarker(o[0], o[1], o[2], i % 2 === 0 ? 0xFF0000 : 0x00FF00, undefined, 120);
     }
     return chunkList;
-    //console.log(nextChunkIsFoundByWhichAxis, t);
 }
 
 function requestPointerlock() {
@@ -201,8 +195,6 @@ let left = 0;
 let backward = 0;
 let up = 0;
 let down = 0;
-
-const pointer = new THREE.Vector2(0, 0);
 
 export async function load(canvas, scene, camera) {
     
@@ -239,6 +231,22 @@ export async function load(canvas, scene, camera) {
 
     scene.add(yawObject);
 
+    selectionBox = new THREE.Group();
+    selectionBox.add(new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(1 + 1/800, 1 + 1/800, 1 + 1/800)),
+        new THREE.LineBasicMaterial({
+            color: new THREE.Color(0x222222)
+        })
+    ));
+    selectionBox.add(new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(1 + 1/1500, 1 + 1/1500, 1 + 1/1500)),
+        new THREE.LineBasicMaterial({
+            color: new THREE.Color(0x333333)
+        })
+    ));
+
+    scene.add(selectionBox);
+
     const PI_2 = Math.PI / 2;
 
     document.addEventListener("mousemove", (event) => {
@@ -267,11 +275,11 @@ export async function load(canvas, scene, camera) {
         try {
             document.exitPointerLock();
         } catch (err) {
-            // do nothing
+            // do nothing on error
         }
         isPointerlocked = false;
         console.error("Pointer lock error event:", event);
-        // requestPointerlock();
+        // requestPointerlock(); // Do not call again because it will just fail again in loop
     });
 
     window.addEventListener("keydown", function(event) {
@@ -305,6 +313,53 @@ export async function load(canvas, scene, camera) {
             up = 0;
         }
     });
+
+    window.addEventListener("mousedown", function(event) {
+        if (!isPointerlocked) {
+            return;
+        }
+        if (event.button === 2 && targetBlock) {
+            set(
+                targetBlock.tx + SIDE_DISPLACEMENT[targetBlock.sideId].inverse[0],
+                targetBlock.ty + SIDE_DISPLACEMENT[targetBlock.sideId].inverse[1],
+                targetBlock.tz + SIDE_DISPLACEMENT[targetBlock.sideId].inverse[2],
+                selectedBlockType
+            );
+            event.preventDefault();
+        }
+        if (event.button === 1 && targetBlock) {
+            const target = get(targetBlock.tx, targetBlock.ty, targetBlock.tz);
+            if (target && target.id) {
+                selectedBlockType = target.id;
+            }
+        }
+        if (event.button === 0 && targetBlock) {
+            selectionBox.visible = false;
+            set(
+                targetBlock.tx,
+                targetBlock.ty,
+                targetBlock.tz,
+                0
+            );
+            // Update targetBlock
+            targetBlock = getTargetBlock();
+            if (targetBlock) {
+                if (!selectionBox.visible) {
+                    selectionBox.visible = true;
+                }
+                // SIDE_DISPLACEMENT[targetBlock.sideId].inverse
+                selectionBox.position.set(
+                    targetBlock.tx,
+                    targetBlock.ty,
+                    targetBlock.tz
+                );
+            } else if (selectionBox.visible) {
+                selectionBox.visible = false;
+            }
+            // end update targetblock
+            event.preventDefault();
+        }
+    });
 }
 
 const angleByMovementId = {
@@ -335,8 +390,21 @@ function update(frame) {
     } else if (down && !up) {
         moveVertically(-1);
     }
-    if (frame % 10 === 0) {
-        const targetBlock = getTargetBlock();
+    if (frame % 4 === 0) {
+        targetBlock = getTargetBlock();
+        if (targetBlock) {
+            if (!selectionBox.visible) {
+                selectionBox.visible = true;
+            }
+            // SIDE_DISPLACEMENT[targetBlock.sideId].inverse
+            selectionBox.position.set(
+                targetBlock.tx,
+                targetBlock.ty,
+                targetBlock.tz
+            );
+        } else if (selectionBox.visible) {
+            selectionBox.visible = false;
+        }
     }
 }
 

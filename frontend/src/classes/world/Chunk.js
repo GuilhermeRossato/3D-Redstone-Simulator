@@ -233,9 +233,6 @@ export default class Chunk {
 	 * @param {boolean} skipAo
 	 */
 	_buildMesh() {
-		if (this.blockList.length === 0) {
-			return null;
-		}
 		// console.log("Building chunk ", this.cx, this.cy, this.cz);
 		if (this.mesh) {
 			this.scene.remove(this.mesh);
@@ -273,8 +270,12 @@ export default class Chunk {
 
 		const faces = this.getFaces(false, false, false);
 		const faceCount = faces.length;
+		
+		if (faceCount === 0) {
+			return null;
+		}
 
-		instanced.setDrawRange(0, faceCount + 2);
+		// instanced.setDrawRange(0, faceCount + 3);
 		
 		const arrayPos = new Float32Array(faceCount * 3);
 		const arrayVisual = new Float32Array(faceCount * 3);

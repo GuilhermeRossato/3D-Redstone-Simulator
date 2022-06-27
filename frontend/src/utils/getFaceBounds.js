@@ -1,5 +1,4 @@
 import * as THREE from '../libs/three.module.js';
-import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
 const PI_HALF_HALF = Math.PI / 4;
 
 function getFaceUpDirection(rotationId) {
