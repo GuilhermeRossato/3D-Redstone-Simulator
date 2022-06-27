@@ -1,10 +1,10 @@
 {
   "name": "3d-redstone-simulator",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "Web app to simulate the digital boolean logic mechanic (redstone) in a similar environment as the game in which it was implemented",
   "main": "index.js",
   "scripts": {
-    "start-frontend": "node index.js --host localhost --port 8080 --path frontend"
+    "start": "node index.js --host localhost --port 8080 --path frontend"
   },
   "repository": {
     "type": "git",
