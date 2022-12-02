@@ -12,13 +12,15 @@ varying float aoChannel;
 void main() {
     vec4 color = texture2D(texture0, vUv);
 
-    if (color.a < 0.5) { discard; }
+    if (color.a < 0.5) {
+        discard;
+    }
 
     vec4 aoColor = texture2D(texture1, vAO);
     float aoValue;
-    if (aoChannel == 1.0) {
+    if (aoChannel > 0.0 && aoChannel < 1.5) {
         aoValue = aoColor.g;
-    } else if (aoChannel == 2.0) {
+    } else if (aoChannel > 1.5 && aoChannel < 2.5) {
         aoValue = aoColor.b;
     } else {
         aoValue = aoColor.r;

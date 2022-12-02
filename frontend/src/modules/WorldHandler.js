@@ -196,7 +196,7 @@ window['WorldHandler'] = {
     worldPositionToChunk,
     get,
     set,
-    load
+    load,
 }
 
 export default {
@@ -206,5 +206,5 @@ export default {
     worldPositionToChunk,
     get,
     set,
-    load
+    load,
 }
