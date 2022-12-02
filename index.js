@@ -1,14 +1,19 @@
 // This is a static http server script
 
-function getArgumentOrDefault(parameter, fallback) {
-    const before = process.argv.slice(2).map((arg, index) => ({arg, index})).filter(({arg}) => arg === parameter).pop();
-    return before ? process.argv[2 + before.index + 1] || fallback : fallback;
-}
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { join, resolve } from 'path';
 import { createServer } from 'http';
 import { stat, readFile } from 'fs';
+
+/**
+ * @param {string} parameter
+ * @param {string} fallback
+ */
+function getArgumentOrDefault(parameter, fallback) {
+    const before = process.argv.slice(2).map((arg, index) => ({arg, index})).filter(({arg}) => arg === parameter).pop();
+    return before ? process.argv[2 + before.index + 1] || fallback : fallback;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -64,4 +69,8 @@ createServer(function (request, response) {
             console.log(`[${(new Date()).toISOString()}] 200 ${uri}`);
         });
     });
-}).listen(config.port, config.host, () => console.log(`[${(new Date()).toISOString()}] Listening at 'http://${config.host}${config.port != 80 ? ':' + config.port : ''}/' and serving '${resolve(config.path)}'`));
+}).listen(
+    config.port,
+    config.host,
+    () => console.log(`[${(new Date()).toISOString()}] Listening at 'http://${config.host}${config.port != 80 ? ':' + config.port : ''}/' and serving '${resolve(config.path)}'`)
+);
