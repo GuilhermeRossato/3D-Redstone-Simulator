@@ -5,6 +5,7 @@ import WorldHandler from './modules/WorldHandler.js';
 import GameLoopHandler from './modules/GameLoopHandler.js';
 import ForegroundHandler from './modules/ForegroundHandler.js';
 import InputHandler from './modules/InputHandler.js';
+import * as MultiplayerHandler from './modules/MultiplayerHandler.js';
 
 function setLoadingText(str) {
 	const textElement = document.querySelector('.text');
@@ -42,13 +43,24 @@ async function initialization() {
 
 		setLoadingText('Initializing the Main Loop');
 		await GameLoopHandler.load(
-			InputHandler.update,
+			(frame) => {
+				InputHandler.update(frame);
+				if (MultiplayerHandler.active) {
+					MultiplayerHandler.update(frame);
+				}
+			},
 			GraphicsHandler.draw,
 			(ms) => {console.log('Running behind ' + ms + 'ms')}
 		);
 
 		setLoadingText('Initializing the Controls');
-		await InputHandler.load(canvas, scene, camera);
+		const { pitchObject, yawObject } = await InputHandler.load(canvas, scene, camera);
+
+		const session = window['cookieStore'] ? await window['cookieStore'].get('session') : null;
+		if (session && session.value) {
+			setLoadingText('Initializing multiplayer');
+			await MultiplayerHandler.load(scene, pitchObject, yawObject);
+		}
 
 		setLoadingText('Initializing the GUI');
 		await ForegroundHandler.load();

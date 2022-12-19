@@ -1,16 +1,31 @@
 import * as THREE from '../libs/three.module.js';
 import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHandler.js';
-import { getChunkAtWorldPosition, set, get } from './WorldHandler.js';
+import { getChunk, set, get } from './WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
 
+let camera;
 let isPointerlocked = false;
 let isFullScreen = false;
 let isFirstClick = false;
-let yawObject;
+let yawObject = new THREE.Object3D();
+let pitchObject = new THREE.Object3D();
 let selectionBox;
 let targetBlock;
 let selectedBlockType = 2;
+
+export let dirty = false;
+
+export const position = yawObject.position;
+
+export const rotation = {
+    pitch: pitchObject.rotation.x,
+    yaw: yawObject.rotation.y,
+}
+
+export function clearDirtyness() {
+    dirty = false;
+}
 
 function getTargetBlock() {
     const position = camera.parent.parent.position;
@@ -30,11 +45,11 @@ function getTargetBlock() {
 
     const point = new THREE.Vector3(0, 0, 0);
 
-    /** @type {{x: number; y: number; z: number; weight: number, fx: number, fy: number, fz: number, sideId: number} | null} */
+    /** @type {{x: number; y: number; z: number; weight: number, fx: number, fy: number, fz: number, sideId: number, tx: number, ty: number, tz: number} | null} */
     let collision = null;
 
     for (const chunk of chunkList) {
-        const c = WorldHandler.getChunk(chunk[0], chunk[1], chunk[2]);
+        const c = getChunk(chunk[0], chunk[1], chunk[2]);
         if (!c) {
             continue;
         }
@@ -196,8 +211,9 @@ let backward = 0;
 let up = 0;
 let down = 0;
 
-export async function load(canvas, scene, camera) {
-    
+export async function load(canvas, scene, receivedCamera) {
+    camera = receivedCamera;
+
     canvas.addEventListener("click", (_event) => {
         if (isFirstClick && !isFullScreen) {
             isFirstClick = false;
@@ -210,11 +226,9 @@ export async function load(canvas, scene, camera) {
         }
     });
 
-    const pitchObject = new THREE.Object3D();
     pitchObject.rotation.set(camera.rotation.x, camera.rotation.y, camera.rotation.z);
     pitchObject.add(camera);
 
-    yawObject = new THREE.Object3D();
     yawObject.name = 'Camera Wrapper';
     yawObject.position.set(camera.position.x, camera.position.y, camera.position.z);
     yawObject.add(pitchObject);
@@ -232,18 +246,15 @@ export async function load(canvas, scene, camera) {
     scene.add(yawObject);
 
     selectionBox = new THREE.Group();
-    selectionBox.add(new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(1 + 1/800, 1 + 1/800, 1 + 1/800)),
-        new THREE.LineBasicMaterial({
-            color: new THREE.Color(0x222222)
-        })
-    ));
-    selectionBox.add(new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(1 + 1/1500, 1 + 1/1500, 1 + 1/1500)),
-        new THREE.LineBasicMaterial({
-            color: new THREE.Color(0x333333)
-        })
-    ));
+
+    for (let size of [600, 900, 1500]) {
+        selectionBox.add(new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(1 + 1/size, 1 + 1/size, 1 + 1/size)),
+            new THREE.LineBasicMaterial({
+                color: new THREE.Color(0x222222)
+            })
+        ));
+    }
 
     scene.add(selectionBox);
 
@@ -254,13 +265,20 @@ export async function load(canvas, scene, camera) {
             return;
         }
         
-        const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-        const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+        const movementX = event.movementX || 0;
+        const movementY = event.movementY || 0;
+
+        if (movementX !== 0 || movementY !== 0) {
+            dirty = true;
+        }
 
         yawObject.rotation.y -= movementX * 0.002;
         pitchObject.rotation.x -= movementY * 0.002;
 
         pitchObject.rotation.x = Math.max(- PI_2, Math.min(PI_2, pitchObject.rotation.x));
+
+        rotation.pitch = pitchObject.rotation.x;
+        rotation.yaw = yawObject.rotation.y;
     });
 
     document.addEventListener("fullscreenChange", function () {
@@ -360,6 +378,8 @@ export async function load(canvas, scene, camera) {
             event.preventDefault();
         }
     });
+
+    return { pitchObject, yawObject };
 }
 
 const angleByMovementId = {
@@ -383,11 +403,14 @@ const angleByMovementId = {
 function update(frame) {
     let movementId = forward * 8 + backward * 4 + right * 2 + left;
     if (movementId != 0) {
+        dirty = true;
         moveTowardsAngle(angleByMovementId[movementId]);
     }
     if (up && !down) {
+        dirty = true;
         moveVertically(1);
     } else if (down && !up) {
+        dirty = true;
         moveVertically(-1);
     }
     if (frame % 4 === 0) {

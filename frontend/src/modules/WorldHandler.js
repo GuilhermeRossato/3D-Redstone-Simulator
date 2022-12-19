@@ -186,6 +186,7 @@ async function load(loadedScene) {
     set(1, 1, -2, 3);
     set(2, 0, -1, 3);
     set(2, 0, -2, 3);
+    set(8, 6, 8, 1);
 }
 
 // Debug
