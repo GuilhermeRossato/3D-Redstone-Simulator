@@ -1,13 +1,10 @@
 'use strict';
 
 import Chunk from '../classes/world/Chunk.js';
-import * as THREE from '../libs/three.module.js';
+import { scene } from './GraphicsHandler.js';
 
 /** @type {Record<number, Record<number, Record<number, Chunk>>>} */
 const chunks = [];
-
-/** @type {THREE.Scene} */
-let scene;
 
 export function isSolidBlock(x, y, z) {
     const worldBlock = get(x, y, z);
@@ -161,46 +158,18 @@ export function set(x, y, z, id) {
     return result;
 }
 
-async function load(loadedScene) {
-    scene = loadedScene;
-    set(-1, -2, -1, 1);
-    set(-1, 2, -1, 1);
+export async function load() {
     set(-1, 0, -1, 1);
-    set(0, 0, -1, 1);
-    set(-1, -1, -1, 1);
-    set(-1, 3, -1, 1);
-    set(-1, 1, -1, 1);
-    set(0, 1, -1, 1);
-    set(-1, 0, 0, 2);
-    set(0, 0, 0, 2);
-    set(1, 0, 0, 2);
-    set(0, 0, 1, 2);
-    set(1, 0, 1, 2);
-    set(-1, 0, 1, 2);
-    set(2, 0, 0, 2);
-    set(2, 0, 1, 2);
-    set(2, 1, 1, 2);
-    set(1, 0, -1, 3);
-    set(1, 0, -2, 3);
-    set(1, 1, -1, 3);
-    set(1, 1, -2, 3);
-    set(2, 0, -1, 3);
-    set(2, 0, -2, 3);
-    set(8, 6, 8, 1);
+    set(1, 0, -1, 2);
+    set(0, 0, 1, 3);
+    set(0, 0, 0, 4);
+    set(0, 0, -1, 4);
+    set(-1, 1, -1, 5);
+    set(0, 1, -1, 5);
 }
 
 // Debug
 window['WorldHandler'] = {
-    isSolidBlock,
-    getChunkAtWorldPosition,
-    getChunk,
-    worldPositionToChunk,
-    get,
-    set,
-    load,
-}
-
-export default {
     isSolidBlock,
     getChunkAtWorldPosition,
     getChunk,

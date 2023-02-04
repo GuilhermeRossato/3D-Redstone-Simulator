@@ -29,9 +29,9 @@ function update() {
                 overflowFunc(delta);
             } else {
                 updateFunc(frame);
-                frame++;
-                updateFunc(frame);
-                frame++;
+                updateFunc(frame + 1);
+                updateFunc(frame + 2);
+                frame += 3;
             }
             delta = 0;
         } else {
@@ -62,19 +62,13 @@ export function load(update, draw, overflow) {
     performancer.attach(document.body);
 }
 
-function start() {
+export function start() {
     isRunning = true;
     drawFunc();
     updateFunc();
     requestAnimationFrame(update);
 }
 
-function stop() {
+export function stop() {
     isRunning = false;
-}
-
-export default {
-    load,
-    start,
-    stop
 }

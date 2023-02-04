@@ -70,7 +70,7 @@ createServer(function (request, response) {
         });
     });
 }).listen(
-    config.port,
+    parseInt(config.port.toString(), 10),
     config.host,
-    () => console.log(`[${(new Date()).toISOString()}] Listening at 'http://${config.host}${config.port != 80 ? ':' + config.port : ''}/' and serving '${resolve(config.path)}'`)
+    () => console.log(`[${(new Date()).toISOString()}] Listening at 'http://${config.host}${config.port.toString() !== '80' ? ':' + config.port : ''}/' and serving '${resolve(config.path)}'`)
 );

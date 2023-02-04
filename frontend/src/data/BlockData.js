@@ -4,9 +4,9 @@ function getReproduciblyRandomAvailableTexture(sideNumber, x, y, z) {
 	return this.textureList[Math.abs(Math.floor((noise4d(x, y, z, sideNumber) * 1000))) % this.textureList.length];
 }
 
-window.getReproduciblyRandomAvailableTexture = getReproduciblyRandomAvailableTexture;
+window['getReproduciblyRandomAvailableTexture'] = getReproduciblyRandomAvailableTexture;
 
-/** @type {{name: string, isSolid?: false, faceCount?: number, isRedstone?: true, isTorch?: true, texture?: string | string[] | string[][]}[]} */
+/** @type {{name: string, isSolid?: false, faceCount?: number, isRedstone?: true, isTorch?: true, texture?: any | string | string[] | string[][], textureList?: any}[]} */
 const BlockData = [{
 	name: "Air"
 }, {
@@ -28,12 +28,14 @@ const BlockData = [{
 	faceCount: 1,
 	isSolid: false,
 	isRedstone: true,
+	texture: "redstone-full-off.png",
 	textureList: ["redstone-full-off.png", "redstone-line-off.png", "redstone-intersection-off.png", "redstone-corner-off.png"]
 }, {
 	name: "Redstone Dust",
 	faceCount: 1,
 	isSolid: false,
 	isRedstone: true,
+	texture: "redstone-full-on.png",
 	textureList: ["redstone-full-on.png", "redstone-line-on.png", "redstone-intersection-on.png", "redstone-corner-on.png"]
 }, {
 	name: "Redstone Torch Off",

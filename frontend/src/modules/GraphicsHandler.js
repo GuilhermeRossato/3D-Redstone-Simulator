@@ -1,13 +1,13 @@
 import * as THREE from '../libs/three.module.js';
 import loadTextResource from '../utils/loadTextResource.js';
-import TextureHandler from '../modules/TextureHandler.js';
+import * as TextureHandler from '../modules/TextureHandler.js';
 
 let aaScale = 1;
 let fixedSize = false;
 
 let hasLoaded = false;
 /** @type {THREE.Scene} */
-let scene;
+export let scene;
 /** @type {THREE.PerspectiveCamera} */
 let camera;
 /** @type {THREE.WebGLRenderer} */

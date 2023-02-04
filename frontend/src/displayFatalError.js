@@ -14,7 +14,7 @@ function newElement(tag = 'div', props, parent) {
 /**
  * @param {Error} error 
  */
-function displayFatalError(error) {
+export function displayFatalError(error) {
     if (isFatalErrorDisplayActive) {
         console.warn('Skipped overlapping fatal error display:');
         console.error(error);
@@ -22,7 +22,7 @@ function displayFatalError(error) {
     }
 
     
-    let wrapper = newElement('div', [
+    const wrapper = newElement('div', [
         ['role', 'dialog'],
         ['style', `
         display: flex;
@@ -35,7 +35,7 @@ function displayFatalError(error) {
         z-index: 1300;
         position: fixed;`
         ]]);
-    let innerWrapper = newElement('div', [
+    const innerWrapper = newElement('div', [
         ['style', `
         opacity: 1;
         will-change: opacity;
@@ -53,13 +53,13 @@ function displayFatalError(error) {
         border-radius: 4px;
         background-color: #fff;
         `]], wrapper);
-    let titleWrapper = newElement('div', [
+    const titleWrapper = newElement('div', [
         ['style', `
         flex: 0 0 auto;
         margin: 0;
         padding: 24px 24px 20px;
         `]], innerWrapper);
-    let title = newElement('h2', [
+    const title = newElement('h2', [
         ['style', `
             color: rgba(0, 0, 0, 0.87);
             font-size: 1.3125rem;
@@ -71,13 +71,13 @@ function displayFatalError(error) {
             text-shadow: none;
         `]], titleWrapper);
     title.innerText = error.name?error.name:'Error Event';
-    let paragraphWrapper = newElement('div', [
+    const paragraphWrapper = newElement('div', [
         ['style', `
         flex: 1 1 auto;
         padding: 0 24px 24px;
         overflow-y: auto;
         `]], innerWrapper);
-    let paragraph = newElement('pre', [
+    const paragraph = newElement('pre', [
         ['style', `
             color: rgba(0, 0, 0, 0.63);
             font-size: 1rem;
@@ -107,5 +107,3 @@ function displayFatalError(error) {
 
     isFatalErrorDisplayActive = true;
 }
-
-export default displayFatalError;

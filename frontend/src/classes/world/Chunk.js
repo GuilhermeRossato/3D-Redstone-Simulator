@@ -5,7 +5,7 @@ import WorldBlock from '../../classes/world/WorldBlock.js';
 import * as BlockHandler from '../../modules/BlockHandler.js';
 import { getMaterial } from '../../modules/GraphicsHandler.js';
 import SIDE_DISPLACEMENT from '../../data/SideDisplacement.js';
-import TextureHandler from '../../modules/TextureHandler.js';
+import * as TextureHandler from '../../modules/TextureHandler.js';
 
 const primitive = new THREE.PlaneBufferGeometry(1, 1);
 window['geometry'] = primitive;
@@ -46,7 +46,7 @@ export default class Chunk {
 		this.blocks = [];
 		/** @type {WorldBlock[]} */
 		this.blockList = [];
-		/** @type {any} */
+		/** @type {any | THREE.Mesh} */
 		this.mesh = undefined;
 
 		this.rebuildMesh = this.rebuildMesh.bind(this);
@@ -134,6 +134,7 @@ export default class Chunk {
 			return 0;
 		}
 
+		// @ts-ignore
 		return tl + t * 2 + tr * 4 + (r + (br + (b + (bl + l * 2) * 2) * 2) * 2) * 8;
 	}
 
@@ -194,8 +195,7 @@ export default class Chunk {
 						rotationId = 446;
 						console.warn("Unknown texture for " + lookupId + " at ", gx, gy, gz);
 					} else {
-						// @ts-ignore
-						faceTexture = block.texture[redstoneTextureLookup[lookupId].id];
+						faceTexture = block.data.textureList[redstoneTextureLookup[lookupId].id];
 						rotationId = redstoneTextureLookup[lookupId].rot;
 					}
 				} else {
@@ -215,7 +215,7 @@ export default class Chunk {
 					textureY: ty
 				};
 				if (block.data.isRedstone) {
-					obj.y -= 7/16;
+					obj.y -= 7.5/16;
 				} else if (block.data.isTorch && j !== 5) {
 					obj.lightness = 1;
 					obj[SIDE_DISPLACEMENT[j].originAxis] += SIDE_DISPLACEMENT[j].originValue * (j === 4 ? 2 : 1)/16;
@@ -229,9 +229,6 @@ export default class Chunk {
 		return faces;
 	}
 
-	/**
-	 * @param {boolean} skipAo
-	 */
 	_buildMesh() {
 		// console.log("Building chunk ", this.cx, this.cy, this.cz);
 		if (this.mesh) {
@@ -245,10 +242,9 @@ export default class Chunk {
 			this.instanced = null;
 		}
 
-		/** @type {THREE.MeshBasicMaterial} */
+		// const material = new THREE.MeshBasicMaterial();
 		const material = getMaterial();
 
-		// const material = new THREE.MeshBasicMaterial();
 		const geometry = primitive;
 
 		if (!material || !geometry) {
@@ -270,7 +266,7 @@ export default class Chunk {
 
 		const faces = this.getFaces(false, false, false);
 		const faceCount = faces.length;
-		
+
 		if (faceCount === 0) {
 			return null;
 		}
@@ -302,7 +298,7 @@ export default class Chunk {
 		const attributeTile = new THREE.InstancedBufferAttribute(arrayTile, 2);
 		instanced.setAttribute("instanceTile", attributeTile);
 
-		/** @type {any} */
+		/** @type {any} */ // @ts-ignore
 		const mesh = new THREE.Mesh(instanced, material);
 		mesh.name = `${this.cx}x${this.cy}x${this.cz}`;
 		mesh.position.set(this.cx * 16, this.cy * 16, this.cz * 16);
@@ -424,7 +420,7 @@ export default class Chunk {
 	 * @param {number} id 
 	 */
 	addBlock(x, y, z, id) {
-		const blockObj = { id, data: BlockData[id], x, y, z };
+		const blockObj = { id, data: BlockData[id], x, y, z, texture: BlockData[id].texture };
 		if (!this.blocks[z]) {
 			this.blocks[z] = [];
 		}

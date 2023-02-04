@@ -35,7 +35,7 @@ function getTargetBlock() {
     const pitch = camera.parent.rotation.x;
     // horizontal angle
     const yaw = camera.parent.parent.rotation.y;
-    
+
     const dx = Math.sin(Math.PI + yaw) * Math.cos(pitch);
     const dy = Math.sin(pitch);
     const dz = Math.cos(Math.PI + yaw) * Math.cos(pitch);
@@ -352,7 +352,6 @@ export async function load(canvas, scene, receivedCamera) {
             }
         }
         if (event.button === 0 && targetBlock) {
-            selectionBox.visible = false;
             set(
                 targetBlock.tx,
                 targetBlock.ty,
@@ -400,7 +399,7 @@ const angleByMovementId = {
     '15': Math.PI * (0),
 }
 
-function update(frame) {
+export function update(frame) {
     let movementId = forward * 8 + backward * 4 + right * 2 + left;
     if (movementId != 0) {
         dirty = true;
@@ -431,7 +430,19 @@ function update(frame) {
     }
 }
 
-export default {
-    load,
-    update
-};
+/**
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ * @param {number} yaw
+ * @param {number} pitch
+ */
+export function setPlayerPosition(x, y, z, yaw, pitch) {
+    yawObject.position.set(x, y, z);
+    if (typeof yaw === 'number' && !isNaN(yaw)) {
+        yawObject.rotation.y = yaw;
+    }
+    if (typeof pitch === 'number' && !isNaN(pitch)) {
+        pitchObject.rotation.x = pitch;
+    }
+}

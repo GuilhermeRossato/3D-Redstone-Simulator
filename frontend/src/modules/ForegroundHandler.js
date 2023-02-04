@@ -1,19 +1,16 @@
-function start() {
+export function start() {
+    // @ts-ignore
     document.querySelector('.loading-screen').style.display = 'none';
+    // @ts-ignore
     document.querySelector('.foreground-game').style.display = '';
+    // @ts-ignore
     document.querySelector('.background-game-canvas').style.display = '';
 }
 
-async function load() {
+export async function load() {
 
 }
 
-function showPausedGame() {
+export function showPausedGame() {
     
-}
-
-export default {
-    start,
-    load,
-    showPausedGame
 }

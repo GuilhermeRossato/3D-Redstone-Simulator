@@ -98,7 +98,7 @@ async function processImageAndGenerateTextureFromPath(sourcePath, addCanvasToScr
     return await createTextureFromCanvas(canvas);
 }
 
-async function load() {
+export async function load() {
     if (hasLoaded) {
         throw new Error('Textures are already loaded');
     }
@@ -168,30 +168,29 @@ async function load() {
     hasLoaded = true;
 }
 
-function getMainTexture() {
+export function getMainTexture() {
     if (!hasLoaded) {
         throw new Error("Texture system not loaded");
     }
     return mainTexture;
 }
 
-function getAoTexture() {
+export function getAoTexture() {
     if (!hasLoaded) {
         throw new Error("Texture system not loaded");
     }
     return aoTexture;
 }
 
-function getTexturePositionFromName(textureName) {
+export function getTexturePositionFromName(textureName) {
     return textureLookup[textureName] || textureLookup[FALLBACK_TEXTURE];
 }
 
-const TextureHandler = {
+// For debug
+window['TextureHandler'] = {
     load,
     getMainTexture,
     getAoTexture,
     getTexturePositionFromName,
 };
-
-export default TextureHandler;
 

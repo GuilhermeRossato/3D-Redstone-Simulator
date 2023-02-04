@@ -1,10 +1,10 @@
-import displayFatalError from './displayFatalError.js';
-import TextureHandler from './modules/TextureHandler.js';
-import GraphicsHandler from './modules/GraphicsHandler.js';
-import WorldHandler from './modules/WorldHandler.js';
-import GameLoopHandler from './modules/GameLoopHandler.js';
-import ForegroundHandler from './modules/ForegroundHandler.js';
-import InputHandler from './modules/InputHandler.js';
+import { displayFatalError } from './displayFatalError.js';
+import * as TextureHandler from './modules/TextureHandler.js';
+import * as GraphicsHandler from './modules/GraphicsHandler.js';
+import * as WorldHandler from './modules/WorldHandler.js';
+import * as GameLoopHandler from './modules/GameLoopHandler.js';
+import * as ForegroundHandler from './modules/ForegroundHandler.js';
+import * as InputHandler from './modules/InputHandler.js';
 import * as MultiplayerHandler from './modules/MultiplayerHandler.js';
 
 function setLoadingText(str) {
@@ -27,6 +27,7 @@ async function initialization() {
         if (!canvas) {
             throw new Error('Canvas not present on page');
         }
+
 		const gl = canvas.getContext('webgl');
 		if (gl == null) {
 			throw new Error('WebGL Context could not be created');
@@ -46,7 +47,7 @@ async function initialization() {
 			(frame) => {
 				InputHandler.update(frame);
 				if (MultiplayerHandler.active) {
-					MultiplayerHandler.update(frame);
+					MultiplayerHandler.update();
 				}
 			},
 			GraphicsHandler.draw,
@@ -54,13 +55,10 @@ async function initialization() {
 		);
 
 		setLoadingText('Initializing the Controls');
-		const { pitchObject, yawObject } = await InputHandler.load(canvas, scene, camera);
+		await InputHandler.load(canvas, scene, camera);
 
-		const session = window['cookieStore'] ? await window['cookieStore'].get('session') : null;
-		if (session && session.value) {
-			setLoadingText('Initializing multiplayer');
-			await MultiplayerHandler.load(scene, pitchObject, yawObject);
-		}
+		setLoadingText('Initializing Multiplayer');
+		await MultiplayerHandler.load();
 
 		setLoadingText('Initializing the GUI');
 		await ForegroundHandler.load();

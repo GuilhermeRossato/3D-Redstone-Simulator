@@ -50,8 +50,6 @@ function getFaceRightDirection(rotationId) {
 export default function getFaceBounds(face, cx = 0, cy = 0, cz = 0) {
 	if (face.ref.data.isTorch) {
 		throw new Error('Unimplemented');
-	} else if (face.ref.data.isRedstone) {
-		throw new Error('Unimplemented');
 	}
 	const up = getFaceUpDirection(face.rotationId);
 	const right = getFaceRightDirection(face.rotationId);
