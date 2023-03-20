@@ -311,7 +311,6 @@ export async function load(canvas, scene, receivedCamera) {
     });
 
     window.addEventListener("keydown", function(event) {
-        console.log(event.code);
         if (event.code === 'KeyW') {
             forward = 1;
         } else if (event.code === 'KeyA') {
