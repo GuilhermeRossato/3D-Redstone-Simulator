@@ -159,13 +159,6 @@ export function set(x, y, z, id) {
 }
 
 export async function load() {
-    set(-1, 0, -1, 1);
-    set(1, 0, -1, 2);
-    set(0, 0, 1, 3);
-    set(0, 0, 0, 4);
-    set(0, 0, -1, 4);
-    set(-1, 1, -1, 5);
-    set(0, 1, -1, 5);
 }
 
 // Debug

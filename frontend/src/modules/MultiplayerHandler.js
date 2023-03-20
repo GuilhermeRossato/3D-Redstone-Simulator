@@ -91,28 +91,29 @@ function initPlayers(playerList) {
 
 export async function load() {
     try {
-        const status = await performLogin();
+        const response = await performLogin();
 
-        if (!status) {
+        if (!response) {
             console.warn('Login did not return data');
             return;
         }
 
-        if (status.message || status.error) {
-            console.warn('Login failed with error', status.message || status.error);
+        if (response.message || response.error) {
+            console.warn('Login failed with error', response.message || response.error);
             return;
         }
 
-        if (!status.player || typeof status.player.x !== 'number' || typeof status.player.y !== 'number' || typeof status.player.z !== 'number') {
-            console.warn('Server did not send a correct player object at response', status);
+        if (!response.player || typeof response.player.x !== 'number' || typeof response.player.y !== 'number' || typeof response.player.z !== 'number') {
+            console.warn('Server did not send a correct player object at response', response);
             return;
         }
 
-        if (status && status.success) {
+        if (response && response.success) {
             active = true;
-            player = status.player;
+            player = response.player;
             setPlayerPosition(player.x, player.y, player.z, player.yaw, player.pitch);
-            await requestNearbyPlayerUpdate();
+            initPlayers(response.players);
+            initWorld(response.world);
         } else {
             console.log('Missing success flag from server response');
         }
@@ -122,31 +123,20 @@ export async function load() {
     }
 }
 
-async function requestNearbyPlayerUpdate() {
-    const response = await fetch('/request-nearby-players/');
-    const text = await response.text();
-    if (!text) {
-        throw new Error('Server did not send data');
-    }
-    if (text[0] !== '{') {
-        if (text[0] === '<' || text.length > 1000) {
-            throw new Error('Server returned invalid text');
-        } else {
-            throw new Error(text);
+/**
+ * 
+ * @param {{x: number, y: number, z: number, id: number}[]} blockList 
+ */
+function initWorld(blockList) {
+    for (const {x, y, z, id} of blockList) {
+        if (x === -4 && y === 0 && z === 0) {
+            console.trace(x, y, z, id);
         }
+        if (id === 0) {
+            continue;
+        }
+        set(x, y, z, id);
     }
-    const json = JSON.parse(text);
-
-    if (typeof json !== 'object') {
-        throw new Error('Unexpected reply type of request nearby players');
-    }
-    if (json.message || json.error) {
-        throw new Error(json.message || json.error)
-    }
-    if (!(json.players instanceof Array)) {
-        throw new Error('Invalid "players" property on server reply');
-    }
-    initPlayers(json.players);
 }
 
 async function performLogin() {
@@ -184,14 +174,8 @@ async function performLogin() {
 }
 
 function b(i, j, t) {
-    if (isNaN(i)) {
-        throw new Error('Got NaN at argument 1: ' + JSON.stringify([i, j, t]));
-    }
-    if (isNaN(j)) {
-        throw new Error('Got NaN at argument 2: ' + JSON.stringify([i, j, t]));
-    }
-    if (isNaN(t)) {
-        throw new Error('Got NaN at argument 3: ' + JSON.stringify([i, j, t]));
+    if (typeof i !== 'number' || typeof j !== 'number' || isNaN(i) || isNaN(j) || isNaN(t)) {
+        throw new Error('Got NaN: ' + JSON.stringify([i, j, t]));
     }
     return i + (j - i) * t;
 }
@@ -207,7 +191,7 @@ export function update() {
         if (onlinePlayerRecord[pid].target.end < n) {
             onlinePlayerRecord[pid].target.finished = true;
             onlinePlayerRecord[pid].group.position.set(targetPosition[0], targetPosition[1], targetPosition[2]);
-            onlinePlayerRecord[pid].group.rotation.set(0, targetPosition[3], 0);
+            onlinePlayerRecord[pid].group.rotation.set(0, targetPosition[4], 0);
         } else {
             const t = (n - onlinePlayerRecord[pid].target.start) / (onlinePlayerRecord[pid].target.end - onlinePlayerRecord[pid].target.start);
             if (isNaN(t)) {
@@ -217,8 +201,7 @@ export function update() {
             const x = b(originPosition[0], targetPosition[0], t);
             const y = b(originPosition[1], targetPosition[1], t);
             const z = b(originPosition[2], targetPosition[2], t);
-            const pitch = b(originPosition[3], targetPosition[3], t);
-            // console.log(t, x, y, z, pitch);
+            const pitch = b(originPosition[4], targetPosition[4], t);
             if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(pitch)) {
                 continue;
             }
@@ -228,7 +211,6 @@ export function update() {
     }
     if (active && player) {
         updateSelfState();
-        updateExternalWorld();
         updateNextGameState();
     }
 }
@@ -243,6 +225,10 @@ export function processEvent(event) {
         console.log('Player spawned');
         addOtherPlayer(event.properties);
     } else if (event.type === 'move') {
+        if (player && event.pid === player._id) {
+            console.warn('Server sent self movement event (ignoring it)');
+            return;
+        }
         console.log('Player moved');
         if (!onlinePlayerRecord[event.pid]) {
             onlinePlayerRecord[event.pid] = new Promise((resolve) => {
@@ -295,7 +281,7 @@ export function processEvent(event) {
                 finished: false,
                 start,
                 end: start + 500,
-                origin: [onlinePlayerRecord[event.pid].group.position.x, onlinePlayerRecord[event.pid].group.position.y, onlinePlayerRecord[event.pid].group.position.z, onlinePlayerRecord[event.pid].group.rotation.y, 0],
+                origin: [onlinePlayerRecord[event.pid].group.position.x, onlinePlayerRecord[event.pid].group.position.y, onlinePlayerRecord[event.pid].group.position.z, 0, onlinePlayerRecord[event.pid].group.rotation.y],
                 target: [event.x, event.y, event.z, event.pitch, event.yaw]
             }
             // onlinePlayerRecord[event.pid].group.position.set(event.x, event.y, event.z);
@@ -322,5 +308,7 @@ export function processEvent(event) {
         if (typeof event.x === 'number' && typeof event.y === 'number' && typeof event.z === 'number' && typeof event.id === 'number') {
             set(event.x, event.y, event.z, event.id);
         }
+    } else {
+        console.warn('Unknown server event of type "' + (event ? event.type : 'unknown') + '"');
     }
 }

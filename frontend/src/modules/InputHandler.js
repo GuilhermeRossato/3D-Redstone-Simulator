@@ -3,6 +3,8 @@ import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHa
 import { getChunk, set, get } from './WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
+import { sendPlayerActionToServerEventually } from './Multiplayer/ExternalSelfStateHandler.js';
+import { reliveWorld } from './DebugHandler.js';
 
 let camera;
 let isPointerlocked = false;
@@ -45,7 +47,7 @@ function getTargetBlock() {
 
     const point = new THREE.Vector3(0, 0, 0);
 
-    /** @type {{x: number; y: number; z: number; weight: number, fx: number, fy: number, fz: number, sideId: number, tx: number, ty: number, tz: number} | null} */
+    /** @type {{x: number; y: number; z: number; weight: number, fx: number, fy: number, fz: number, sideId: number, tx: number, ty: number, tz: number, sx: number, sy: number, sz: number} | null} */
     let collision = null;
 
     for (const chunk of chunkList) {
@@ -64,7 +66,7 @@ function getTargetBlock() {
                 const result = ray.intersectTriangle(triangle[0], triangle[1], triangle[2], false, point);
                 if (result) {
                     const weight = (point.x - position.x) / dx;
-                    if (collision === null) {
+                    if (collision === null || collision.weight >= weight) {
                         collision = {
                             x: point.x,
                             y: point.y,
@@ -76,26 +78,33 @@ function getTargetBlock() {
                             sideId: face.sideId,
                             tx: 0,
                             ty: 0,
-                            tz: 0
+                            tz: 0,
+                            sx: 0,
+                            sy: 0,
+                            sz: 0
                         };
-                        collision.tx = collision.fx - SIDE_DISPLACEMENT[collision.sideId].inverse[0] / 2;
-                        collision.ty = collision.fy - SIDE_DISPLACEMENT[collision.sideId].inverse[1] / 2;
-                        collision.tz = collision.fz - SIDE_DISPLACEMENT[collision.sideId].inverse[2] / 2;
-                    } else if (collision.weight >= weight) {
-                        collision.x = point.x;
-                        collision.y = point.y;
-                        collision.z = point.z;
-                        collision.weight = weight;
-                        collision.fx = face.x + chunk[0] * 16;
-                        collision.fy = face.y + chunk[1] * 16;
-                        collision.fz = face.z + chunk[2] * 16;
-                        collision.sideId = face.sideId;
-                        collision.tx = collision.fx - SIDE_DISPLACEMENT[collision.sideId].inverse[0] / 2;
-                        collision.ty = collision.fy - SIDE_DISPLACEMENT[collision.sideId].inverse[1] / 2;
-                        collision.tz = collision.fz - SIDE_DISPLACEMENT[collision.sideId].inverse[2] / 2;
+                        if (face.ref.id === 5) {
+                            // block is a redstone dust
+                            collision.tx = collision.fx;
+                            collision.ty = collision.fy + 0/16;
+                            collision.tz = collision.fz;
+                            collision.sx = 1;
+                            collision.sy = 1/16;
+                            collision.sz = 1;
+                        } else {
+                            collision.tx = collision.fx - SIDE_DISPLACEMENT[collision.sideId].inverse[0] / 2;
+                            collision.ty = collision.fy - SIDE_DISPLACEMENT[collision.sideId].inverse[1] / 2;
+                            collision.tz = collision.fz - SIDE_DISPLACEMENT[collision.sideId].inverse[2] / 2;
+                            collision.sx = 1;
+                            collision.sy = 1;
+                            collision.sz = 1;
+                        }
                     }
                 }
             }
+        }
+        if (collision) {
+            break;
         }
     }
 
@@ -314,6 +323,9 @@ export async function load(canvas, scene, receivedCamera) {
         } else if (event.code === 'Space') {
             up = 1;
         }
+        if (event.code === 'KeyR') {
+            launchReliveWorld();
+        }
     });
 
     window.addEventListener("keyup", function(event) {
@@ -336,49 +348,63 @@ export async function load(canvas, scene, receivedCamera) {
         if (!isPointerlocked) {
             return;
         }
-        if (event.button === 2 && targetBlock) {
-            set(
+        const isLeftClick = event.button === 0;
+        const isMiddleClick = event.button === 1;
+        const isRightClick = event.button === 2;
+        if (isRightClick && targetBlock) {
+            issueBlockCreationRequest(
                 targetBlock.tx + SIDE_DISPLACEMENT[targetBlock.sideId].inverse[0],
                 targetBlock.ty + SIDE_DISPLACEMENT[targetBlock.sideId].inverse[1],
                 targetBlock.tz + SIDE_DISPLACEMENT[targetBlock.sideId].inverse[2],
                 selectedBlockType
             );
             event.preventDefault();
+            return;
         }
-        if (event.button === 1 && targetBlock) {
+        if (isMiddleClick && targetBlock) {
             const target = get(targetBlock.tx, targetBlock.ty, targetBlock.tz);
             if (target && target.id) {
                 selectedBlockType = target.id;
             }
+            return;
         }
-        if (event.button === 0 && targetBlock) {
-            set(
-                targetBlock.tx,
-                targetBlock.ty,
-                targetBlock.tz,
-                0
-            );
-            // Update targetBlock
-            targetBlock = getTargetBlock();
-            if (targetBlock) {
-                if (!selectionBox.visible) {
-                    selectionBox.visible = true;
-                }
-                // SIDE_DISPLACEMENT[targetBlock.sideId].inverse
-                selectionBox.position.set(
-                    targetBlock.tx,
-                    targetBlock.ty,
-                    targetBlock.tz
-                );
-            } else if (selectionBox.visible) {
-                selectionBox.visible = false;
-            }
-            // end update targetblock
+        if (isLeftClick && targetBlock) {
+            issueBlockDestructionRequest(targetBlock.tx, targetBlock.ty, targetBlock.tz);
             event.preventDefault();
         }
     });
 
     return { pitchObject, yawObject };
+}
+
+let isReliveWorldActive = false;
+function launchReliveWorld() {
+    if (isReliveWorldActive) {
+        console.log('Skipped relive world because it is currently active');
+        return;
+    }
+    isReliveWorldActive = true;
+    const cx = Math.floor(position.x / 16);
+    const cy = Math.floor(position.y / 16);
+    const cz = Math.floor(position.z / 16);
+    reliveWorld(cx, cy, cz).then(() => {
+        console.log('Relive world finished');
+        isReliveWorldActive = false;
+    }).catch((err) => {
+        console.log('Relive world failed:', err);
+        isReliveWorldActive = false;
+    });
+}
+
+let nextUpdateAction = null;
+
+function issueBlockCreationRequest(x, y, z, id) {
+    nextUpdateAction = {type: 'create', x, y, z, id};
+}
+
+function issueBlockDestructionRequest(x, y, z) {
+    nextUpdateAction = {type: 'delete', x, y, z};
+    selectionBox.visible = false;
 }
 
 const angleByMovementId = {
@@ -412,6 +438,20 @@ export function update(frame) {
         dirty = true;
         moveVertically(-1);
     }
+    if (nextUpdateAction) {
+        if (nextUpdateAction.type === 'create') {
+            set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, nextUpdateAction.id);
+            sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
+            nextUpdateAction = null;
+        } else if (nextUpdateAction.type === 'delete') {
+            set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, 0);
+            selectionBox.visible = false;
+            frame = 0; // This makes the selection box be updated
+            sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: 0 });
+            nextUpdateAction = null;
+        }
+    }
+    // Update selection box every 4th frame
     if (frame % 4 === 0) {
         targetBlock = getTargetBlock();
         if (targetBlock) {
@@ -419,11 +459,12 @@ export function update(frame) {
                 selectionBox.visible = true;
             }
             // SIDE_DISPLACEMENT[targetBlock.sideId].inverse
-            selectionBox.position.set(
-                targetBlock.tx,
-                targetBlock.ty,
-                targetBlock.tz
-            );
+            if (selectionBox.position.x !== targetBlock.tx || selectionBox.position.y !== targetBlock.ty || selectionBox.position.z !== targetBlock.tz) {
+                selectionBox.position.set(targetBlock.tx, targetBlock.ty, targetBlock.tz);
+            }
+            if (selectionBox.scale.x !== targetBlock.sx || selectionBox.scale.y !== targetBlock.sy || selectionBox.scale.z !== targetBlock.sz) {
+                selectionBox.scale.set(targetBlock.sx, targetBlock.sy, targetBlock.sz);
+            }
         } else if (selectionBox.visible) {
             selectionBox.visible = false;
         }

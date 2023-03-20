@@ -1,22 +1,24 @@
-import { clearDirtyness, dirty, position, rotation } from '../InputHandler.js';
+import * as InputHandler from '../InputHandler.js';
 
 let sendingPosition = false;
+let playerActionBuffer = [];
+export let error = null;
 
-async function sendCurrentPositionToServer() {
-    const body = JSON.stringify({
-        actions: [{
-            type: 'move',
-            x: position.x,
-            y: position.y,
-            z: position.z,
-            yaw: rotation.yaw,
-            pitch: rotation.pitch,
-        }]
-    });
+export async function sendPlayerActionToServerEventually(action) {
+    playerActionBuffer.push(action);
+}
 
-    clearDirtyness();
+async function sendPlayerMadeActions() {
+    const body = JSON.stringify({ actions: playerActionBuffer });
+    playerActionBuffer = [];
 
     const response = await fetch('/player-made-action/', { method: 'POST', body });
+
+    if (response.status === 400) {
+        // User must have been disconnected
+        window.location.reload();
+        return;
+    }
 
     const text = await response.text();
 
@@ -24,7 +26,7 @@ async function sendCurrentPositionToServer() {
         return;
     }
 
-    if (text[0] === '<') {
+    if (text.trim()[0] === '<') {
         console.error('Player made action returned HTML');
         return;
     }
@@ -33,21 +35,52 @@ async function sendCurrentPositionToServer() {
         return;
     }
 
-    console.error('Player action returned unexpected data', text);
+    error = new Error('Player action returned unexpected data: ' + text);
+    console.error(error);
 }
 
 let requestDebounceIndex = 0;
 
 export function updateSelfState() {
-    if (requestDebounceIndex < 15) {
-        requestDebounceIndex += 1;
-    } else {
-        if (!sendingPosition && dirty) {
-            requestDebounceIndex -= 15;
-            sendingPosition = true;
-            sendCurrentPositionToServer().then(
-                () => sendingPosition = false
-            );
-        }
+    if (error) {
+        return;
     }
+    if (sendingPosition) {
+        return;
+    }
+    if (requestDebounceIndex < 10) {
+        requestDebounceIndex += 1;
+        return;
+    }
+    if (playerActionBuffer.length === 0 && !InputHandler.dirty) {
+        return;
+    }
+    if (InputHandler.dirty) {
+        const position = InputHandler.position;
+        const rotation = InputHandler.rotation;
+        playerActionBuffer.push({
+            type: 'move',
+            x: position.x,
+            y: position.y,
+            z: position.z,
+            yaw: rotation.yaw,
+            pitch: rotation.pitch,
+        });
+        InputHandler.clearDirtyness();
+    }
+    requestDebounceIndex = 0;
+    sendingPosition = true;
+    if (playerActionBuffer.length > 1 && playerActionBuffer[0].type === 'move' && playerActionBuffer[1].type === 'move') {
+        console.warn('Double movement');
+    }
+    sendPlayerMadeActions().then(
+        () => sendingPosition = false,
+        (err) => {
+            console.error(err);
+            if (!error) {
+                error = err;
+            }
+            sendingPosition = false;
+        }
+    );
 }
