@@ -1,12 +1,12 @@
 # 3D Redstone Simulator
 
-A javascript experiment to simulate minecraft's redstone logic in a similar 3D environment.
+A javascript experiment to simulate minecraft and its game behaviors such as redstone logic in the browser.
 
 [Click here to run the current version](https://grossato.com.br/static/3D-Redstone-Simulator/)
 
 Left click to break blocks, middle click to select block type, and right click to place blocks. WASD to move horizontally and Space/Shift to move vertically.
 
-Note that during development, the above link will not always bring you to a working release, if you want you can download the most recent [release](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/releases) and run it yourself. This project doesn't need building or installing dependencies, a simple static http server will do.
+Note that during development the above link will not always bring you to a working release, if you want you can download the most recent [release](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/releases) and run it yourself. This project doesn't need building or installing dependencies but the multiplayer functionality only works on the link.
 
 # Releases
  - v 0.1 - Performance Viability Release
@@ -21,7 +21,7 @@ Note that during development, the above link will not always bring you to a work
 
 ![Preview v0.3](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v03_normal.gif)
 
- - v 0.4 - Inventory, Hotbar and Procedural Terrain Generation
+ - v 0.4 - Inventory, Hotbar and Procedural Terrain Generation [Removed]
 
 ![Preview v0.4](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v04_normal.gif)
 
@@ -33,15 +33,21 @@ Note that during development, the above link will not always bring you to a work
 
 ![Preview v0.6](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v06.gif)
 
+ - v 0.7 - Multiplayer and World persistance
+
+![Preview v0.7](https://grossato.com.br/static/3D-Redstone-Simulator/frontend/assets/images/releases/v07.gif)
+
 ## Who is this for
 
-This is an experiment to make developing redstone contraptions easier by allowing fast prototyping on the browser.
+This is an experiment to simulate the game in the browser and eventually to make developing redstone contraptions easier by allowing fast prototyping. It also serves as my project to experiment with project organization, design philosophy, test zone and whatever idea I came up with.
 
 ## How to run this repo locally
 
 Download this repository and either run `npm run start` at the root of it or just run a static http server to serve files for `frontend` folder.
 
 There are no dependencies, so you don't need to call `npm install`.
+
+However, the backend is not included, so it will not work and your world and the changes you make in it will not be saved.
 
 ## Objectives, Priorities and Plan
 
@@ -51,15 +57,19 @@ There are no dependencies, so you don't need to call `npm install`.
 4. Crosshair and Block Selection (done)
 5. Collision Detection (removed)
 6. Procedural Terrain Generation (release v0.4 only)
-7. Inventory and Hotbar system (in progress)
-8. **Major update** - rewrote everything with modern technology (done)
+7. **Major update** - rewrote everything with modern technology (done)
+8. Inventory and Hotbar system (in progress)
 9. Mobile and Gamepad compatibility (in progress)
 10. Block placement (done)
-11. Area select and selection tools (copy/paste areas)
-12. Save/Load System
+11. Area select and selection tools
+12. Multiplayer system (done)
 13. Redstone Simulation
 14. Piston Simulation
 15. Water and Lava Simulation
+
+## Easter eggs
+
+You can relive the entire world block history (play it back) in some obscure undocumented way.
 
 # Dependencies, Credits and Inspiration
 
