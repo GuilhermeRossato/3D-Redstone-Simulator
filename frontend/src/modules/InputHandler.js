@@ -311,6 +311,7 @@ export async function load(canvas, scene, receivedCamera) {
     });
 
     window.addEventListener("keydown", function(event) {
+        console.log(event.code);
         if (event.code === 'KeyW') {
             forward = 1;
         } else if (event.code === 'KeyA') {
@@ -330,6 +331,15 @@ export async function load(canvas, scene, receivedCamera) {
             } else {
                 resetLocalWorld();
             }
+        }
+        if (event.code === 'Digit1' || event.code === 'Numpad1') {
+            selectedBlockType = 1;
+        } else if (event.code === 'Digit2' || event.code === 'Numpad2') {
+            selectedBlockType = 2;
+        } else if (event.code === 'Digit3' || event.code === 'Numpad3') {
+            selectedBlockType = 3;
+        } else if (event.code === 'Digit4' || event.code === 'Numpad4') {
+            selectedBlockType = 4;
         }
     });
 
