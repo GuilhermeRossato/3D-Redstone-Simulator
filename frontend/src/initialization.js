@@ -40,7 +40,7 @@ async function initialization() {
 		const {scene, camera} = await GraphicsHandler.load(canvas, gl);
 
 		setLoadingText('Initializing the World');
-		await WorldHandler.load(scene);
+		await WorldHandler.load();
 
 		setLoadingText('Initializing the Main Loop');
 		await GameLoopHandler.load(
@@ -51,7 +51,7 @@ async function initialization() {
 				}
 			},
 			GraphicsHandler.draw,
-			(ms) => {console.log('Running behind ' + ms + 'ms')}
+			(ms) => {console.log('Running behind ' + ms.toFixed(0) + 'ms')}
 		);
 
 		setLoadingText('Initializing the Controls');
@@ -63,7 +63,8 @@ async function initialization() {
 		setLoadingText('Initializing the GUI');
 		await ForegroundHandler.load();
 
-		await new Promise(r=>setTimeout(r, 250));
+		await new Promise(r => setTimeout(r, 250));
+
 		ForegroundHandler.start();
 		GameLoopHandler.start();
 	} catch (err) {
