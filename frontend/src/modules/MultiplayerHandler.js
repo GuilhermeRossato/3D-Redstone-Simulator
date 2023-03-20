@@ -119,7 +119,7 @@ export async function load() {
         }
     } catch (err) {
         active = false;
-        console.error(err);
+        console.error('Multiplayer could not be set up:', err);
     }
 }
 

@@ -59,6 +59,10 @@ async function initialization() {
 
 		setLoadingText('Initializing Multiplayer');
 		await MultiplayerHandler.load();
+		
+		if (!MultiplayerHandler.active) {
+			WorldHandler.startLocalWorld();
+		}
 
 		setLoadingText('Initializing the GUI');
 		await ForegroundHandler.load();

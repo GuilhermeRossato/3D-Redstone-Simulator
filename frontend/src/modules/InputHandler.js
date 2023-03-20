@@ -1,10 +1,11 @@
 import * as THREE from '../libs/three.module.js';
 import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHandler.js';
-import { getChunk, set, get } from './WorldHandler.js';
+import { getChunk, set, get, resetLocalWorld } from './WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
 import { sendPlayerActionToServerEventually } from './Multiplayer/ExternalSelfStateHandler.js';
 import { reliveWorld } from './DebugHandler.js';
+import * as MultiplayerHandler from './MultiplayerHandler.js';
 
 let camera;
 let isPointerlocked = false;
@@ -324,7 +325,11 @@ export async function load(canvas, scene, receivedCamera) {
             up = 1;
         }
         if (event.code === 'KeyR') {
-            launchReliveWorld();
+            if (MultiplayerHandler.active) {
+                launchReliveWorld();
+            } else {
+                resetLocalWorld();
+            }
         }
     });
 
@@ -439,6 +444,11 @@ export function update(frame) {
         moveVertically(-1);
     }
     if (nextUpdateAction) {
+        if (nextUpdateAction.y === 0 && (nextUpdateAction.x === 0 || nextUpdateAction.x === 1) && (nextUpdateAction.z === 0 || nextUpdateAction.z === 1)) {
+            // Do not change the four fundamental blocks
+            nextUpdateAction = null;
+            return;
+        }
         if (nextUpdateAction.type === 'create') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, nextUpdateAction.id);
             sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });

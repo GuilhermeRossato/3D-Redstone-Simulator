@@ -1,8 +1,7 @@
-'use strict';
-
 import Chunk from '../classes/world/Chunk.js';
 import { scene } from './GraphicsHandler.js';
 
+let isSavingTheWorldLocally = false;
 /** @type {Record<number, Record<number, Record<number, Chunk>>>} */
 const chunks = [];
 
@@ -86,6 +85,9 @@ export function get(x, y, z) {
  * @param {number} id
  */
 export function set(x, y, z, id) {
+    if (isSavingTheWorldLocally) {
+        updateLocalWorldData(x, y, z, id);
+    }
     const cx = worldPositionToChunk(x);
     const cy = worldPositionToChunk(y);
     const cz = worldPositionToChunk(z);
@@ -161,7 +163,57 @@ export function set(x, y, z, id) {
 export async function load() {
 }
 
-// Debug
+const startingLocalWorldBlockData = [
+    [0, 0, 0, 1],
+    [1, 0, 0, 2],
+    [0, 0, 1, 3],
+    [1, 0, 1, 4]
+]
+
+async function updateLocalWorldData(x, y, z, id) {
+    let blockData = startingLocalWorldBlockData;
+    try {
+        const blockDataStr = localStorage.getItem('world-data');
+        if (blockDataStr) {
+            blockData = JSON.parse(blockDataStr);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+    const block = blockData.find(([bx, by, bz]) => bx === x && by === y && bz === z);
+    if (block) {
+        block[3] = id;
+    } else {
+        blockData.push([x, y, z, id]);
+    }
+    localStorage.setItem('world-data', JSON.stringify(blockData));
+}
+
+export async function startLocalWorld() {
+    isSavingTheWorldLocally = true;
+    let blockData = startingLocalWorldBlockData;
+    try {
+        const blockDataStr = localStorage.getItem('world-data');
+        if (blockDataStr) {
+            blockData = JSON.parse(blockDataStr);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+    if (!(blockData instanceof Array)) {
+        blockData = startingLocalWorldBlockData;
+    }
+    for (const [x, y, z, id] of blockData) {
+        set(x, y, z, id);
+    }
+}
+
+export function resetLocalWorld() {
+    localStorage.removeItem('world-data');
+    window.location.reload();
+}
+
+// for debug
 window['WorldHandler'] = {
     isSolidBlock,
     getChunkAtWorldPosition,
