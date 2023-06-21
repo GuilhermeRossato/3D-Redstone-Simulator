@@ -1,6 +1,6 @@
 {
   "name": "3d-redstone-simulator",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Web app to simulate minecraft in the browser and its behavior such as the digital boolean logic mechanic (redstone) in a 3d environment",
   "main": "static-server.js",
   "scripts": {
@@ -18,7 +18,8 @@
     "boolean",
     "algebra",
     "logic",
-    "minecraft"
+    "minecraft",
+    "three.js"
   ],
   "author": "Guilherme Rossato",
   "license": "MIT",
