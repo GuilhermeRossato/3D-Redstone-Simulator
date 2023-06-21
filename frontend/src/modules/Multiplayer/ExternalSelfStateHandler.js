@@ -1,11 +1,14 @@
 import * as InputHandler from '../InputHandler.js';
+import * as MultiplayerHandler from '../MultiplayerHandler.js';
 
 let sendingPosition = false;
 let playerActionBuffer = [];
 export let error = null;
 
 export async function sendPlayerActionToServerEventually(action) {
-    playerActionBuffer.push(action);
+    if (MultiplayerHandler.active) {
+        playerActionBuffer.push(action);
+    }
 }
 
 async function sendPlayerMadeActions() {

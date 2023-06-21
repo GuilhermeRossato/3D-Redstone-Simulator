@@ -1,11 +1,11 @@
 import Performancer from "../classes/Performancer.js"
-import { draw } from "./GraphicsHandler.js";
 
-let period = 1000/60; // 60 FPS
+const isConstantTime = false;
+const period = 1000/60; // 60 FPS
+
 let extraMs = 0;
 let lastTime = performance.now();
 let performancer;
-let isConstantTime = false;
 let isRunning = false;
 
 let updateFunc;

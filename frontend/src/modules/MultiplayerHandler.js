@@ -119,7 +119,7 @@ export async function load() {
         }
     } catch (err) {
         active = false;
-        console.error(err);
+        console.error('Multiplayer could not be set up:', err);
     }
 }
 
@@ -129,9 +129,6 @@ export async function load() {
  */
 function initWorld(blockList) {
     for (const {x, y, z, id} of blockList) {
-        if (x === -4 && y === 0 && z === 0) {
-            console.trace(x, y, z, id);
-        }
         if (id === 0) {
             continue;
         }

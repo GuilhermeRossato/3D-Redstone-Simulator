@@ -1,10 +1,11 @@
 import * as THREE from '../libs/three.module.js';
 import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHandler.js';
-import { getChunk, set, get } from './WorldHandler.js';
+import { getChunk, set, get, resetLocalWorld } from './WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
 import { sendPlayerActionToServerEventually } from './Multiplayer/ExternalSelfStateHandler.js';
 import { reliveWorld } from './DebugHandler.js';
+import * as MultiplayerHandler from './MultiplayerHandler.js';
 
 let camera;
 let isPointerlocked = false;
@@ -309,7 +310,7 @@ export async function load(canvas, scene, receivedCamera) {
         // requestPointerlock(); // Do not call again because it will just fail again in loop
     });
 
-    window.addEventListener("keydown", function(event) {
+    window.addEventListener("keydown", (event) => {
         if (event.code === 'KeyW') {
             forward = 1;
         } else if (event.code === 'KeyA') {
@@ -324,11 +325,24 @@ export async function load(canvas, scene, receivedCamera) {
             up = 1;
         }
         if (event.code === 'KeyR') {
-            launchReliveWorld();
+            if (MultiplayerHandler.active) {
+                launchReliveWorld();
+            } else {
+                resetLocalWorld();
+            }
+        }
+        if (event.code === 'Digit1' || event.code === 'Numpad1') {
+            selectedBlockType = 1;
+        } else if (event.code === 'Digit2' || event.code === 'Numpad2') {
+            selectedBlockType = 2;
+        } else if (event.code === 'Digit3' || event.code === 'Numpad3') {
+            selectedBlockType = 3;
+        } else if (event.code === 'Digit4' || event.code === 'Numpad4') {
+            selectedBlockType = 4;
         }
     });
 
-    window.addEventListener("keyup", function(event) {
+    window.addEventListener("keyup", (event) => {
         if (event.code === 'KeyW') {
             forward = 0;
         } else if (event.code === 'KeyA') {
@@ -439,6 +453,11 @@ export function update(frame) {
         moveVertically(-1);
     }
     if (nextUpdateAction) {
+        if (nextUpdateAction.y === 0 && (nextUpdateAction.x === 0 || nextUpdateAction.x === 1) && (nextUpdateAction.z === 0 || nextUpdateAction.z === 1)) {
+            // Do not change the four fundamental blocks
+            nextUpdateAction = null;
+            return;
+        }
         if (nextUpdateAction.type === 'create') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, nextUpdateAction.id);
             sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
