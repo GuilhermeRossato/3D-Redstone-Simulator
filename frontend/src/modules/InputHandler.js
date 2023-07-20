@@ -52,7 +52,7 @@ function getTargetBlock() {
     let collision = null;
 
     for (const chunk of chunkList) {
-        const c = getChunk(chunk[0], chunk[1], chunk[2]);
+        const c = getChunk(chunk[0], chunk[1], chunk[2], false);
         if (!c) {
             continue;
         }
@@ -460,13 +460,13 @@ export function update(frame) {
         }
         if (nextUpdateAction.type === 'create') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, nextUpdateAction.id);
-            sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
+            sendPlayerActionToServerEventually({type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
             nextUpdateAction = null;
         } else if (nextUpdateAction.type === 'delete') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, 0);
             selectionBox.visible = false;
             frame = 0; // This makes the selection box be updated
-            sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: 0 });
+            sendPlayerActionToServerEventually({type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: 0 });
             nextUpdateAction = null;
         }
     }
@@ -491,13 +491,10 @@ export function update(frame) {
 }
 
 /**
- * @param {number} x
- * @param {number} y
- * @param {number} z
- * @param {number} yaw
- * @param {number} pitch
+ * @param {{ x: number; y: number; z: number; yaw: number; pitch: number; }} position
  */
-export function setPlayerPosition(x, y, z, yaw, pitch) {
+export function setPlayerPosition(position) {
+    const { x, y, z, yaw, pitch } = position
     yawObject.position.set(x, y, z);
     if (typeof yaw === 'number' && !isNaN(yaw)) {
         yawObject.rotation.y = yaw;

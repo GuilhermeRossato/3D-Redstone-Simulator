@@ -12,34 +12,10 @@ export async function sendPlayerActionToServerEventually(action) {
 }
 
 async function sendPlayerMadeActions() {
-    const body = JSON.stringify({ actions: playerActionBuffer });
-    playerActionBuffer = [];
-
-    const response = await fetch('/player-made-action/', { method: 'POST', body });
-
-    if (response.status === 400) {
-        // User must have been disconnected
-        window.location.reload();
-        return;
+    while (playerActionBuffer.length) {
+        const action = playerActionBuffer.pop();
+        MultiplayerHandler.sendAction(action);
     }
-
-    const text = await response.text();
-
-    if (text.length === 0) {
-        return;
-    }
-
-    if (text.trim()[0] === '<') {
-        console.error('Player made action returned HTML');
-        return;
-    }
-
-    if (text === '{"success":true}') {
-        return;
-    }
-
-    error = new Error('Player action returned unexpected data: ' + text);
-    console.error(error);
 }
 
 let requestDebounceIndex = 0;
@@ -51,7 +27,7 @@ export function updateSelfState() {
     if (sendingPosition) {
         return;
     }
-    if (requestDebounceIndex < 10) {
+    if (requestDebounceIndex < 5) {
         requestDebounceIndex += 1;
         return;
     }

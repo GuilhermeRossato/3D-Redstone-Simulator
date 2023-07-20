@@ -16,6 +16,8 @@ import { get, set } from "./WorldHandler.js";
  * @param {number} range
  */
 export async function reliveWorld(cx, cy, cz, range = 2) {
+    console.log('Relive disabled');
+    return;
     const blockEventList = await getHistoryAroundPosition(cx, cy, cz, range);
     console.log('There are', blockEventList.length, 'block history lists');
     // Create event list
