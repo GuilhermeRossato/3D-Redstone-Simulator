@@ -1,5 +1,5 @@
 import * as THREE from '../libs/three.module.js';
-import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHandler.js';
+import { moveVertically, moveTowardsAngle } from './MovementHandler.js';
 import { getChunk, set, get, resetLocalWorld } from './WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
@@ -11,8 +11,8 @@ let camera;
 let isPointerlocked = false;
 let isFullScreen = false;
 let isFirstClick = false;
-let yawObject = new THREE.Object3D();
-let pitchObject = new THREE.Object3D();
+export const yawObject = new THREE.Object3D();
+export const pitchObject = new THREE.Object3D();
 let selectionBox;
 let targetBlock;
 let selectedBlockType = 2;
@@ -246,13 +246,6 @@ export async function load(canvas, scene, receivedCamera) {
     camera.position.set(0, 0, 0);
     camera.rotation.set(0, 0, 0);
 
-/*
-    const pitchObject = camera;
-    const yawObject = camera;
-    pitchObject.rotation.set(0, 0, 0);
-    */
-    setCameraWrapper(yawObject);
-
     scene.add(yawObject);
 
     selectionBox = new THREE.Group();
@@ -440,7 +433,7 @@ const angleByMovementId = {
 }
 
 export function update(frame) {
-    let movementId = forward * 8 + backward * 4 + right * 2 + left;
+    const movementId = forward * 8 + backward * 4 + right * 2 + left;
     if (movementId != 0) {
         dirty = true;
         moveTowardsAngle(angleByMovementId[movementId]);

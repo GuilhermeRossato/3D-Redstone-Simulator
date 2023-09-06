@@ -119,6 +119,12 @@ async function performLogin() {
     }
     const s = new WebSocket("wss://camisadoavesso.com.br:443/websocket/" + selfLoginCode + '/' + (cookieId ? cookieId + '/' : ''));
 
+    s.addEventListener('timeout', () => {
+        console.log('socket timeout event');
+    }, {
+        once: true
+    });
+
     s.addEventListener('close', () => {
         console.log('socket close event');
     }, {
@@ -133,7 +139,8 @@ async function performLogin() {
 
     s.addEventListener("open", () => {
         s.send(JSON.stringify({
-            name: 'guest'
+            name: 'guest',
+            selfLoginCode,
         }));
     }, {
         once: true,
