@@ -2,9 +2,9 @@ import * as THREE from '../libs/three.module.js';
 import { scene } from './GraphicsHandler.js';
 import { setPlayerPosition } from './InputHandler.js';
 import { updateSelfState } from './Multiplayer/ExternalSelfStateHandler.js';
-import { updateExternalWorld } from './Multiplayer/ExternalWorldHandler.js';
 import { updateNextGameState } from './Multiplayer/NextGameStateHandler.js';
 import { set } from './WorldHandler.js';
+import { b } from '../utils/bezier.js';
 
 export let active = false;
 
@@ -40,11 +40,11 @@ function addOtherPlayer(player) {
     const headGeometry = new THREE.BoxGeometry(headSize / 16, headSize / 16, headSize / 16);
     // @ts-ignore
     const head = new THREE.Mesh(headGeometry, playerMaterial);
-    head.position.set(0, 4/16, 0);
+    head.position.set(0, 4 / 16, 0);
     const bodyGeometry = new THREE.BoxGeometry(1, 12 / 16, 4 / 16);
     // @ts-ignore
     const body = new THREE.Mesh(bodyGeometry, playerMaterial);
-    body.position.set(0, -6/16, 0);
+    body.position.set(0, -6 / 16, 0);
 
     const legGeometry = new THREE.BoxGeometry(8 / 16, 12 / 16, 4 / 16);
     // @ts-ignore
@@ -124,11 +124,10 @@ export async function load() {
 }
 
 /**
- * 
  * @param {{x: number, y: number, z: number, id: number}[]} blockList 
  */
 function initWorld(blockList) {
-    for (const {x, y, z, id} of blockList) {
+    for (const { x, y, z, id } of blockList) {
         if (x === -4 && y === 0 && z === 0) {
             console.trace(x, y, z, id);
         }
@@ -140,22 +139,17 @@ function initWorld(blockList) {
 }
 
 async function performLogin() {
-    let selfLoginCode1 = window.localStorage.getItem('self-login-code');
-    let selfLoginCode2 = window.sessionStorage.getItem('self-login-code');
+    let selfLoginCode = window.localStorage.getItem('self-login-code');
     const monthPair = ((new Date()).getMonth() + 1).toString().padStart(2, '0');
     const datePair = ((new Date()).getDate()).toString().padStart(2, '0');
-    if (!selfLoginCode1) {
-        selfLoginCode1 = monthPair + Math.floor(Math.random() * 8999999 + 1000000).toString() + datePair;
-        window.localStorage.setItem('self-login-code', selfLoginCode1);
-    }
-    if (!selfLoginCode2) {
-        selfLoginCode2 = monthPair + Math.floor(Math.random() * 899999 + 100000).toString() + datePair;
-        window.sessionStorage.setItem('self-login-code', selfLoginCode2);
+    if (!selfLoginCode) {
+        selfLoginCode = monthPair + Math.floor(Math.random() * 8999999 + 1000000).toString() + datePair;
+        window.localStorage.setItem('self-login-code', selfLoginCode);
     }
     const response = await fetch('/perform-client-login/', {
         method: 'POST',
         headers: {
-            'self-login-code': selfLoginCode1 + '-' + selfLoginCode2,
+            'self-login-code': selfLoginCode,
         },
     });
     const text = await response.text();
@@ -163,21 +157,10 @@ async function performLogin() {
         throw new Error('Server did not send data');
     }
     if (text[0] !== '{') {
-        if (text[0] === '<' || text.length > 1000) {
-            throw new Error('Perform login returned invalid text');
-        } else {
-            throw new Error(text);
-        }
+        throw new Error(`Perform login returned invalid response: ${JSON.stringify(text.substring(0, 1024))}`);
     }
     const json = JSON.parse(text);
     return json;
-}
-
-function b(i, j, t) {
-    if (typeof i !== 'number' || typeof j !== 'number' || isNaN(i) || isNaN(j) || isNaN(t)) {
-        throw new Error('Got NaN: ' + JSON.stringify([i, j, t]));
-    }
-    return i + (j - i) * t;
 }
 
 export function update() {
