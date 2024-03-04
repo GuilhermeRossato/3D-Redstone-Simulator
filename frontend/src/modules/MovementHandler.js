@@ -1,11 +1,7 @@
 const playerSpeed = 0.07195416666666666666666666666667;
 const playerVerticalSpeed = 0.08724816666666678;
 
-let yawObject;
-
-export function setCameraWrapper(newYawObject) {
-    yawObject = newYawObject;
-}
+import { yawObject } from './InputHandler.js';
 
 export function moveTowardsAngle(yaw) {
     yaw += yawObject.rotation.y;

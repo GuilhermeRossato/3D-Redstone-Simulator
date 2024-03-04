@@ -7,12 +7,15 @@ import * as ForegroundHandler from './modules/ForegroundHandler.js';
 import * as InputHandler from './modules/InputHandler.js';
 import * as MultiplayerHandler from './modules/MultiplayerHandler.js';
 
+/**
+ * @param {string} str
+ */
 function setLoadingText(str) {
 	const textElement = document.querySelector('.text');
 	if (!(textElement instanceof HTMLElement)) {
 		return console.warn('Could not find loading text to display loading text');
 	}
-	textElement.innerText = str
+	textElement.innerText = str;
 }
 
 function pauseGame() {
@@ -51,7 +54,7 @@ async function initialization() {
 				}
 			},
 			GraphicsHandler.draw,
-			(ms) => {console.log('Running behind ' + ms.toFixed(0) + 'ms')}
+			(ms) => {console.log(`Running behind ${ms.toFixed(0)}ms`)}
 		);
 
 		setLoadingText('Initializing the Controls');

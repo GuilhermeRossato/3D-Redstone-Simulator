@@ -30,7 +30,7 @@ createServer(function (request, response) {
         response.end();
         return;
     }
-    let filename = join(config.path, uri);
+    let filename = join(config.path, decodeURIComponent(uri));
     stat(filename, function (err, stats) {
         if (err) {
             if (err.code === "ENOENT") {

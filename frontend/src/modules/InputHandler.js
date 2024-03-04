@@ -1,5 +1,5 @@
 import * as THREE from '../libs/three.module.js';
-import { moveVertically, moveTowardsAngle, setCameraWrapper } from './MovementHandler.js';
+import { moveVertically, moveTowardsAngle } from './MovementHandler.js';
 import { getChunk, set, get, resetLocalWorld } from './WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
@@ -11,8 +11,8 @@ let camera;
 let isPointerlocked = false;
 let isFullScreen = false;
 let isFirstClick = false;
-let yawObject = new THREE.Object3D();
-let pitchObject = new THREE.Object3D();
+export const yawObject = new THREE.Object3D();
+export const pitchObject = new THREE.Object3D();
 let selectionBox;
 let targetBlock;
 let selectedBlockType = 2;
@@ -52,7 +52,7 @@ function getTargetBlock() {
     let collision = null;
 
     for (const chunk of chunkList) {
-        const c = getChunk(chunk[0], chunk[1], chunk[2]);
+        const c = getChunk(chunk[0], chunk[1], chunk[2], false);
         if (!c) {
             continue;
         }
@@ -246,13 +246,6 @@ export async function load(canvas, scene, receivedCamera) {
     camera.position.set(0, 0, 0);
     camera.rotation.set(0, 0, 0);
 
-/*
-    const pitchObject = camera;
-    const yawObject = camera;
-    pitchObject.rotation.set(0, 0, 0);
-    */
-    setCameraWrapper(yawObject);
-
     scene.add(yawObject);
 
     selectionBox = new THREE.Group();
@@ -310,7 +303,7 @@ export async function load(canvas, scene, receivedCamera) {
         // requestPointerlock(); // Do not call again because it will just fail again in loop
     });
 
-    window.addEventListener("keydown", function(event) {
+    window.addEventListener("keydown", (event) => {
         if (event.code === 'KeyW') {
             forward = 1;
         } else if (event.code === 'KeyA') {
@@ -342,7 +335,7 @@ export async function load(canvas, scene, receivedCamera) {
         }
     });
 
-    window.addEventListener("keyup", function(event) {
+    window.addEventListener("keyup", (event) => {
         if (event.code === 'KeyW') {
             forward = 0;
         } else if (event.code === 'KeyA') {
@@ -440,7 +433,7 @@ const angleByMovementId = {
 }
 
 export function update(frame) {
-    let movementId = forward * 8 + backward * 4 + right * 2 + left;
+    const movementId = forward * 8 + backward * 4 + right * 2 + left;
     if (movementId != 0) {
         dirty = true;
         moveTowardsAngle(angleByMovementId[movementId]);
@@ -460,13 +453,13 @@ export function update(frame) {
         }
         if (nextUpdateAction.type === 'create') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, nextUpdateAction.id);
-            sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
+            sendPlayerActionToServerEventually({type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
             nextUpdateAction = null;
         } else if (nextUpdateAction.type === 'delete') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, 0);
             selectionBox.visible = false;
             frame = 0; // This makes the selection box be updated
-            sendPlayerActionToServerEventually({type: 'set-block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: 0 });
+            sendPlayerActionToServerEventually({type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: 0 });
             nextUpdateAction = null;
         }
     }
@@ -491,13 +484,10 @@ export function update(frame) {
 }
 
 /**
- * @param {number} x
- * @param {number} y
- * @param {number} z
- * @param {number} yaw
- * @param {number} pitch
+ * @param {{ x: number; y: number; z: number; yaw: number; pitch: number; }} position
  */
-export function setPlayerPosition(x, y, z, yaw, pitch) {
+export function setPlayerPosition(position) {
+    const { x, y, z, yaw, pitch } = position
     yawObject.position.set(x, y, z);
     if (typeof yaw === 'number' && !isNaN(yaw)) {
         yawObject.rotation.y = yaw;
