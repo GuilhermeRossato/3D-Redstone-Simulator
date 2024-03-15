@@ -5,7 +5,7 @@ import * as WorldHandler from './modules/WorldHandler.js';
 import * as GameLoopHandler from './modules/GameLoopHandler.js';
 import * as ForegroundHandler from './modules/ForegroundHandler.js';
 import * as InputHandler from './modules/InputHandler.js';
-import * as MultiplayerHandler from './modules/MultiplayerHandler.js';
+import * as MultiplayerHandler from './modules/Multiplayer/MultiplayerHandler.js';
 
 /**
  * @param {string} str

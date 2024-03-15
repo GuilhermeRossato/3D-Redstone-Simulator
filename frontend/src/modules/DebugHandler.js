@@ -45,7 +45,7 @@ export async function reliveWorld(cx, cy, cz, range = 2) {
         set(block.x, block.y, block.z, 0);
     }
     // Recreate the world
-    for (const {x, y, z, id} of events) {
+    for (const { x, y, z, id } of events) {
         const current = get(x, y, z);
         if (id === 0 && current === null) {
             console.log('Skipped same event at', x, y, z);
@@ -102,7 +102,7 @@ async function getHistoryAroundPosition(cx, cy, cz, range = 2) {
     }
 
     const blockEventList = [];
-    for (const {ox, oy, oz, chunk} of chunkList) {
+    for (const { ox, oy, oz, chunk } of chunkList) {
         for (const y in chunk.blocks) {
             for (const x in chunk.blocks[y]) {
                 for (const z in chunk.blocks[y][x]) {
