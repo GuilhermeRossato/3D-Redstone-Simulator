@@ -5,7 +5,7 @@ import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
 import { sendPlayerActionToServerEventually } from './Multiplayer/ExternalSelfStateHandler.js';
 import { reliveWorld } from './DebugHandler.js';
-import * as MultiplayerHandler from './MultiplayerHandler.js';
+import * as MultiplayerHandler from './Multiplayer/MultiplayerHandler.js';
 
 let camera;
 let isPointerlocked = false;
@@ -17,17 +17,15 @@ let selectionBox;
 let targetBlock;
 let selectedBlockType = 2;
 
-export let dirty = false;
+export const flags = {
+    dirty: false
+}
 
 export const position = yawObject.position;
 
 export const rotation = {
     pitch: pitchObject.rotation.x,
     yaw: yawObject.rotation.y,
-}
-
-export function clearDirtyness() {
-    dirty = false;
 }
 
 function getTargetBlock() {
@@ -87,10 +85,10 @@ function getTargetBlock() {
                         if (face.ref.id === 5) {
                             // block is a redstone dust
                             collision.tx = collision.fx;
-                            collision.ty = collision.fy + 0/16;
+                            collision.ty = collision.fy + 0 / 16;
                             collision.tz = collision.fz;
                             collision.sx = 1;
-                            collision.sy = 1/16;
+                            collision.sy = 1 / 16;
                             collision.sz = 1;
                         } else {
                             collision.tx = collision.fx - SIDE_DISPLACEMENT[collision.sideId].inverse[0] / 2;
@@ -118,24 +116,24 @@ function getTargetBlock() {
  */
 function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf = true) {
     const c = [
-        Math.floor((ox + 0.5)/16), 
-        Math.floor((oy + 0.5)/16),
-        Math.floor((oz + 0.5)/16)
+        Math.floor((ox + 0.5) / 16),
+        Math.floor((oy + 0.5) / 16),
+        Math.floor((oz + 0.5) / 16)
     ];
 
     const chunkList = [];
     if (includeSelf) {
         chunkList.push([c[0], c[1], c[2]]);
     }
-    
+
     const l = [
         ((dx > 0) ? (c[0] + 1) * 16 : c[0] * 16) - ox - 0.5,
         ((dy > 0) ? (c[1] + 1) * 16 : c[1] * 16) - oy - 0.5,
         ((dz > 0) ? (c[2] + 1) * 16 : c[2] * 16) - oz - 0.5
     ];
 
-    const tList = [l[0]/dx, l[1]/dy, l[2]/dz];
-    
+    const tList = [l[0] / dx, l[1] / dy, l[2] / dz];
+
     let nextChunkIsFoundByWhichAxis = 0;
     if (Math.abs(tList[0]) < Math.abs(tList[1])) {
         if (Math.abs(tList[2]) < Math.abs(tList[0])) {
@@ -158,7 +156,7 @@ function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf
     }
 
     const t = tList[nextChunkIsFoundByWhichAxis];
-    
+
     const nextChunkOffset = [dx * t, dy * t, dz * t];
 
     const o = [ox, oy, oz];
@@ -172,9 +170,9 @@ function raycastChunkList(ox, oy, oz, dx, dy, dz, maxChunkCount = 4, includeSelf
         l[0] = ((dx > 0) ? (c[0] + 1) * 16 : c[0] * 16) - o[0] - 0.5;
         l[1] = ((dy > 0) ? (c[1] + 1) * 16 : c[1] * 16) - o[1] - 0.5;
         l[2] = ((dz > 0) ? (c[2] + 1) * 16 : c[2] * 16) - o[2] - 0.5;
-        tList[0] = l[0]/dx;
-        tList[1] = l[1]/dy;
-        tList[2] = l[2]/dz;
+        tList[0] = l[0] / dx;
+        tList[1] = l[1] / dy;
+        tList[2] = l[2] / dz;
         if (Math.abs(tList[0]) < Math.abs(tList[1])) {
             if (Math.abs(tList[2]) < Math.abs(tList[0])) {
                 nextChunkIsFoundByWhichAxis = 2;
@@ -252,7 +250,7 @@ export async function load(canvas, scene, receivedCamera) {
 
     for (let size of [600, 900, 1500]) {
         selectionBox.add(new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxGeometry(1 + 1/size, 1 + 1/size, 1 + 1/size)),
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(1 + 1 / size, 1 + 1 / size, 1 + 1 / size)),
             new THREE.LineBasicMaterial({
                 color: new THREE.Color(0x222222)
             })
@@ -267,12 +265,12 @@ export async function load(canvas, scene, receivedCamera) {
         if (!isPointerlocked) {
             return;
         }
-        
+
         const movementX = event.movementX || 0;
         const movementY = event.movementY || 0;
 
         if (movementX !== 0 || movementY !== 0) {
-            dirty = true;
+            flags.dirty = true;
         }
 
         yawObject.rotation.y -= movementX * 0.002;
@@ -351,7 +349,7 @@ export async function load(canvas, scene, receivedCamera) {
         }
     });
 
-    window.addEventListener("mousedown", function(event) {
+    window.addEventListener("mousedown", function (event) {
         if (!isPointerlocked) {
             return;
         }
@@ -406,11 +404,11 @@ function launchReliveWorld() {
 let nextUpdateAction = null;
 
 function issueBlockCreationRequest(x, y, z, id) {
-    nextUpdateAction = {type: 'create', x, y, z, id};
+    nextUpdateAction = { type: 'create', x, y, z, id };
 }
 
 function issueBlockDestructionRequest(x, y, z) {
-    nextUpdateAction = {type: 'delete', x, y, z};
+    nextUpdateAction = { type: 'delete', x, y, z };
     selectionBox.visible = false;
 }
 
@@ -435,14 +433,14 @@ const angleByMovementId = {
 export function update(frame) {
     const movementId = forward * 8 + backward * 4 + right * 2 + left;
     if (movementId != 0) {
-        dirty = true;
+        flags.dirty = true;
         moveTowardsAngle(angleByMovementId[movementId]);
     }
     if (up && !down) {
-        dirty = true;
+        flags.dirty = true;
         moveVertically(1);
     } else if (down && !up) {
-        dirty = true;
+        flags.dirty = true;
         moveVertically(-1);
     }
     if (nextUpdateAction) {
@@ -453,13 +451,13 @@ export function update(frame) {
         }
         if (nextUpdateAction.type === 'create') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, nextUpdateAction.id);
-            sendPlayerActionToServerEventually({type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
+            sendPlayerActionToServerEventually({ type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: nextUpdateAction.id });
             nextUpdateAction = null;
         } else if (nextUpdateAction.type === 'delete') {
             set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, 0);
             selectionBox.visible = false;
             frame = 0; // This makes the selection box be updated
-            sendPlayerActionToServerEventually({type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: 0 });
+            sendPlayerActionToServerEventually({ type: 'block', x: nextUpdateAction.x, y: nextUpdateAction.y, z: nextUpdateAction.z, id: 0 });
             nextUpdateAction = null;
         }
     }
@@ -484,10 +482,10 @@ export function update(frame) {
 }
 
 /**
- * @param {{ x: number; y: number; z: number; yaw: number; pitch: number; }} position
+ * @param {{ x: number; y: number; z: number; yaw?: number; pitch?: number; }} position
  */
 export function setPlayerPosition(position) {
-    const { x, y, z, yaw, pitch } = position
+    const { x, y, z, yaw, pitch } = position;
     yawObject.position.set(x, y, z);
     if (typeof yaw === 'number' && !isNaN(yaw)) {
         yawObject.rotation.y = yaw;
