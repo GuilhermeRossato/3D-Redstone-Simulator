@@ -1,32 +1,32 @@
 {
-  "name": "3d-redstone-simulator",
-  "version": "0.7.0",
-  "description": "Web app to simulate minecraft in the browser and its behavior such as the digital boolean logic mechanic (redstone) in a 3d environment",
-  "main": "static-server.js",
-  "scripts": {
-    "start": "node static-server.js --host localhost --port 8080 --path frontend"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/GuilhermeRossato/3D-Redstone-Simulator.git"
-  },
-  "type": "module",
-  "keywords": [
-    "3d",
-    "redstone",
-    "simulator",
-    "boolean",
-    "algebra",
-    "logic",
-    "minecraft",
-    "three.js"
-  ],
-  "author": "Guilherme Rossato",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/GuilhermeRossato/3D-Redstone-Simulator/issues"
-  },
-  "homepage": "https://github.com/GuilhermeRossato/3D-Redstone-Simulator#readme",
-  "devDependencies": {},
-  "dependencies": {}
+    "name": "3d-redstone-simulator",
+    "version": "0.7.0",
+    "description": "Web app to simulate minecraft in the browser and its behavior such as the digital boolean logic mechanic (redstone) in a 3d environment",
+    "main": "static-server.js",
+    "scripts": {
+        "start": "node static-server.js --host localhost --port 8080 --path frontend"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/GuilhermeRossato/3D-Redstone-Simulator.git"
+    },
+    "type": "module",
+    "keywords": [
+        "3d",
+        "redstone",
+        "simulator",
+        "boolean",
+        "algebra",
+        "logic",
+        "minecraft",
+        "three.js"
+    ],
+    "author": "Guilherme Rossato",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/GuilhermeRossato/3D-Redstone-Simulator/issues"
+    },
+    "homepage": "https://github.com/GuilhermeRossato/3D-Redstone-Simulator#readme",
+    "devDependencies": {},
+    "dependencies": {}
 }
