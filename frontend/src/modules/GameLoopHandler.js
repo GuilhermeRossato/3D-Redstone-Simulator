@@ -1,7 +1,7 @@
 import Performancer from "../classes/Performancer.js"
 
 const isConstantTime = false;
-const period = 1000/60; // 60 FPS
+const period = 1000 / 60; // 60 FPS
 
 let extraMs = 0;
 let lastTime = performance.now();
@@ -24,7 +24,7 @@ function update() {
     } else {
         if (delta < period) {
             extraMs = delta;
-        } else if (delta > period*16) {
+        } else if (delta > period * 16) {
             if (delta > 3000) {
                 overflowFunc(delta);
             } else {

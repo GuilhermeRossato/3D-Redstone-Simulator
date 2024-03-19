@@ -1,5 +1,5 @@
 import * as InputHandler from '../InputHandler.js';
-import * as MultiplayerHandler from '../MultiplayerHandler.js';
+import * as MultiplayerHandler from './MultiplayerHandler.js';
 
 let sendingPosition = false;
 let playerActionBuffer = [];
@@ -12,10 +12,12 @@ export async function sendPlayerActionToServerEventually(action) {
 }
 
 async function sendPlayerMadeActions() {
+    const promises = [];
     while (playerActionBuffer.length) {
         const action = playerActionBuffer.pop();
-        MultiplayerHandler.sendAction(action);
+        promises.push(MultiplayerHandler.sendClientAction(action));
     }
+    await Promise.all(promises);
 }
 
 let requestDebounceIndex = 0;
@@ -31,27 +33,24 @@ export function updateSelfState() {
         requestDebounceIndex += 1;
         return;
     }
-    if (playerActionBuffer.length === 0 && !InputHandler.dirty) {
+    if (playerActionBuffer.length === 0 && !InputHandler.flags.dirty) {
         return;
     }
-    if (InputHandler.dirty) {
-        const position = InputHandler.position;
-        const rotation = InputHandler.rotation;
+    if (InputHandler.flags.dirty) {
+        const { x, y, z } = InputHandler.position;
+        const { yaw, pitch } = InputHandler.rotation;
         playerActionBuffer.push({
             type: 'move',
-            x: position.x,
-            y: position.y,
-            z: position.z,
-            yaw: rotation.yaw,
-            pitch: rotation.pitch,
+            x,
+            y,
+            z,
+            yaw,
+            pitch,
         });
-        InputHandler.clearDirtyness();
+        InputHandler.flags.dirty = false;
     }
     requestDebounceIndex = 0;
     sendingPosition = true;
-    if (playerActionBuffer.length > 1 && playerActionBuffer[0].type === 'move' && playerActionBuffer[1].type === 'move') {
-        console.warn('Double movement');
-    }
     sendPlayerMadeActions().then(
         () => sendingPosition = false,
         (err) => {
