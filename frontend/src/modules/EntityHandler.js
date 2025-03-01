@@ -1,4 +1,5 @@
 import * as THREE from '../libs/three.module.js';
+import { b, ib } from '../utils/bezier.js';
 import { scene } from './GraphicsHandler.js';
 
 /**
@@ -129,25 +130,22 @@ export function update(time) {
         const startPosition = entityRecord[pid].target.start;
         const endPosition = entityRecord[pid].target.end;
         const n = new Date().getTime();
-        const duration = entityRecord[pid].target.time + entityRecord[pid].target.;
-        if (entityRecord[pid].target.time +) {
+        let t = ib(entityRecord[pid].target.startAt, entityRecord[pid].target.endAt, n);
+        if (t >= 1) {
             entityRecord[pid].target.finished = true;
-            entityRecord[pid].group.position.set(endPosition[0], endPosition[1], endPosition[2]);
-            entityRecord[pid].group.rotation.set(0, endPosition[4], 0);
-        } else {
-            const t = (n - entityRecord[pid].target.start) / (entityRecord[pid].target.end - entityRecord[pid].target.start);
-            if (isNaN(t)) {
-                console.log('t is NaN');
-                continue;
-            }
-            const x = b(startPosition[0], endPosition[0], t);
-            const y = b(startPosition[1], endPosition[1], t);
-            const z = b(startPosition[2], endPosition[2], t);
-            const pitch = b(startPosition[4], endPosition[4], t);
-            if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(pitch)) {
-                continue;
-            }
-            entityRecord[pid].group.position.set(x, y, z);
+            t = 1;
+        }
+        // Position
+        const x = b(startPosition.x, endPosition.x, t);
+        const y = b(startPosition.y, endPosition.y, t);
+        const z = b(startPosition.z, endPosition.z, t);
+        entityRecord[pid].mesh.position.set(x, y, z);
+        // Rotation
+        if (typeof startPosition.pitch === 'number') {
+            const pitch = b(startPosition.pitch, endPosition.pitch, t);
+            const yaw = b(startPosition.yaw, endPosition.yaw, t);
+            mesh.children[0].rotation.y = yaw;
+            mesh.rotation.z = pitch;
             entityRecord[pid].group.rotation.set(0, pitch, 0);
         }
     }

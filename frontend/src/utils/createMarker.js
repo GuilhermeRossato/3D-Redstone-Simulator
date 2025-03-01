@@ -1,34 +1,36 @@
 import * as THREE from '../libs/three.module.js';
 
-export function createMarker(x = 0, y = 0, z = 0, color = 0xFFFFFF, size = 1/16, duration = null) {
-    if (!(color instanceof THREE.Color)) {
-        color = new THREE.Color(color);
-    }
+export function createMarker(x = 0, y = 0, z = 0, color = 0xFFFFFF, size = 1 / 16, duration = null) {
+    const colorObj = typeof color === 'number' ? new THREE.Color(color) : (color instanceof THREE.Color) ? color : undefined;
     const geometry = new THREE.BufferGeometry();
     const vertices = new Float32Array([
         // Line 1
-    	x, y - size, z,
-    	x, y + size, z,
+        x, y - size, z,
+        x, y + size, z,
         // Line 2
-    	x, y, z - size,
-    	x, y, z + size,
+        x, y, z - size,
+        x, y, z + size,
         // Line 3
-    	x - size, y, z,
-    	x + size, y, z
+        x - size, y, z,
+        x + size, y, z
     ]);
-    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-    
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+
     const material = new THREE.LineBasicMaterial({
-        color: color,
+        color: colorObj,
         linewidth: 1
     });
 
     const lines = new THREE.LineSegments(geometry, material);
-    if (window.scene) {
-        window.scene.add(lines);
+    const scene = window['scene'];
+    if (scene) {
+        scene.add(lines);
     }
     if (duration) {
-        setTimeout(() => { window.scene.remove(lines); }, duration * 1000);
+        setTimeout(
+            () => { scene.remove(lines); },
+            duration * 1000
+        );
     }
     return lines;
 }
@@ -61,4 +63,4 @@ window.addEventListener('keyup', (event) => {
     }
 });
 
-window.createMarker = createMarker;
+window['createMarker'] = createMarker;
