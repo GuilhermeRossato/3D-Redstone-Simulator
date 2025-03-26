@@ -6,6 +6,13 @@ import {
 
 const debug = true;
 
+function getWebsocketEndpoint() {
+  let protocol = window.location.hostname === "localhost" ? "ws" : "wss";
+  let host = window.location.host;
+  host = "gui-test-zone.com.br";
+  return `${protocol}://${host}`;
+}
+
 /** @type {undefined | WebSocket} */
 let socket;
 
@@ -38,12 +45,13 @@ async function createSocket() {
   ]);
   return await new Promise((resolve, reject) => {
     lastBeginTime = new Date().getTime();
-    const url = `${window.location.hostname === "localhost" ? "ws" : "wss"}://${
-      window.location.host
-    }/websocket/${selfLoginCode}/${cookieId ? cookieId + "/" : ""}`;
+    const base = getWebsocketEndpoint();
+    const url = `${base}/websocket/${selfLoginCode}/${
+      cookieId ? cookieId + "/" : ""
+    }`;
     debug && console.log("[D]", "Creating websocket to", url);
-    const s = new WebSocket(url);
-    s.onerror = (err) => {
+    const ws = new WebSocket(url);
+    ws.onerror = (err) => {
       console.log("Websocket error:", err);
     };
 
@@ -57,7 +65,7 @@ async function createSocket() {
         reject(closeReason);
       }
     }, 7000);
-    s.addEventListener("timeout", (evt) => {
+    ws.addEventListener("timeout", (evt) => {
       isSocketClosed = true;
       clearTimeout(timeoutTimer);
       const message = `Timeout event emitted for websocket ${
@@ -75,7 +83,7 @@ async function createSocket() {
       }
     });
 
-    s.addEventListener("error", (evt) => {
+    ws.addEventListener("error", (evt) => {
       if (evt.eventPhase === 2) {
         console.log(
           "Websocket was received by the listener but the communication failed"
@@ -104,7 +112,7 @@ async function createSocket() {
       }
     });
 
-    s.addEventListener("close", () => {
+    ws.addEventListener("close", () => {
       isSocketClosed = true;
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
@@ -120,7 +128,7 @@ async function createSocket() {
       lastCloseTime = now;
     });
 
-    s.addEventListener("open", () => {
+    ws.addEventListener("open", () => {
       clearTimeout(timeoutTimer);
       if (resolved) {
         debug &&
@@ -130,7 +138,7 @@ async function createSocket() {
           );
         try {
           isSocketClosed = true;
-          s.close();
+          ws.close();
         } catch (err) {
           // Ignore
         }
@@ -147,18 +155,19 @@ async function createSocket() {
             );
           try {
             isSocketClosed = true;
-            s.close();
+            ws.close();
           } catch (err) {
             // Ignore
           }
           return;
         }
         resolved = true;
-        resolve(s);
+        resolve(ws);
       }, 250);
     });
 
-    s.addEventListener("message", (event) => {
+    ws.addEventListener("message", (event) => {
+      console.log("Received message:", event.data);
       let obj;
       try {
         obj =
@@ -168,7 +177,7 @@ async function createSocket() {
       } catch (err) {
         debug &&
           console.log("[D]", "Failed to parse data from socket:", err.message);
-        s.close();
+        ws.close();
         return;
       }
       if (responseResolveRecord[obj.responseId]) {
