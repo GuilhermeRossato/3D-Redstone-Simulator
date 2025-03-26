@@ -6,4 +6,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send HTTP POST request
-        run: curl -X POST https://grossato.com.br/personal-api/update-project
+        run: curl -X POST -s -w "HTTP Response Code: %{http_code}\nTotal Time: %{time_total}s\nSize Downloaded: %{size_download} bytes\n" https://grossato.com.br/personal-api/update-project
