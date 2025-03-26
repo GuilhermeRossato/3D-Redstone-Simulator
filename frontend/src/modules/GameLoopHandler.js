@@ -53,6 +53,7 @@ function update() {
  * @param {() => any} update 
  * @param {() => any} draw 
  * @param {() => any} overflow 
+ * @returns {any}
  */
 export function load(update, draw, overflow) {
     updateFunc = update;

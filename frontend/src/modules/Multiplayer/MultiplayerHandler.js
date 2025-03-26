@@ -53,7 +53,7 @@ function addOtherPlayer(player) {
 
 
 export async function load() {
-    try {
+    try {      
         await initializeSocket();
         await performLogin();
         active = true;
@@ -61,6 +61,7 @@ export async function load() {
         active = false;
         console.error('Multiplayer failed to start:', err);
     }
+    return active;
 }
 
 /**
