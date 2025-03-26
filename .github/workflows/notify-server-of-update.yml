@@ -1,0 +1,9 @@
+name: Deploy updates to production
+run-name: ${{ github.actor }} updated the project 🚀
+on: [push]
+jobs:
+  Send-Server-Update-Notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send HTTP POST request
+        run: curl -X POST https://grossato.com.br/personal-api/update-project
