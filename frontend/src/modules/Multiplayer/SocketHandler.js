@@ -14,7 +14,7 @@ function getWebsocketEndpoint() {
 }
 
 /** @type {undefined | WebSocket} */
-let socket;
+let ws;
 
 let closeReason = null;
 let lastBeginTime = null;
@@ -50,7 +50,7 @@ async function createSocket() {
       cookieId ? cookieId + "/" : ""
     }`;
     debug && console.log("[D]", "Creating websocket to", url);
-    const ws = new WebSocket(url);
+    ws = new WebSocket(url);
     ws.onerror = (err) => {
       console.log("Websocket error:", err);
     };
@@ -252,14 +252,14 @@ export async function initializeSocket() {
 // let lastSendTime = new Date().getTime();
 let replyId = 0;
 export async function sendEvent(obj, waitReply = false) {
-  if (!socket) {
+  if (!ws) {
     throw new Error("No socket connection stabilished to send event");
   }
   if (isSocketClosed && !isStartingSocket) {
     debug && console.log("[D]", "Restarting socket");
     isStartingSocket = true;
     try {
-      socket = await createSocket();
+      ws = await createSocket();
       isStartingSocket = false;
     } catch (err) {
       debug && console.log("[D]", "Failed while restarting socket:", err.stack);
@@ -270,7 +270,7 @@ export async function sendEvent(obj, waitReply = false) {
   for (let i = 0; i < 30 && isStartingSocket; i++) {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  if (isStartingSocket || !socket || isSocketClosed) {
+  if (isStartingSocket || !ws || isSocketClosed) {
     throw new Error("No socket connection stabilished after restart");
   }
   /*
@@ -289,7 +289,7 @@ export async function sendEvent(obj, waitReply = false) {
         };
         replyId++;
       }
-      socket.send(JSON.stringify(obj));
+      ws.send(JSON.stringify(obj));
       if (!waitReply) {
         resolve();
       }
