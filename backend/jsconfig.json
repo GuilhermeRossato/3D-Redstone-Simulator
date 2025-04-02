@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "NodeNext",
+    "checkJs": true,
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true
+  }
+}
