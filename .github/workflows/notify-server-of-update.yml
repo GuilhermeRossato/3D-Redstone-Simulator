@@ -1,9 +1,25 @@
 name: Deploy updates to production
 run-name: ${{ github.actor }} updated the project 🚀
-on: [push]
+on: []
 jobs:
   Send-Server-Update-Notification:
     runs-on: ubuntu-latest
     steps:
-      - name: Send HTTP POST request
-        run: curl -X POST -s -w "HTTP Response Code: %{http_code}\nTotal Time: %{time_total}s\nSize Downloaded: %{size_download} bytes\n" https://grossato.com.br/personal-api/update-project
+      - name: Send HTTP POST request with retry
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+        run: |
+          retries=0
+          max_retries=3
+          while [ $retries -le $max_retries ]; do
+            response=$(curl -X POST -s -w "HTTP Response Code: %{http_code}\nTotal Time: %{time_total}s\nSize Downloaded: %{size_download} bytes\n" "https://grossato.com.br/personal-api/update-project?token=${PROJECT_TOKEN}&project=${PROJECT_NAME}")
+            if [[ "$response" == *"HTTP Response Code: 404"* || "$response" == *"HTTP Response Code: 500"* ]]; then
+              echo "Received 404 or 500 error. Retrying in 10 seconds..."
+              sleep 10
+              retries=$((retries+1))
+            else
+              echo "Request successful"
+              break
+            fi
+          done
