@@ -1,10 +1,25 @@
 import http from "http";
 import crypto from "crypto";
 
+console.log('Starting server script...');
+
+async function handleRequest(req, res) {
+  res.writeHead(200, {
+    "Content-Type": "text/plain",
+  });
+  res.end("Hello from the server!");
+}
+
 const server = http.createServer((req, res) => {
-  // Handle regular HTTP requests here (if needed)
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Hello from the HTTP server!");
+  handleRequest(req, res).then(() => {
+    console.log(req.method, req.url, 'Finished');
+    console.log("Request handled successfully");
+  }).catch((err) => {
+    console.log(req.method, req.url, 'Failed');
+    console.error("Request handling failed:", err);
+    try {res.writeHead(500);} catch(err) {}
+    try {res.end("Internal server error");} catch(err) {}
+  })
 });
 
 server.on("upgrade", (req, socket, head) => {
