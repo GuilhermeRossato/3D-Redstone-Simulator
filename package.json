@@ -1,7 +1,7 @@
 {
   "name": "3d-redstone-simulator",
   "version": "0.8.0",
-  "description": "Web app to simulate minecraft in the browser and its behavior such as the digital boolean logic mechanic (redstone) in a 3d environment",
+  "description": "A project to simulate minecraft in the browser with the boolean logic mechanic (redstone) as close as we can get to the original game.",
   "main": "static-server.js",
   "scripts": {
     "dev": "node static-server.js --host localhost --port 8080 --path frontend",
