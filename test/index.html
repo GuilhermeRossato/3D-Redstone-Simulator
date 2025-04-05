@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <div id="output"></div>
+
+    <script>
+        const outputDiv = document.getElementById('output');
+
+        function log(message) {
+	console.log(message);
+            outputDiv.innerHTML += `<p>${message}</p>`;
+        }
+
+        function connectWebSocket() {
+            log('Attempting to connect to WebSocket...');
+            const ws = new WebSocket('wss://gui-test-zone.com.br/ws');
+
+            ws.onopen = () => {
+                log('Connected to WebSocket server.');
+                log(`WebSocket readyState: ${ws.readyState}`);
+            };
+
+            ws.onmessage = (event) => {
+                log(`Received: ${event.data}`);
+            };
+
+            ws.onerror = (error) => {
+                log(`Error: ${error}`);
+                log(`WebSocket readyState (onerror): ${ws.readyState}`);
+                log(`Error details: ${error.message ? error.message : error}`); // Try to get a more specific error message
+            };
+
+            ws.onclose = (event) => {
+                log(`Disconnected from WebSocket server. Code: ${event.code}, Reason: ${event.reason}`);
+                log(`WebSocket readyState (onclose): ${ws.readyState}`);
+            };
+
+            // Optional: Send a message after connection
+            ws.addEventListener('open', () => {
+                log('Sending test message...');
+                ws.send('Hello from the client!');
+            });
+
+            // Optional: Log state changes
+            ws.addEventListener('message', () => {
+                log(`WebSocket readyState (onmessage): ${ws.readyState}`);
+            });
+        }
+
+        connectWebSocket();
+    </script>
+</body>
+</html>
