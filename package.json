@@ -5,7 +5,7 @@
   "main": "static-server.js",
   "scripts": {
     "dev": "node static-server.js --host localhost --port 8080 --path frontend",
-    "start": "node backend/index.js --host localhost --port 8070",
+    "start": "node backend/index.js --url http://localhost:8999/"
   },
   "repository": {
     "type": "git",
