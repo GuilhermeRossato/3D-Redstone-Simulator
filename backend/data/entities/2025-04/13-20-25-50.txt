@@ -1,1 +1,0 @@
-e-011: {"id":"e-011","saved":20011,"state":{"type":"player","position":[-66,-62,-61],"direction":[0,0,0],"health":20,"maxHealth":20,"path":[0,0,0],"target":"","player":"p-035674866026"},"created":1744586730568,"updated":0,"snaps":[{"t":1}]}

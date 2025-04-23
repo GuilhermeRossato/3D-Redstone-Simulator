@@ -1,4 +1,4 @@
-import { chunks } from "../../lib/primitives/createStorageClient.js";
+import { chunks } from "../../lib/storage.js";
 
 async function getSurroundingWorld(origin, target) {
   if (typeof target === "number") {
