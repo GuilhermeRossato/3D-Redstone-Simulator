@@ -1,4 +1,4 @@
-import { createStore, entities, players } from "../../lib/storage.js";
+import { createStorageClient, entities, players } from "../../lib/primitives/createStorageClient.js";
 
 export default async function setup(payload, context) {
   const { type, selfLoginCode, cookieId, replyId } = payload;

@@ -1,26 +1,25 @@
-import { sfs } from "./sfs.js";
-import { isProcessRunningByPid } from "./isProcessRunningByPid.js";
-import getDateTimeString from "./getDateTimeString.js";
-import { backendPath } from "./init.js";
+import { sfs } from "../sfs.js";
+import { isProcessRunningByPid } from "../isProcessRunningByPid.js";
+import getDateTimeString from "../getDateTimeString.js";
+import { backendPath } from "../init.js";
 
 const debugSave = true;
 const debug = false;
 
 /**
- *
- * @template {{[name: string]: unknown}} T // Constrain T to be an object with string keys
+ * @template {{[name: string]: unknown}} T A template to constrain T to be an object with string keys
  * @param {string} type The string type of the store. This is used to create a unique store for each type.
  * @param {(t?: any)=>T} [parser] Method used to parse each entry. Also used to infer the type of T.
  * @param {Partial<{maxLoaded: number, writeDelay: number, combineLimit: number, countEntries: boolean, manualSave: boolean, maxPerFile: number, limitState: boolean}>} [storeConfig]
  */
-export async function createStore(
+export async function createStorageClient(
   type = "",
   parser = (t) => t,
   storeConfig = {}
 ) {
   const log = debug ? (...args) => console.log([type], ...args) : () => {};
   /** @type {typeof storeObj} */
-  const cached = createStore[`cached-${type}`];
+  const cached = createStorageClient[`cached-${type}`];
   if (cached) {
     return cached;
   }
@@ -979,95 +978,3 @@ export async function createStore(
   };
   return storeObj;
 }
-
-const loadUsers = createStore.bind(null, "users");
-const loadRooms = createStore.bind(null, "rooms");
-const loadItems = createStore.bind(null, "items");
-const loadWorld = createStore.bind(null, "world");
-
-export const loaders = {
-  users: loadUsers,
-  rooms: loadRooms,
-  items: loadItems,
-  world: loadWorld,
-};
-
-export const loaded = {
-  users: new Set(),
-  rooms: new Set(),
-  items: new Set(),
-  world: new Set(),
-};
-
-export const record = {
-  users: loadUsers({ n: 16 }),
-  rooms: loadRooms({ n: 16 }),
-  items: loadItems({ n: 16 }),
-  world: loadWorld({ n: 16 }),
-};
-
-export const entities = await createStore(
-  "entities",
-  () => ({
-    type: "",
-    position: [0, 0, 0],
-    direction: [0, 0, 0],
-    health: 0,
-    maxHealth: 0,
-    path: [0, 0, 0],
-    player: "",
-    target: "",
-  }),
-  {
-    maxPerFile: 1_000,
-    writeDelay: 20_000,
-    manualSave: false,
-  }
-);
-
-export const players = await createStore(
-  "player",
-  () => ({
-    id: "",
-    cookieId: "",
-    lastLogin: 0,
-    name: "",
-    entity: "",
-    position: [0, 0, 0],
-    direction: [0, 0, 0],
-  }),
-  {
-    maxPerFile: 1000,
-    writeDelay: 5_000,
-    manualSave: false,
-  }
-);
-
-export const actions = await createStore(
-  "actions",
-  () => ({
-    actor: "",
-    position: [0, 0, 0],
-    direction: [0, 0, 0],
-    type: "",
-    time: 0,
-    target: "",
-  }),
-  {
-    maxPerFile: 1000,
-    manualSave: true,
-  }
-);
-
-export const chunks = await createStore(
-  "chunks",
-  () => ({
-    position: [0, 0, 0],
-    data: "",
-    players: [""],
-  }),
-  {
-    maxPerFile: 1000,
-    manualSave: true,
-  }
-);

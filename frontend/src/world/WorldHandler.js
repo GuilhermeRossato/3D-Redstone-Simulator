@@ -1,5 +1,6 @@
 import Chunk from '../classes/world/Chunk.js';
-import { scene } from './GraphicsHandler.js';
+import { scene } from '../modules/GraphicsHandler.js';
+import { loadWorld } from './loadWorld.js';
 
 let isSavingTheWorldLocally = false;
 /** @type {Record<number, Record<number, Record<number, Chunk>>>} */
@@ -161,6 +162,7 @@ export function set(x, y, z, id) {
 }
 
 export async function load() {
+  return await loadWorld();
 }
 
 const startingLocalWorldBlockData = [

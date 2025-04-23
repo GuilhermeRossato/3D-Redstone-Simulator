@@ -1,4 +1,4 @@
-import { get, set } from "./WorldHandler.js";
+import { get, set } from "../world/WorldHandler.js";
 
 /**
  * @typedef {Object} ChunkObject

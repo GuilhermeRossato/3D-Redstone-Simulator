@@ -1,5 +1,5 @@
 import { position } from '../InputHandler.js';
-import * as WorldHandler from '../WorldHandler.js';
+import * as WorldHandler from '../../world/WorldHandler.js';
 
 const chunkUpdateLookup = [];
 for (let cx = -3; cx <= 3; cx++) {

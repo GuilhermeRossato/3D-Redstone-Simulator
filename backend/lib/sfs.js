@@ -9,7 +9,7 @@ let lastPath = "";
 let lastOp = null;
 let lastRes = null;
 
-const updatePathOpRes = (path, op, res, alt = undefined) => {
+const updateLastOpResult = (path, op, res, alt = undefined) => {
   lastPath = path;
   lastOp = op;
   lastRes = res;
@@ -47,10 +47,10 @@ const readFileFunc = async (path, encoding) => {
       path,
       encoding === "buffer" || encoding === "" ? "binary" : encoding
     );
-    updatePathOpRes(path, "readFile", result);
+    updateLastOpResult(path, "readFile", result);
     return result;
   } catch (error) {
-    updatePathOpRes(path, "readFile", error);
+    updateLastOpResult(path, "readFile", error);
     return !encoding || encoding === "binary" || encoding === "buffer"
       ? Buffer.from("")
       : "";
@@ -64,10 +64,10 @@ const readFileFunc = async (path, encoding) => {
 const readTextFileFunc = async (path = "") => {
   try {
     const result = await fs.promises.readFile(path, "utf-8");
-    updatePathOpRes(path, "readFile", result);
+    updateLastOpResult(path, "readFile", result);
     return result;
   } catch (error) {
-    updatePathOpRes(path, "readFile", error);
+    updateLastOpResult(path, "readFile", error);
     return "";
   }
 };
@@ -87,10 +87,10 @@ const writeFileFunc = async (path, data, encoding) => {
         : data,
       encoding
     );
-    updatePathOpRes(path, "writeFile", result);
+    updateLastOpResult(path, "writeFile", result);
     return await statFunc(path);
   } catch (error) {
-    updatePathOpRes(path, "writeFile", error);
+    updateLastOpResult(path, "writeFile", error);
     return null;
   }
 };
@@ -108,7 +108,7 @@ const appendFileFunc = async (path, data, encoding) => {
       : data;
   try {
     const result = await fs.promises.appendFile(path, text, encoding);
-    updatePathOpRes(path, "appendFile", result);
+    updateLastOpResult(path, "appendFile", result);
     return true;
   } catch (error) {
     if (error.code === "ENOENT" && typeof path === "string") {
@@ -118,15 +118,15 @@ const appendFileFunc = async (path, data, encoding) => {
         await fs.promises.mkdir(parts.join("/"), { recursive: true });
         try {
           const result = await fs.promises.appendFile(path, text, encoding);
-          updatePathOpRes(path, "appendFile", result);
+          updateLastOpResult(path, "appendFile", result);
           return true;
         } catch (error2) {
-          updatePathOpRes(path, "appendFile", error2);
+          updateLastOpResult(path, "appendFile", error2);
           return false;
         }
       }
     }
-    updatePathOpRes(path, "appendFile", error);
+    updateLastOpResult(path, "appendFile", error);
     return false;
   }
 };
@@ -138,10 +138,10 @@ const appendFileFunc = async (path, data, encoding) => {
 const unlinkFunc = async (path) => {
   try {
     const result = await fs.promises.unlink(path);
-    updatePathOpRes(path, "unlink", result);
+    updateLastOpResult(path, "unlink", result);
     return true;
   } catch (error) {
-    updatePathOpRes(path, "unlink", error);
+    updateLastOpResult(path, "unlink", error);
     return false;
   }
 };
@@ -153,10 +153,10 @@ const unlinkFunc = async (path) => {
 const readdirFunc = async (path) => {
   try {
     const result = await fs.promises.readdir(path);
-    updatePathOpRes(path, "readdir", result);
+    updateLastOpResult(path, "readdir", result);
     return result;
   } catch (error) {
-    updatePathOpRes(path, "readdir", error);
+    updateLastOpResult(path, "readdir", error);
     return [];
   }
 };
@@ -178,20 +178,20 @@ const statFunc = async (path) => {
       result = await fs.promises.stat(path);
     } else {
       console.log("Unexpected path type", path);
-      process.exit(163);
+      process.exit(181);
     }
-    updatePathOpRes(path, "stat", result);
+    updateLastOpResult(path, "stat", result);
     return {
       path,
       size: result.size,
-      atimeMs: result.atimeMs,
-      mtimeMs: result.mtimeMs,
-      ctimeMs: result.ctimeMs,
+      atimeMs: Math.floor(result.atimeMs),
+      mtimeMs: Math.floor(result.mtimeMs),
+      ctimeMs: Math.floor(result.ctimeMs),
       isDirectory: result.isDirectory() ? isYes : isNo,
       isFile: result.isFile() ? isYes : isNo,
     };
   } catch (error) {
-    updatePathOpRes(path, "stat", error);
+    updateLastOpResult(path, "stat", error);
     return {
       path,
       size: NaN,
@@ -211,10 +211,10 @@ const statFunc = async (path) => {
 const mkdirFunc = async (path, options = { recursive: true }) => {
   try {
     const result = await fs.promises.mkdir(path, options);
-    updatePathOpRes(path, "mkdir", result);
+    updateLastOpResult(path, "mkdir", result);
     return true; // Directory created successfully
   } catch (error) {
-    updatePathOpRes(path, "mkdir", error);
+    updateLastOpResult(path, "mkdir", error);
     if (error.code === "EEXIST") {
       // Directory already exists, treat as success
       return true;

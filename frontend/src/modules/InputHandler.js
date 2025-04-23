@@ -1,6 +1,6 @@
 import * as THREE from '../libs/three.module.js';
 import { moveVertically, moveTowardsAngle } from './MovementHandler.js';
-import { getChunk, set, get, resetLocalWorld } from './WorldHandler.js';
+import { getChunk, set, get, resetLocalWorld } from '../world/WorldHandler.js';
 import getFaceBounds from '../utils/getFaceBounds.js'
 import SIDE_DISPLACEMENT from '../data/SideDisplacement.js';
 import { sendPlayerActionToServerEventually } from './Multiplayer/ExternalSelfStateHandler.js';

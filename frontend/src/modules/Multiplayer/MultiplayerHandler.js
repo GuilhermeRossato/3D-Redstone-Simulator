@@ -3,7 +3,7 @@ import { scene } from "../GraphicsHandler.js";
 import { setPlayerPosition } from "../InputHandler.js";
 import { updateSelfState } from "./ExternalSelfStateHandler.js";
 import * as EntityHandler from "../EntityHandler.js";
-import * as WorldHandler from "../WorldHandler.js";
+import * as WorldHandler from "../../world/WorldHandler.js";
 import { initializeSocket, sendEvent } from "./SocketHandler.js";
 import { b } from "../../utils/bezier.js";
 import { createSnackbarAlert } from "../../utils/createSnackbarAlert.js";
@@ -302,3 +302,13 @@ export async function processServerPacket(packet) {
 
   console.warn("Unknown packet", packet);
 }
+
+export function getPlayer() {
+  return player;
+}
+
+window["setBlock"] = function (x, y, z, id, type) {
+
+}
+
+

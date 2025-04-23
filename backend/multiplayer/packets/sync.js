@@ -1,4 +1,3 @@
-import { chunks } from "../../lib/storage.js";
 
 export async function sync(payload, context) {
   const { type, clientTime, replyId, offset } = payload;

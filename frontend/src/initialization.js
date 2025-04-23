@@ -1,7 +1,7 @@
 import { displayFatalError } from "./displayFatalError.js";
 import * as TextureHandler from "./modules/TextureHandler.js";
 import * as GraphicsHandler from "./modules/GraphicsHandler.js";
-import * as WorldHandler from "./modules/WorldHandler.js";
+import * as WorldHandler from "./world/WorldHandler.js";
 import * as GameLoopHandler from "./modules/GameLoopHandler.js";
 import * as ForegroundHandler from "./modules/ForegroundHandler.js";
 import * as InputHandler from "./modules/InputHandler.js";

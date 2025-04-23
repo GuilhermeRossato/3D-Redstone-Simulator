@@ -1,6 +1,6 @@
 import * as THREE from '../../libs/three.module.js';
 import BlockData from '../../data/BlockData.js';
-import * as WorldHandler from '../../modules/WorldHandler.js';
+import * as WorldHandler from '../../world/WorldHandler.js';
 import WorldBlock from '../../classes/world/WorldBlock.js';
 import * as BlockHandler from '../../modules/BlockHandler.js';
 import { getMaterial } from '../../modules/GraphicsHandler.js';
