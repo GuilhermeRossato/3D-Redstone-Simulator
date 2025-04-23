@@ -1,0 +1,1 @@
+@code --folder-uri vscode-remote://ssh-remote+grossato.com.br/home/backend/dev/3D-Redstone-Simulator

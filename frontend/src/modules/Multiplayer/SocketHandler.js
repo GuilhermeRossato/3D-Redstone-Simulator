@@ -86,10 +86,13 @@ async function createSocket() {
     });
 
     ws.addEventListener("error", (evt) => {
-      if (evt.eventPhase === 2) {
+      if (evt?.eventPhase === 2) {
         console.log(
           "Websocket was received by the listener but the communication failed"
         );
+        console.log("Event", evt?.reason, evt?.cause, evt?.message, evt);
+      } else {
+        console.log("Websocket error event:", evt);
       }
       isSocketClosed = true;
       clearTimeout(timeoutTimer);
