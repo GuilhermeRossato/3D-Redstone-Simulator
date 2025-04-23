@@ -485,6 +485,7 @@ export function update(frame) {
  * @param {{ x: number; y: number; z: number; yaw?: number; pitch?: number; }} position
  */
 export function setPlayerPosition(position) {
+  console.log("Setting player position", position);
     const { x, y, z, yaw, pitch } = position;
     yawObject.position.set(x, y, z);
     if (typeof yaw === 'number' && !isNaN(yaw)) {

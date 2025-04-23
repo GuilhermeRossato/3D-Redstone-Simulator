@@ -1,0 +1,2 @@
+e-013: {"id":"e-013","saved":20007,"state":{"type":"player","position":[-65,-62,-65],"direction":[0,0,0],"health":20,"maxHealth":20,"path":[0,0,0],"target":"","player":"p-035674866026"},"created":1745427035896,"updated":0,"snaps":[{"t":1}]}
+e-013: {"id":"e-013","saved":116425,"state":{"type":"player","position":[-63.401,-62,-61.804],"direction":[0.06,-0.22,0],"health":20,"maxHealth":20,"path":[0,0,0],"target":"","player":"p-035674866026"},"created":1745427035896,"updated":106328,"snaps":[]}

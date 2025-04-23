@@ -1,11 +1,41 @@
 import fs from "node:fs";
 import http from "node:http";
-import crypto from "node:crypto";
 import process from "node:process";
+import child_process from "node:child_process";
+
+const detached = extractArgs([
+  "--detach",
+  "--detached",
+  "--daemon",
+  "--async",
+  "--background",
+  "--bg",
+  "-bg",
+]).length;
+
+if (detached) {
+  console.log("Spawning detached process");
+  console.log(" > node", ...process.argv.slice(1));
+  const c = child_process.spawn(process.argv[0], process.argv.slice(1), {
+    stdio: "ignore",
+    detached: true,
+  });
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  console.log(
+    "Detached process",
+    c?.pid ? "spawned" : "failed to spawn",
+    c?.pid === undefined ? "" : c.pid
+  );
+  c?.unref?.();
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  process.exit(0);
+}
 
 import { host, port, url, backendPath } from "./lib/init.js";
 import getMimeLookupRecord from "./utils/getMimeLookupRecord.js";
 import { once } from "./utils/once.js";
+import { extractArgs } from "./utils/extractArgs.js";
+import { handleRequestUpgrade } from "./multiplayer/handleRequestUpgrade.js";
 
 if (!host || !port) {
   console.log(
@@ -20,11 +50,11 @@ const mimeLookup = getMimeLookupRecord();
 
 async function handleRequest(req, res) {
   const url = req.url.toLowerCase().startsWith("/3d-redstone-simulator")
-    ? req.url.substring("/3d-redstone-simulator".length)
+    ? req.url.substring("/3d-redstone-simulator".length) || "/"
     : req.url;
   if (
     req.method === "GET" &&
-    (["/", "/index.html", "/index.php"].includes(url))
+    ["/", "/index.html", "/index.php"].includes(url)
   ) {
     return {
       path: "./index.html",
@@ -99,15 +129,6 @@ function execSafe(...args) {
   }
 }
 
-// Generate the Sec-WebSocket-Accept key
-function generateAcceptKey(key) {
-  const magicString = "258EAFA5-E914-47DA-95CA-C5B5DA8F6B11";
-  return crypto
-    .createHash("sha1")
-    .update(key + magicString)
-    .digest("base64");
-}
-
 const server = http.createServer((req, res) => {
   handleRequest(req, res)
     .then((data) => {
@@ -152,16 +173,16 @@ const server = http.createServer((req, res) => {
           .then((buffer) => {
             const dot = target.lastIndexOf(".");
             const type = mimeLookup[target.substring(dot + 1)] || "text/plain";
-            console.log(
-              req.method,
-              target.substring(target.startsWith(".") ? 1 : 0),
-              "(",
-              buffer.byteLength,
-              "bytes",
-              "of",
-              type,
-              ")"
-            );
+            // console.log(
+            //   req.method,
+            //   target.substring(target.startsWith(".") ? 1 : 0),
+            //   "(",
+            //   buffer.byteLength,
+            //   "bytes",
+            //   "of",
+            //   type,
+            //   ")"
+            // );
             return execSafe(
               () =>
                 res.writeHead(200, {
@@ -201,172 +222,60 @@ const server = http.createServer((req, res) => {
 });
 
 server.on("upgrade", function (request, socket, head) {
-  console.log("Upgrade request received");
-  console.log("Upgrade request headers:", request.headers);
-  console.log("Upgrade request head:", head);
-
-  socket.on("close", (evt) => {
-    console.log(
-      `Socket closed for service`,
-      evt?.reason,
-      evt?.message,
-      evt?.cause,
-      evt
-    );
-  });
-
-  socket.on("error", (err) => {
-    console.log(`Socket error event:`, err);
-  });
-
-  socket.on("end", (evt) => {
-    console.log(
-      `Socket ended for service`,
-      evt?.reason,
-      evt?.message,
-      evt?.cause,
-      evt
-    );
-  });
-
-  if (request.headers["upgrade"] !== "websocket") {
-    console.log("WebSocket connection failed: Upgrade header not present");
-    const response = [
-      "HTTP/1.1 400 Bad Request",
-      "Content-Type: text/plain",
-      "Connection: close",
-      "",
-      "400 Bad Request: Upgrade header not present",
-    ].join("\r\n");
-    socket.end(response);
-    return;
-  }
-
-  const accept = request.headers["sec-websocket-key"];
-  if (!accept) {
-    console.log(
-      "WebSocket connection failed: Sec-WebSocket-Key header missing"
-    );
-    const response = [
-      "HTTP/1.1 400 Bad Request",
-      "Content-Type: text/plain",
-      "Connection: close",
-      "",
-      "400 Bad Request: Sec-WebSocket-Key header missing",
-    ].join("\r\n");
-    socket.end(response);
-    return;
-  }
-
-  let dataCount = 0;
-  socket.on("data", (buffer) => {
-    console.log("Received websocket data");
+  /** @type {Parameters<typeof handleRequestUpgrade>[3]} */
+  const onError = (err) => {
+    if (!err) {
+      console.log("Empty error argument on upgrade request error handler");
+      return;
+    }
+    const arr = err instanceof Array ? err : [err];
+    console.log("Received error on upgrade request error handler:", ...arr);
     try {
-      console.log("WebSocket data received", buffer.length);
-
-      if (dataCount === 0 || dataCount === 1) {
-        const masked = (buffer[1] & 0b10000000) >> 7;
-        if (masked !== 1) {
-          console.log("Warning: Client didn't mask data");
-        } else {
-          console.log("WebSocket client masked data as expected");
-        }
-      }
-      dataCount += 1;
-
-      // Basic WebSocket frame parsing (text only)
-      const FIN = (buffer[0] & 0b10000000) >> 7;
-      const Opcode = buffer[0] & 0b00001111;
-      const Mask = (buffer[1] & 0b10000000) >> 7;
-      let payloadLength = buffer[1] & 0b01111111;
-
-      let maskingKeyStart = 2;
-      if (payloadLength === 126) {
-        payloadLength = buffer.readUInt16BE(2);
-        maskingKeyStart = 4;
-      } else if (payloadLength === 127) {
-        console.log("Payload too long (might fail to connect)");
-        payloadLength = buffer.readBigUInt64BE(2);
-        maskingKeyStart = 10;
-      }
-
-      const maskingKey = buffer.slice(maskingKeyStart, maskingKeyStart + 4);
-      const payloadStart = maskingKeyStart + 4;
-
-      const payload = buffer.slice(
-        payloadStart,
-        payloadStart + Number(payloadLength)
-      );
-
-      // Unmask the payload
-      for (let i = 0; i < payload.length; i++) {
-        payload[i] = payload[i] ^ maskingKey[i % 4];
-      }
-
-      const message = payload.toString("utf8");
-      console.log(`Received: ${message}`);
-
-      // Echo the message back to the client
-      const response = `Server received: ${message}`;
-      const responseBuffer = Buffer.from(response, "utf8");
-      const responseHeader = Buffer.from([0b10000001, responseBuffer.length]); // FIN + Text Opcode
-      socket.write(Buffer.concat([responseHeader, responseBuffer]));
-    } catch (err) {
-      console.error("Error processing WebSocket data:", err);
       const response = [
-        "HTTP/1.1 500 Internal Server Error",
+        "HTTP/1.1 400 Bad Request",
         "Content-Type: text/plain",
         "Connection: close",
         "",
-        "500 Internal Server Error: WebSocket data processing failed",
+        `400 Bad Request: ${arr
+          .map((err) =>
+            err instanceof Array
+              ? JSON.stringify(err.map((v, i) => ({ i, v })))
+              : err instanceof Error
+              ? err.stack
+              : err instanceof Event
+              ? `Error event of type ${err.type}`
+              : typeof err === "string"
+              ? `Error message: ${err.length === 0 ? "empty" : err}`
+              : JSON.stringify(err)
+          )
+          .join(" ")}`,
       ].join("\r\n");
       socket.end(response);
+    } catch (err) {
+      console.error("Error sending upgrade error response:", err);
     }
-  });
-
-  try {
-    const acceptKey = generateAcceptKey(accept);
-    const responseHeaders = [
-      "HTTP/1.1 101 Switching Protocols",
-      "Upgrade: websocket",
-      "Connection: Upgrade",
-      `Sec-WebSocket-Accept: ${acceptKey}`,
-    ];
-    console.log("Using the following headers for WebSocket handshake:");
-    console.log(responseHeaders);
-
-    socket.write(responseHeaders.join("\r\n") + "\r\n\r\n");
-
-    console.log("WebSocket connection established");
-  } catch (err) {
-    console.error("Error during WebSocket handshake:", err);
-    const response = [
-      "HTTP/1.1 500 Internal Server Error",
-      "Content-Type: text/plain",
-      "Connection: close",
-      "",
-      "500 Internal Server Error: WebSocket handshake failed",
-    ].join("\r\n");
-    socket.end(response);
-    return;
-  }
-
-  socket.on("close", () => {
-    console.log("WebSocket connection closed");
-  });
-
-  socket.on("error", (error) => {
-    console.log("WebSocket error:", error);
-    console.error("WebSocket error:", error);
-    const response = [
-      "HTTP/1.1 500 Internal Server Error",
-      "Content-Type: text/plain",
-      "Connection: close",
-      "",
-      "500 Internal Server Error: WebSocket error occurred",
-    ].join("\r\n");
-    socket.end(response);
-  });
+  };
+  handleRequestUpgrade(request, socket, head, onError)
+    .then(() => {
+      console.log("Upgrade request handled");
+    })
+    .catch((err) => {
+      console.log("Error in upgrade handler:", err);
+      try {
+        const response = [
+          "HTTP/1.1 500 Internal Server Error",
+          "Content-Type: text/plain",
+          "Connection: close",
+          "",
+          "500 Internal Server Error: Upgrade handler error:",
+          "",
+          err.stack,
+        ].join("\r\n");
+        socket.end(response);
+      } catch (err) {
+        console.error("Error sending upgrade response:", err);
+      }
+    });
 });
 server.on("error", (err) => {
   console.log("Failed to listen to host", host, "on port", port, "with error:");

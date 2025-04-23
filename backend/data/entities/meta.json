@@ -1,0 +1,27 @@
+{
+  "created": 1744584412695,
+  "propTypes": {
+    "type": "string",
+    "position": "array",
+    "direction": "array",
+    "health": "number",
+    "maxHealth": "number",
+    "path": "array",
+    "target": "string",
+    "player": "string"
+  },
+  "config": {
+    "maxPerFile": 1000,
+    "writeDelay": 20000,
+    "manualSave": false
+  },
+  "lock": {
+    "parent": 125730,
+    "owner": 126925,
+    "locked": 1745428011308,
+    "created": "2025-04-23 14:06:51",
+    "updated": "2025-04-23 14:06:51"
+  },
+  "nextNum": 20,
+  "prevId": "e-019"
+}

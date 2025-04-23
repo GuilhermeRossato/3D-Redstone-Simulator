@@ -53,8 +53,6 @@ async function initialization() {
         InputHandler.update(frame);
         if (MultiplayerHandler.active) {
           MultiplayerHandler.update();
-          console.log("Enabled multiplayer mode");
-          await sleep(1000);
         }
       },
       GraphicsHandler.draw,
@@ -67,10 +65,15 @@ async function initialization() {
     await InputHandler.load(canvas, scene, camera);
 
     setLoadingText("Initializing Multiplayer");
-    if (MultiplayerHandler.load()) {
-      console.log("MultiplayerHandler.load() will be loaded");
-    } else {
-      console.log("MultiplayerHandler.load() returned false");
+    try {
+      if (MultiplayerHandler.load()) {
+        console.log("MultiplayerHandler.load() will be loaded");
+      } else {
+        console.log("MultiplayerHandler.load() returned false");
+      }
+    } catch (err) {
+      console.log("MultiplayerHandler.load() failed");
+      console.error(err);
     }
 
     if (!MultiplayerHandler.active) {

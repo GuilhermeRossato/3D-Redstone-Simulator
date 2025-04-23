@@ -1,0 +1,1 @@
+e-014: {"id":"e-014","saved":20007,"state":{"type":"player","position":[-64,-62,-66],"direction":[-0.03,-0.5705,0],"health":20,"maxHealth":20,"path":[0,0,0],"target":"","player":"p-035674866026"},"created":1745427255677,"updated":12705,"snaps":[{"t":1},{"t":1,"position":[-64,-62,-66],"direction":[-0.03,-0.5705,0]}]}

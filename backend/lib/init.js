@@ -5,7 +5,7 @@ console.log("Starting backend server script...");
 
 import { extractArgs } from "../utils/extractArgs.js";
 
-export const backendPath = fs.existsSync("./backend/.env") ? "./backend" : ".";
+export const backendPath = fs.existsSync("./backend") ? "./backend" : ".";
 
 if (fs.existsSync(`${backendPath}/.env`)) {
   process.loadEnvFile(`${backendPath}/.env`);
@@ -46,7 +46,7 @@ if (urlParam.endsWith("/")) {
   urlParam = urlParam.substring(urlParam.length - 1);
 }
 
-let q = urlParam.indexOf(":");
+const q = urlParam.indexOf(":");
 
 export const url = urlParam;
 export const host = urlParam.substring(0, q === -1 ? urlParam.length : q);

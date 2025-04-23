@@ -9,8 +9,8 @@ const debug = true;
 function getWebsocketEndpoint() {
   let protocol = window.location.hostname === "localhost" ? "ws" : "wss";
   let host = window.location.host;
-  host = "gui-test-zone.com.br";
-  return `${protocol}://${host}`;
+  // host = "gui-test-zone.com.br";
+  return `${protocol}://${host}/3D-Redstone-Simulator`;
 }
 
 /** @type {undefined | WebSocket} */
@@ -46,14 +46,16 @@ async function createSocket() {
   return await new Promise((resolve, reject) => {
     lastBeginTime = new Date().getTime();
     const base = getWebsocketEndpoint();
-    const url = `${base}/websocket/${selfLoginCode}/${
-      cookieId ? cookieId + "/" : ""
-    }`;
+    const url = `${base}/ws/${selfLoginCode}/${cookieId ? cookieId + "/" : ""}`;
     debug && console.log("[D]", "Creating websocket to", url);
     ws = new WebSocket(url);
     ws.onerror = (err) => {
       console.log("Websocket error:", err);
     };
+
+    // @ts-ignore
+    window["socket"] = window["ws"] = ws;
+    window["messages"] = [];
 
     let resolved = false;
     const timeoutTimer = setTimeout(() => {
@@ -113,6 +115,7 @@ async function createSocket() {
     });
 
     ws.addEventListener("close", () => {
+      console.log("Socket closed");
       isSocketClosed = true;
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
@@ -129,6 +132,7 @@ async function createSocket() {
     });
 
     ws.addEventListener("open", () => {
+      debug && console.log("Web socket opened");
       clearTimeout(timeoutTimer);
       if (resolved) {
         debug &&
@@ -167,7 +171,6 @@ async function createSocket() {
     });
 
     ws.addEventListener("message", (event) => {
-      console.log("Received message:", event.data);
       let obj;
       try {
         obj =
@@ -180,6 +183,12 @@ async function createSocket() {
         ws.close();
         return;
       }
+      window["messages"].push(obj);
+      if (window["messages"].length > 32) {
+        window["messages"].pop();
+      }
+
+      console.log("Received message:", obj);
       if (responseResolveRecord[obj.responseId]) {
         debug && console.log("[D]", "Routed server packet to response");
         responseResolveRecord[obj.responseId].resolve(obj);
@@ -252,6 +261,9 @@ export async function initializeSocket() {
 // let lastSendTime = new Date().getTime();
 let replyId = 0;
 export async function sendEvent(obj, waitReply = false) {
+  if (!obj.type) {
+    throw new Error("Missing type in object");
+  }
   if (!ws) {
     throw new Error("No socket connection stabilished to send event");
   }
@@ -273,12 +285,6 @@ export async function sendEvent(obj, waitReply = false) {
   if (isStartingSocket || !ws || isSocketClosed) {
     throw new Error("No socket connection stabilished after restart");
   }
-  /*
-    while (lastSendTime - new Date().getTime() < 50) {
-      await new Promise((resolve) => setTimeout(resolve, 51));
-    }
-    lastSendTime = new Date().getTime();
-    */
   return await new Promise((resolve, reject) => {
     try {
       if (waitReply) {
