@@ -1,5 +1,4 @@
-import { createStore, entities, players } from "../../lib/storage.js";
-
+import { players, entities } from "../../lib/models.js";
 
 function createCookieId(selfLoginCode) {
   const yearDigit = new Date().getFullYear().toString()[3];

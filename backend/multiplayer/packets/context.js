@@ -1,5 +1,3 @@
-import { chunks } from "../../lib/storage.js";
-
 async function getSurroundingWorld(origin, target) {
   if (typeof target === "number") {
     origin[0] -= target;

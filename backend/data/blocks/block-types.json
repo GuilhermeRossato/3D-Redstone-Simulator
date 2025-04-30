@@ -1,0 +1,75 @@
+{
+  "air": {
+    "name": "Air"
+  },
+  "stone": {
+    "name": "Stone",
+    "texture": ["stone0.png", "stone1.png", "stone2.png", "stone3.png", "stone4.png", "stone5.png", "stone6.png", "stone7.png"]
+  },
+  "copper_ore": {
+
+  },
+  "water": {
+
+  },
+  "granite": {
+
+  },
+  "grass_block": {
+
+  },
+  "oak_log": {
+
+  },
+  "short_grass": {
+
+  },
+  "oak_leaves": {
+
+  },
+  "birch_log": {
+
+  },
+  "birch_leaves": {
+
+  },
+  "dirt": {
+
+  },
+  "acacia_leaves": {
+
+  },
+  "andesite": {
+
+  },
+  "glow_lichen": {
+
+  },
+  "diorite": {
+
+  },
+  "gravel": {
+
+  },
+  "jungle_leaves": {
+
+  },
+  "vine": {
+
+  },
+  "coal_ore": {
+
+  },
+  "jungle_log": {
+
+  },
+  "fern": {
+
+  },
+  "iron_ore": {
+
+  },
+  "dandelion": {
+
+  }
+}

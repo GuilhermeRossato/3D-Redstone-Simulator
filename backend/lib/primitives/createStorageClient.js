@@ -37,8 +37,6 @@ export async function createStorageClient(
   let currentFile = "";
   let currentCount = 0;
 
-  // Define a mutex for the `operateMetadata` method
-  let metadataMutex = Promise.resolve();
   let metadataBusy = false;
 
   let metadataPromises = [];

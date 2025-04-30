@@ -113,7 +113,7 @@ async function performLogin() {
     {
       type: "setup",
       selfLoginCode: await getSelfLoginCode(),
-      cookieId,
+      cookieId: cookieId || localStorage.getItem("last-cookie-id"),
     },
     true
   );
@@ -127,6 +127,7 @@ async function performLogin() {
     typeof initResponse.cookieId === "string" &&
     initResponse.cookieId !== cookieId
   ) {
+    localStorage.setItem("last-cookie-id", initResponse.cookieId);
     console.log("Updating cookieId");
     document.cookie = `id=${initResponse.cookieId}; expires=${new Date(
       new Date().getTime() + 31_536_000_000

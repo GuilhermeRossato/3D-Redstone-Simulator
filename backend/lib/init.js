@@ -8,7 +8,11 @@ import { extractArgs } from "../utils/extractArgs.js";
 export const backendPath = fs.existsSync("./backend") ? "./backend" : ".";
 
 if (fs.existsSync(`${backendPath}/.env`)) {
-  process.loadEnvFile(`${backendPath}/.env`);
+  if (typeof process.loadEnvFile === "function") {
+    process.loadEnvFile(`${backendPath}/.env`);
+  } else {
+    console.log("Could not find loadEnvFile function. Skipping loading env file.");
+  }
 } else {
   console.log(
     "Could not find .env file. Skipping loading environment variables."

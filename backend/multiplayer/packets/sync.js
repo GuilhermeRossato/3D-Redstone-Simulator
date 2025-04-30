@@ -1,4 +1,4 @@
-import { chunks } from "../../lib/storage.js";
+import { chunks } from "../../lib/models.js";
 
 export async function sync(payload, context) {
   const { type, clientTime, replyId, offset } = payload;
@@ -23,9 +23,9 @@ export async function sync(payload, context) {
     throw new Error("Missing context entity");
   }
   const p = context.entity.state.position;
-  const cid = `c-${Math.floor(p[0] / 16 + offset[0])}-${Math.floor(
+  const cid = `c-${Math.floor(p[0] / 16 + offset[0])},${Math.floor(
     p[1] / 16 + offset[1]
-  )}-${Math.floor(p[2] / 16 + offset[2])}`;
+  )},${Math.floor(p[2] / 16 + offset[2])}`;
   const list = chunks.load(1, {
     id: cid,
   });
