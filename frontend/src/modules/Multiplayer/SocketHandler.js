@@ -2,9 +2,15 @@ import {
   getSelfLoginCode,
   getCookieId,
   processServerPacket,
+  flags,
 } from "./MultiplayerHandler.js";
 
 const debug = true;
+const verbose = false;
+
+function onSocketClose() {
+  flags.connected = false;
+}
 
 function getWebsocketEndpoint() {
   let protocol = window.location.hostname === "localhost" ? "ws" : "wss";
@@ -69,6 +75,7 @@ async function createSocket() {
     }, 7000);
     ws.addEventListener("timeout", (evt) => {
       isSocketClosed = true;
+      onSocketClose();
       clearTimeout(timeoutTimer);
       const message = `Timeout event emitted for websocket ${
         evt && typeof evt["message"] === "string"
@@ -90,11 +97,13 @@ async function createSocket() {
         console.log(
           "Websocket was received by the listener but the communication failed"
         );
+        // @ts-ignore
         console.log("Event", evt?.reason, evt?.cause, evt?.message, evt);
       } else {
         console.log("Websocket error event:", evt);
       }
       isSocketClosed = true;
+      onSocketClose();
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
       const message = `Error event emitted for websocket ${
@@ -120,6 +129,7 @@ async function createSocket() {
     ws.addEventListener("close", () => {
       console.log("Socket closed");
       isSocketClosed = true;
+      onSocketClose();
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
       const message = `Socket close event emitted ${
@@ -145,6 +155,7 @@ async function createSocket() {
           );
         try {
           isSocketClosed = true;
+          onSocketClose();
           ws.close();
         } catch (err) {
           // Ignore
@@ -162,6 +173,7 @@ async function createSocket() {
             );
           try {
             isSocketClosed = true;
+            onSocketClose();
             ws.close();
           } catch (err) {
             // Ignore
@@ -183,6 +195,7 @@ async function createSocket() {
       } catch (err) {
         debug &&
           console.log("[D]", "Failed to parse data from socket:", err.message);
+        debug && console.log("[D]", "Event data:", { data: event.data });
         ws.close();
         return;
       }
@@ -191,14 +204,14 @@ async function createSocket() {
         window["messages"].pop();
       }
 
-      console.log("Received message:", obj);
+      verbose && console.log("[V]", "Received message:", obj);
       if (responseResolveRecord[obj.responseId]) {
-        debug && console.log("[D]", "Routed server packet to response");
+        verbose && console.log("[D]", "Routed server packet to response");
         responseResolveRecord[obj.responseId].resolve(obj);
         delete responseResolveRecord[obj.responseId];
         return;
       }
-      debug &&
+      verbose &&
         console.log("[D]", "Routed server packet to process server event");
       processServerPacket(obj);
     });

@@ -44,7 +44,7 @@ if (!host || !port) {
   process.exit(6);
 }
 
-console.log("Starting listening", `http://${url}`, "...");
+console.log("Process", process.pid, "will listen to:", `http://${url}`, "...");
 
 const mimeLookup = getMimeLookupRecord();
 
@@ -229,6 +229,22 @@ server.on("upgrade", function (request, socket, head) {
       return;
     }
     const arr = err instanceof Array ? err : [err];
+    if (
+      (arr.length === 1||arr.length === 5) &&
+      (arr[0] === "Socket closed for service" ||
+        arr[0] === "Socket ended for service")
+    ) {
+      console.log("Socket ended for service");
+      return;
+    }
+    if (
+      (arr.length === 1||arr.length === 5) &&
+      arr[0] instanceof Error &&
+      arr[0].message === 'write after end'
+    ) {
+      console.log('Socket ended on write');
+      return;
+    }
     console.log("Received error on upgrade request error handler:", ...arr);
     try {
       const response = [

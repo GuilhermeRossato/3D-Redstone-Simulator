@@ -1,15 +1,15 @@
+import { updatePlayer } from "../../PlayerStorage.js";
+
 export async function move(payload, context) {
-  const { type, x, y, z, yaw, pitch, replyId } = payload;
+  const { type, x, y, z, yaw, pitch, pose, replyId } = payload;
   if (type !== "move") {
-    throw new Error("Invalid sync packet type");
+    throw new Error("Invalid move packet type");
   }
-  if (!context.entity) {
-    throw new Error("Invalid context entity");
+  if (!context.player) {
+    throw new Error("Invalid context player");
   }
-  context.entity.update({
-    position: [x, y, z],
-    direction: [yaw, pitch, 0],
-  });
+  context.player.pose = pose || [x,y,z,yaw,pitch];
+  await updatePlayer(context.player);
   if (replyId) {
     return { serverTime: new Date().getTime(), success: true };
   }

@@ -4,7 +4,7 @@
   "description": "A project to simulate minecraft in the browser with the boolean logic mechanic (redstone) as close as we can get to the original game.",
   "main": "static-server.js",
   "scripts": {
-    "dev": "node static-server.js --host localhost --port 8080 --path frontend",
+    "dev": "node static-server.js --host localhost --port 8999 --path frontend",
     "start": "node backend/index.js --url http://localhost:8999/"
   },
   "repository": {

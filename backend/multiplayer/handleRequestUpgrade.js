@@ -70,6 +70,35 @@ export async function handleRequestUpgrade(req, socket, head, error) {
       }
       debug && console.log("Sending to client:", output);
 
+      if (output && typeof output === "object") {
+        const parts = [];
+        const list = Object.keys(output);
+        for (let i = 0; i < list.length; i++) {
+          const key = list[i];
+          if (output[key] === undefined) {
+            continue;
+          }
+          try {
+            parts.push(`${JSON.stringify(key)}:${JSON.stringify(output[key])}`);
+          } catch (err) {
+            console.log(
+              "Failed to stringify event key:",
+              key,
+              "of event:",
+              output
+            );
+            console.log("Error:", err);
+            parts.push(
+              `${JSON.stringify(key)}:${JSON.stringify({
+                error: err.message,
+                stack: err.stack,
+              })}`
+            );
+          }
+        }
+        output = `{${parts.join(",")}}`;
+        JSON.parse(output);
+      }
       const responseBuffer = Buffer.from(
         output && typeof output === "object"
           ? JSON.stringify(output)

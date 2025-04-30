@@ -4,16 +4,14 @@ import {
   loadServerChunkChanges,
   loadServerChunkState,
   writeServerChunkState,
-} from "./ServerChunkStore.js";
-
-const saved_event_limit = 2;
-const unsaved_event_limit = 2;
-const unsaved_time_limit = 500;
+} from "../ServerChunkStore.js";
 
 const sampleState = {
+  cx: 0,
+  cy: 0,
+  cz: 0,
   blocks: {},
   inside: [],
-  fileSize: 0,
 };
 const cache = {};
 
@@ -82,11 +80,7 @@ function applyServerChunkEvent(obj, event) {
       obj.inside = [];
     }
     if (event.type === "enter" || event.type === "+") {
-      if (
-        obj.inside.some(
-          (e) => (e.id && e.id === id) || (e.entityId && e.entityId === id)
-        )
-      ) {
+      if (obj.inside.some((e) => e.id === id || e.entityId === id)) {
         return false;
       }
       const idx = obj.inside.findIndex((e) => (e.id || e.entityId) > id);
@@ -137,6 +131,10 @@ function applyServerChunkEvent(obj, event) {
   throw new Error(`Unknown event: ${JSON.stringify(event)}`);
 }
 
+const saved_event_limit = 128;
+const unsaved_event_limit = 64;
+const unsaved_time_limit = 5000;
+
 export class ServerChunk {
   constructor(cx = 0, cy = 0, cz = 0) {
     this.id = `b${cy | 0}/${cx | 0}x${cz | 0}`;
@@ -153,28 +151,11 @@ export class ServerChunk {
     this.flush = this.flush.bind(this);
   }
 
-  /**
-   * @param {string | number | ServerChunk | number[]} cx
-   * @param {number} [cy]
-   * @param {number} [cz]
-   * @returns {ServerChunk}
-   */
   static from(cx, cy, cz) {
     if (cx instanceof ServerChunk && !cy && !cz) {
       return cx;
     }
-    if (typeof cx === 'string' && cy === undefined && cz === undefined) {
-      if (cx.startsWith('b') && cx.includes('/') && cx.includes('x')) {
-        cx = cx.replace('b', '').replace('/', ',').replace('x', ',');
-      }
-      if (cx.includes(',')) {
-        const a = cx.split(',');
-        cx = parseFloat(a[0]);
-        cy = parseFloat(a[1]);
-        cz = parseFloat(a[2]);
-      }
-    }
-    if (cx instanceof Array && (cx.length === 3||cx.length === 4) && !cy && !cz) {
+    if (cx instanceof Array && cx.length === 3 && !cy && !cz) {
       cz = cx[2];
       cy = cx[1];
       cx = cx[0];
@@ -198,7 +179,7 @@ export class ServerChunk {
     if (typeof cz === "string") {
       cz = parseInt(cz);
     }
-    if (typeof cx !== "number" || isNaN(cx) || isNaN(cy) || isNaN(cz)) {
+    if (isNaN(cx) || isNaN(cy) || isNaN(cz)) {
       throw new Error("Invalid arguments");
     }
     const id = `b${cx | 0}/${cy | 0}x${cz | 0}`;
@@ -211,38 +192,36 @@ export class ServerChunk {
     return cache[id];
   }
 
-  async add(event, immediate = false) {
+  async add(event) {
     if (this.flushing) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     if (!this.loaded) {
-      await this.load(true);
+      await this.load();
     }
     if (!event.time) {
       event.time = Date.now();
     }
-    if (!this.state) {
-      throw new Error("State not loaded");
-    }
-    console.log("Adding event", event, 'to', this.id);
-    applyServerChunkEvent(this.state, event);
-    this.unsaved.push(event);
-    if (immediate || this.unsaved.length > unsaved_event_limit) {
-      await this.flush();
-    } else if (!this.saveTimer) {
+    if (!this.saveTimer) {
       this.saveTimer = setTimeout(this.flush, unsaved_time_limit);
+    }
+    applyServerChunkEvent(this, event);
+    this.unsaved.push(event);
+    if (this.unsaved.length > unsaved_event_limit) {
+      await this.flush();
     }
     return event;
   }
 
   async set(x, y, z, id) {
-    return await this.add({ x, y, z, id, type: id ? "set" : "remove" });
+    return await this.add({x, y, z, id, type: id ? "set" : "remove"});
   }
 
   /**
    * Write the changes to disk
+   * @param {number} [limit] - Limit the number of changes to write
    */
-  async flush() {
+  async flush(limit = NaN) {
     this.flushing = true;
     try {
       if (this.saveTimer) {
@@ -252,53 +231,22 @@ export class ServerChunk {
       if (!this.loaded) {
         await this.load();
       }
-      const now = Date.now();
-      const events = [];
-      const updated = this.unsaved.filter((e, i, arr) => {
-        const remaining = arr.length - 1 - i;
-        if (remaining > unsaved_event_limit) {
-          console.log('Consolidating', i);
-          if (e.persist !== false) {
-            events.push(e);
-          }
-          return false;
-        }
-        if (e.time < now - unsaved_time_limit) {
-          console.log('Consolidating', i);
-          if (e.persist !== false) {
-            events.push(e);
-          }
-          return false;
-        }
-        return true;
-      });
-      if (events.length === 0) {
-        this.flushing = false;
-        return;
-      }
-      const total = this.eventCount + events.length;
+      const cutoff = Math.min(
+        this.unsaved.length,
+        isNaN(limit) || limit < 0 ? this.unsaved.length : limit
+      );
+      const total = this.eventCount + cutoff;
       if (total > saved_event_limit) {
-        this.state.cx = this.cx;
-        this.state.cy = this.cy;
-        this.state.cz = this.cz;
         await writeServerChunkState(this.id, this.state);
         await clearServerChunkChanges(this.id);
-        this.unsaved = [];
-        this.eventCount = 0;
       } else {
-        await appendServerChunkChanges(this.id, events);
-        this.eventCount += events.length;
-        this.unsaved = updated;
+        await appendServerChunkChanges(this.id, this.unsaved.splice(0, cutoff));
       }
       this.flushing = false;
     } catch (err) {
       this.flushing = false;
       throw err;
     }
-  }
-
-  getTimeSinceLoad() {
-    return Date.now() - this.loaded;
   }
 
   async load(apply = true) {
@@ -313,12 +261,6 @@ export class ServerChunk {
       this.state = res.state;
       this.eventCount = res.changes.length;
       this.loaded = Date.now();
-      return this;
-    }
-    if (res.state) {
-      res.state.cx = this.cx;
-      res.state.cy = this.cy;
-      res.state.cz = this.cz;
     }
     return res;
   }

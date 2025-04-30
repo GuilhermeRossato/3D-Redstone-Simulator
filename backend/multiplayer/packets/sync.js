@@ -1,40 +1,69 @@
-import { chunks } from "../../lib/models.js";
+import { ServerChunk } from "../../lib/ServerChunk.js";
+
+const chunk_data_size_limit = 1024 * 256;
 
 export async function sync(payload, context) {
-  const { type, clientTime, replyId, offset } = payload;
+  const { type, client, replyId } = payload;
   if (type !== "sync") {
     throw new Error("Invalid sync packet type");
   }
-  if (!clientTime) {
-    throw new Error("Missing clientTime");
-  }
-  if (
-    typeof offset !== "object" ||
-    isNaN(offset[0]) ||
-    isNaN(offset[1]) ||
-    isNaN(offset[2])
-  ) {
-    throw new Error("Invalid offset");
+  if (!client || typeof client !== "number") {
+    throw new Error("Missing or invalid client time");
   }
   if (!replyId) {
     throw new Error("Missing replyId");
   }
-  if (!context.entity) {
-    throw new Error("Missing context entity");
+  if (!context?.player?.id) {
+    throw new Error("Missing context player id");
   }
-  const p = context.entity.state.position;
-  const cid = `c-${Math.floor(p[0] / 16 + offset[0])},${Math.floor(
-    p[1] / 16 + offset[1]
-  )},${Math.floor(p[2] / 16 + offset[2])}`;
-  const list = chunks.load(1, {
-    id: cid,
-  });
-  const entityList = [];
-
+  if (payload.first) {
+    context.syncPairs = [];
+  }
+  const server = Date.now();
+  context.syncPairs.push([client, server]);
+  const chunkList = [];
+  let size = 0;
+  if (payload.chunks) {
+    for (
+      let i = 0;
+      i < payload.chunks.length &&
+      chunkList.length < 16 &&
+      size < chunk_data_size_limit;
+      i++
+    ) {
+      const c = ServerChunk.from(payload.chunks[i]);
+      if (
+        !(
+          c?.loaded &&
+          c?.state &&
+          typeof c?.state?.fileSize === "number" &&
+          !isNaN(c.state.fileSize)
+        )
+      ) {
+        await c.load(true);
+      }
+      if (
+        c?.state &&
+        typeof c?.state?.fileSize === "number" &&
+        !isNaN(c.state.fileSize)
+      ) {
+        size += c.state.fileSize;
+        chunkList.push(c);
+        continue;
+      }
+    }
+  }
+  const chunks = chunkList.map((c) => ({
+    cx: c.cx,
+    cy: c.cy,
+    cz: c.cz,
+    blocks: c.state?.blocks,
+    entities: c.state?.entities,
+    inside: c.state?.inside,
+  }));
   return {
-    serverTime: new Date().getTime(),
-    cid,
-    chunk: list[0],
-    entities: entityList,
+    server,
+    chunks,
+    syncParis: payload?.last ? context.syncPairs : undefined,
   };
 }

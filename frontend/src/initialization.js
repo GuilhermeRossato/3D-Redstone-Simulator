@@ -53,6 +53,12 @@ async function initialization() {
         InputHandler.update(frame);
         if (MultiplayerHandler.active) {
           MultiplayerHandler.update();
+        } else if (InputHandler.flags.dirty) {
+          console.log('Updating player position');
+          InputHandler.flags.dirty = false;
+          const { x, y, z } = InputHandler.position;
+          const { yaw, pitch } = InputHandler.rotation;
+          localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
         }
       },
       GraphicsHandler.draw,
