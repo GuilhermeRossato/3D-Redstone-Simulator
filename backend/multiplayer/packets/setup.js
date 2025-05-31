@@ -4,8 +4,8 @@ import {
   getPlayerSpawnPose,
   loadPlayer,
   loadPlayerByCookieId,
-  updatePlayer,
-} from "../../PlayerStorage.js";
+  savePlayer,
+} from "../../lib/PlayerStorage.js";
 
 function createCookieId(selfLoginCode) {
   if (!selfLoginCode) {
@@ -77,8 +77,10 @@ export default async function setup(payload, context) {
     }
   }
 
+  let updated = false;
+
   if (!player) {
-    const pose = await getPlayerSpawnPose();
+  const pose = await getPlayerSpawnPose();
     const list = await getPlayerIdList(true);
     player = await createPlayer({
       id,
@@ -86,32 +88,29 @@ export default async function setup(payload, context) {
       lastLogin: Date.now(),
       name: `Player${list.length}`,
       pose,
-      entity: {
-        id: `e${id.substring(1)}`,
-        pose,
-        path: [pose].slice(1),
-        health: 20,
-        maxHealth: 20,
-        target: "",
-      },
+      entity: "",
     });
     console.log("Created player", [player.name], "at", player.pose.slice(0, 3));
   }
 
   if (!player.cookieId && (payload.cookieId || context.cookieId)) {
-    player.cookieId = createCookieId(selfLoginCode || player.selfLoginCode);
-    context.cookieId = player.cookieId;
-    await updatePlayer(player);
+    player.cookieId = payload.cookieId || context.cookieId;
+    updated = true;
   }
-
+  if (!player.cookieId) {
+    player.cookieId = createCookieId(selfLoginCode || player.selfLoginCode);
+    updated = true;
+  }
+  if (updated) {
+    await savePlayer(player);
+  }
   context.player = player;
   context.selfLoginCode = selfLoginCode;
   context.cookieId = player.cookieId;
-
   return {
     success: true,
-    selfLoginCode,
-    cookieId: payload.cookieId,
-    responseId: payload.replyId,
+    selfLoginCode: context.selfLoginCode,
+    cookieId: context.cookieId,
+    player,
   };
 }

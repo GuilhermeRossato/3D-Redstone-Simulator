@@ -4,7 +4,7 @@ import {
   appendStorageArray,
   writeStorageObject,
   writeStorageArray,
-} from "./lib/primitives/StorageObjectStore.js";
+} from "./primitives/StorageObjectStore.js";
 
 /** @type {Record<string, string>} */
 const cookieIdRecord = {};
@@ -12,7 +12,7 @@ const cookieIdRecord = {};
 let playerList = undefined;
 
 export async function getPlayerSpawnPose(player) {
-  return [-5, 3, 7, 0, 0].map((v, i) =>
+  return [-5, 3, 7, 0, 0, 0].map((v, i) =>
     i < 3 ? Math.floor(i === 1 ? v : (Math.random() - 0.5) * 2 * v) : v
   );
 }
@@ -37,20 +37,35 @@ export async function loadPlayerByCookieId(cookieId) {
   return await loadPlayer(id);
 }
 
-export async function loadPlayer(id) {
-  if (!id) {
+export async function loadPlayer(obj_or_id) {
+  if (!obj_or_id) {
     return null;
   }
-  if (typeof id === "string" && !id.startsWith("p") && id.length > 4) {
-    if (!id.match(/^\d+$/)) {
+  if (
+    typeof obj_or_id === "object" &&
+    typeof obj_or_id.id === "string" &&
+    obj_or_id.id.length > 4
+  ) {
+    obj_or_id = obj_or_id.id;
+  }
+  if (
+    typeof obj_or_id === "string" &&
+    !obj_or_id.startsWith("p") &&
+    obj_or_id.length > 4
+  ) {
+    if (!obj_or_id.match(/^\d+$/)) {
       throw new Error("Invalid player ID: must contain digits only");
     }
-    id = `p${id}`;
+    obj_or_id = `p${obj_or_id}`;
   }
   if (!playerList) {
     playerList = await loadStorageArray("players", "created", null);
   }
-  const obj = await loadStorageObject("players", id.charAt(1), id);
+  const obj = await loadStorageObject(
+    "players",
+    obj_or_id.charAt(1),
+    obj_or_id
+  );
   if (obj && obj["cookieId"] && cookieIdRecord[obj["cookieId"]] !== obj.id) {
     cookieIdRecord[obj["cookieId"]] = obj.id;
   }
@@ -84,19 +99,25 @@ export async function createPlayer(obj) {
       null,
       playerList.filter((id) => id !== obj.id)
     );
+  } else {
+    playerList.push(obj.id);
+  }
+  if (obj.pose instanceof Array) {
+    if (obj.pose.length === 3) {
+      obj.pose.push(0, 0, 0);
+    } else if (obj.pose.length === 5) {
+      obj.pose.push(0);
+    }
   }
   await appendStorageArray("players", "created", null, [obj.id]);
   await writeStorageObject("players", obj.id.charAt(1), obj.id, obj);
-  if (!playerList.includes(obj.id)) {
-    playerList.push(obj.id);
-  }
   if (obj["cookieId"] && cookieIdRecord[obj["cookieId"]] !== obj.id) {
     cookieIdRecord[obj["cookieId"]] = obj.id;
   }
   return obj;
 }
 
-export async function updatePlayer(obj) {
+export async function savePlayer(obj) {
   let id = obj?.id || obj?.selfLoginCode;
   if (typeof id === "string" && !id.startsWith("p") && id.length > 4) {
     if (!id.match(/^\d+$/)) {

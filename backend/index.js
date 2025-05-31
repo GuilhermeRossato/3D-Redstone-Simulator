@@ -3,6 +3,8 @@ import http from "node:http";
 import process from "node:process";
 import child_process from "node:child_process";
 
+replaceConsoleMethod('log');
+
 const detached = extractArgs([
   "--detach",
   "--detached",
@@ -36,6 +38,9 @@ import getMimeLookupRecord from "./utils/getMimeLookupRecord.js";
 import { once } from "./utils/once.js";
 import { extractArgs } from "./utils/extractArgs.js";
 import { handleRequestUpgrade } from "./multiplayer/handleRequestUpgrade.js";
+import { replaceConsoleMethod } from "./utils/replaceConsoleMethod.js";
+
+fs.writeFileSync(`${backendPath}/../stop`, `kill ${process.pid}\n`, 'utf-8');
 
 if (!host || !port) {
   console.log(

@@ -12,13 +12,6 @@ function onSocketClose() {
   flags.connected = false;
 }
 
-function getWebsocketEndpoint() {
-  let protocol = window.location.hostname === "localhost" ? "ws" : "wss";
-  let host = window.location.host;
-  // host = "gui-test-zone.com.br";
-  return `${protocol}://${host}/3D-Redstone-Simulator`;
-}
-
 /** @type {undefined | WebSocket} */
 let ws;
 
@@ -29,9 +22,14 @@ let lastErrorTime = null;
 let lastCloseTime = null;
 let isSocketClosed = false;
 
-let lastRestartTime = null;
-let lastRestartDelayPeriod = 500;
 let responseResolveRecord = {};
+
+function getWebsocketEndpoint() {
+    const protocol = window.location.hostname === "localhost" ? "ws" : "wss";
+    const host = window.location.host;
+    // host = "gui-test-zone.com.br";
+    return `${protocol}://${host}/3D-Redstone-Simulator`;
+}
 
 async function createSocket() {
   if (lastBeginTime && new Date().getTime() - lastBeginTime < 1000) {
@@ -77,13 +75,11 @@ async function createSocket() {
       isSocketClosed = true;
       onSocketClose();
       clearTimeout(timeoutTimer);
-      const message = `Timeout event emitted for websocket ${
-        evt && typeof evt["message"] === "string"
+      const message = `Timeout event emitted for websocket ${evt && typeof evt["message"] === "string"
           ? evt["message"]
           : "without message"
-      } at phase ${evt.eventPhase} (${
-        resolved ? "after resolving" : "before resolving"
-      })`;
+        } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
+        })`;
       debug && console.log("[D]", message);
       if (!resolved) {
         resolved = true;
@@ -106,15 +102,12 @@ async function createSocket() {
       onSocketClose();
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
-      const message = `Error event emitted for websocket ${
-        evt && typeof evt["message"] === "string"
+      const message = `Error event emitted for websocket ${evt && typeof evt["message"] === "string"
           ? evt["message"]
           : "without message"
-      } at phase ${evt.eventPhase} (${
-        resolved ? "after resolving" : "before resolving"
-      }),  ${now - lastBeginTime} ms since begining connection and ${
-        now - lastErrorTime
-      } ms since last error event`;
+        } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
+        }),  ${now - lastBeginTime} ms since begining connection and ${now - lastErrorTime
+        } ms since last error event`;
       lastErrorTime = new Date().getTime();
       debug && console.log("[D]", message);
       debug && console.log("[D]", "Error event object:", evt);
@@ -132,13 +125,10 @@ async function createSocket() {
       onSocketClose();
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
-      const message = `Socket close event emitted ${
-        now - lastBeginTime
-      } ms since begining connection, ${
-        now - lastStartTime
-      } ms since last connection start, ${
-        now - lastCloseTime
-      } ms since last connection close`;
+      const message = `Socket close event emitted ${now - lastBeginTime
+        } ms since begining connection, ${now - lastStartTime
+        } ms since last connection start, ${now - lastCloseTime
+        } ms since last connection close`;
       debug && console.log("[D]", message);
       closeReason = new Error(message);
       lastCloseTime = now;

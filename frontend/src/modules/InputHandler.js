@@ -550,7 +550,9 @@ export function update(frame) {
       );
       sendPlayerActionToServerEventually({
         type: "place",
-        pos:[nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z],
+        x: nextUpdateAction.x,
+        y: nextUpdateAction.y,
+        z: nextUpdateAction.z,
         id: nextUpdateAction.id,
       });
       nextUpdateAction = null;
@@ -559,11 +561,10 @@ export function update(frame) {
       selectionBox.visible = false;
       frame = 0; // This makes the selection box be updated
       sendPlayerActionToServerEventually({
-        type: "block",
+        type: "delete",
         x: nextUpdateAction.x,
         y: nextUpdateAction.y,
         z: nextUpdateAction.z,
-        id: 0,
       });
       nextUpdateAction = null;
     }

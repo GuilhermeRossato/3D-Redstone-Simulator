@@ -23,59 +23,60 @@ const cache = {};
  * @returns {Boolean} Whether the event changed the object
  */
 function applyServerChunkEvent(obj, event) {
-  if (
-    typeof event.x === "number" &&
-    typeof event.y === "number" &&
-    typeof event.z === "number"
-  ) {
+  if (event.type === "spawn" && event.en)
     if (
-      typeof event.id === "number" &&
-      (event.type === "set" ||
-        event.type === "+" ||
-        (event.type === undefined && event.id > 0))
+      typeof event.x === "number" &&
+      typeof event.y === "number" &&
+      typeof event.z === "number"
     ) {
-      if (!obj.blocks) {
-        obj.blocks = {};
-      }
-      if (!obj.blocks[event.y]) {
-        obj.blocks[event.y] = {};
-      }
-      if (!obj.blocks[event.y][event.x]) {
-        obj.blocks[event.y][event.x] = {};
-      }
-      if (obj.blocks[event.y][event.x][event.z] === event.id) {
-        return false;
-      }
-      obj.blocks[event.y][event.x][event.z] = event.id;
-      return true;
-    }
-    if (
-      event.type === "remove" ||
-      event.type === "-" ||
-      (event.type === undefined && event.id === 0)
-    ) {
-      if (!obj.blocks) {
-        return false;
-      }
-      if (!obj.blocks[event.y]) {
-        return false;
-      }
-      if (!obj.blocks[event.y][event.x]) {
-        return false;
-      }
-      if (!obj.blocks[event.y][event.x][event.z]) {
-        return false;
-      }
-      delete obj.blocks[event.y][event.x][event.z];
-      if (Object.keys(obj.blocks[event.y][event.x]).length === 0) {
-        delete obj.blocks[event.y][event.x];
-        if (Object.keys(obj.blocks[event.y]).length === 0) {
-          delete obj.blocks[event.y];
+      if (
+        typeof event.id === "number" &&
+        (event.type === "set" ||
+          event.type === "+" ||
+          (event.type === undefined && event.id > 0))
+      ) {
+        if (!obj.blocks) {
+          obj.blocks = {};
         }
+        if (!obj.blocks[event.y]) {
+          obj.blocks[event.y] = {};
+        }
+        if (!obj.blocks[event.y][event.x]) {
+          obj.blocks[event.y][event.x] = {};
+        }
+        if (obj.blocks[event.y][event.x][event.z] === event.id) {
+          return false;
+        }
+        obj.blocks[event.y][event.x][event.z] = event.id;
+        return true;
       }
-      return true;
+      if (
+        event.type === "remove" ||
+        event.type === "-" ||
+        (event.type === undefined && event.id === 0)
+      ) {
+        if (!obj.blocks) {
+          return false;
+        }
+        if (!obj.blocks[event.y]) {
+          return false;
+        }
+        if (!obj.blocks[event.y][event.x]) {
+          return false;
+        }
+        if (!obj.blocks[event.y][event.x][event.z]) {
+          return false;
+        }
+        delete obj.blocks[event.y][event.x][event.z];
+        if (Object.keys(obj.blocks[event.y][event.x]).length === 0) {
+          delete obj.blocks[event.y][event.x];
+          if (Object.keys(obj.blocks[event.y]).length === 0) {
+            delete obj.blocks[event.y];
+          }
+        }
+        return true;
+      }
     }
-  }
   const id = event.entity?.id || event.entityId || event.id;
   if (id) {
     if (!obj.inside) {
@@ -144,16 +145,34 @@ export class ServerChunk {
     this.cy = cy | 0;
     this.cz = cz | 0;
     this.saveTimer = null;
-    //this.path = `${backendPath}/data/chunks/${this.id}.json`;
     this.eventCount = 0;
     this.written = 0;
     this.loaded = 0;
     this.state = undefined;
     this.unsaved = [];
+    //this.path = `${backendPath}/data/chunks/${this.id}.json`;
     this.flush = this.flush.bind(this);
   }
 
   /**
+   * 
+   * @param {number} cx  The chunk x coordinate (absolute position divided by 16)
+   * @param {number} cy  The chunk y coordinate (absolute position divided by 16)
+   * @param {number} cz  The chunk z coordinate (absolute position divided by 16)
+   */
+  static get(cx, cy, cz) {
+    const id = `c${cx | 0}/${cy | 0}x${cz | 0}`;
+    if (!cache[id]) {
+      cache[id] = new ServerChunk(cx, cy, cz);
+    }
+    return cache[id];
+  }
+
+  async exists() {}
+
+  /**
+   * Creates an instance of a server chunk (without creating it on the database if it doesnt exist)
+   *
    * @param {string | number | ServerChunk | number[]} cx
    * @param {number} [cy]
    * @param {number} [cz]
@@ -163,18 +182,23 @@ export class ServerChunk {
     if (cx instanceof ServerChunk && !cy && !cz) {
       return cx;
     }
-    if (typeof cx === 'string' && cy === undefined && cz === undefined) {
-      if (cx.startsWith('b') && cx.includes('/') && cx.includes('x')) {
-        cx = cx.replace('b', '').replace('/', ',').replace('x', ',');
+    if (typeof cx === "string" && cy === undefined && cz === undefined) {
+      if (cx.startsWith("b") && cx.includes("/") && cx.includes("x")) {
+        cx = cx.replace("b", "").replace("/", ",").replace("x", ",");
       }
-      if (cx.includes(',')) {
-        const a = cx.split(',');
+      if (cx.includes(",")) {
+        const a = cx.split(",");
         cx = parseFloat(a[0]);
         cy = parseFloat(a[1]);
         cz = parseFloat(a[2]);
       }
     }
-    if (cx instanceof Array && (cx.length === 3||cx.length === 4) && !cy && !cz) {
+    if (
+      cx instanceof Array &&
+      (cx.length === 3 || cx.length === 4) &&
+      !cy &&
+      !cz
+    ) {
       cz = cx[2];
       cy = cx[1];
       cx = cx[0];
@@ -201,14 +225,7 @@ export class ServerChunk {
     if (typeof cx !== "number" || isNaN(cx) || isNaN(cy) || isNaN(cz)) {
       throw new Error("Invalid arguments");
     }
-    const id = `b${cx | 0}/${cy | 0}x${cz | 0}`;
-    if (!id || id.length < 6) {
-      throw new Error("Invalid id from arguments");
-    }
-    if (!cache[id]) {
-      cache[id] = new ServerChunk(cx, cy, cz);
-    }
-    return cache[id];
+    return ServerChunk.get(cx, cy, cz);
   }
 
   async add(event, immediate = false) {
@@ -216,7 +233,7 @@ export class ServerChunk {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     if (!this.loaded) {
-      await this.load(true);
+      await this.load();
     }
     if (!event.time) {
       event.time = Date.now();
@@ -224,13 +241,15 @@ export class ServerChunk {
     if (!this.state) {
       throw new Error("State not loaded");
     }
-    console.log("Adding event", event, 'to', this.id);
+    console.log("Adding event", event, "to", this.id);
     applyServerChunkEvent(this.state, event);
     this.unsaved.push(event);
-    if (immediate || this.unsaved.length > unsaved_event_limit) {
-      await this.flush();
-    } else if (!this.saveTimer) {
-      this.saveTimer = setTimeout(this.flush, unsaved_time_limit);
+    if (event.persist) {
+      if (immediate || this.unsaved.length > unsaved_event_limit) {
+        await this.flush();
+      } else if (!this.saveTimer) {
+        this.saveTimer = setTimeout(this.flush, unsaved_time_limit);
+      }
     }
     return event;
   }
@@ -257,14 +276,14 @@ export class ServerChunk {
       const updated = this.unsaved.filter((e, i, arr) => {
         const remaining = arr.length - 1 - i;
         if (remaining > unsaved_event_limit) {
-          console.log('Consolidating', i);
+          console.log("Consolidating", i);
           if (e.persist !== false) {
             events.push(e);
           }
           return false;
         }
         if (e.time < now - unsaved_time_limit) {
-          console.log('Consolidating', i);
+          console.log("Consolidating", i);
           if (e.persist !== false) {
             events.push(e);
           }
@@ -273,11 +292,19 @@ export class ServerChunk {
         return true;
       });
       if (events.length === 0) {
+        console.log("Nothing to flush to chunk", [this.id]);
         this.flushing = false;
         return;
       }
       const total = this.eventCount + events.length;
       if (total > saved_event_limit) {
+        console.log(
+          "Saving full chunk state",
+          [this.id],
+          "with",
+          total,
+          "events"
+        );
         this.state.cx = this.cx;
         this.state.cy = this.cy;
         this.state.cz = this.cz;
@@ -286,6 +313,13 @@ export class ServerChunk {
         this.unsaved = [];
         this.eventCount = 0;
       } else {
+        console.log(
+          "Appending chunk changes",
+          [this.id],
+          "with",
+          total,
+          "events"
+        );
         await appendServerChunkChanges(this.id, events);
         this.eventCount += events.length;
         this.unsaved = updated;
@@ -301,29 +335,30 @@ export class ServerChunk {
     return Date.now() - this.loaded;
   }
 
-  async load(apply = true) {
-    const res = {
-      state: await loadServerChunkState(this.id, sampleState),
-      changes: await loadServerChunkChanges(this.id),
-    };
-    for (const event of res.changes) {
-      applyServerChunkEvent(res.state, event);
+  getServerChunkEventsSince(time)
+
+  async load() {
+    this.state = await loadServerChunkState(this.id, sampleState);
+    const changes = await loadServerChunkChanges(this.id);
+    for (const event of changes) {
+      applyServerChunkEvent(this.state, event);
     }
-    if (apply) {
-      this.state = res.state;
-      this.eventCount = res.changes.length;
-      this.loaded = Date.now();
-      return this;
-    }
-    if (res.state) {
-      res.state.cx = this.cx;
-      res.state.cy = this.cy;
-      res.state.cz = this.cz;
-    }
-    return res;
+    this.eventCount = changes.length;
+    this.loaded = Date.now();
+    return this;
   }
 
-  static fromAbsolute(x, y, z) {
+  static fromAbsolute(x, y = undefined, z = undefined) {
+    if (
+      x instanceof Array &&
+      x.length >= 3 &&
+      y === undefined &&
+      z === undefined
+    ) {
+      z = x[2];
+      y = x[1];
+      x = x[0];
+    }
     const cx = (x / 16) | 0;
     const cy = (y / 16) | 0;
     const cz = (z / 16) | 0;

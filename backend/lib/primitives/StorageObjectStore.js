@@ -48,7 +48,7 @@ export async function loadStorageObject(type, name, id, fallback = undefined) {
         }
       }
     }
-    if (typeof fallback?.["fileSize"] === 'number') {
+    if (typeof fallback?.["fileSize"] === "number") {
       obj.fileSize = buffer.byteLength;
     }
     return obj;
@@ -114,6 +114,9 @@ export async function writeStorageObject(type, name, id, state = {}) {
  */
 export async function appendStorageArray(type, name, id, array = []) {
   try {
+    if ((array instanceof Array && array.length === 0) || !array) {
+      return countRecord[id] || 0;
+    }
     const text = (array instanceof Array ? array : [array])
       .map((e) => `${JSON.stringify(e)},`)
       .join("\n");
@@ -142,7 +145,7 @@ export async function writeStorageArray(type, name, id, array = []) {
     const text = array.map((e) => `${JSON.stringify(e)},`).join("\n");
     const target = getStorageObjectFilePath(type, name, id, true);
     await confirmPath(target);
-    await fs.promises.writeFile(target, text ? `${text}\n` : '', "utf-8");
+    await fs.promises.writeFile(target, text ? `${text}\n` : "", "utf-8");
     return (countRecord[id] = array.length);
   } catch (err) {
     throw err;

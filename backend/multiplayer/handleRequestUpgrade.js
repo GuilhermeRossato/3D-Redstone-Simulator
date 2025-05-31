@@ -27,10 +27,26 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   debug && console.log("Upgrade request headers:", req.headers);
   debug && console.log("Upgrade request head:", head);
 
+  const context = {};
+  let processing = 0;
+  let packets = 0;
+  let pings = 0;
+
   global.socket = socket;
+
+  let hasProcessedClose = null;
 
   socket.on("close", (evt) => {
     debug && console.log("Socket error event");
+    if (hasProcessedClose === false) {
+      hasProcessedClose = true;
+      index(
+        { type: "close", variant: "socket" },
+        context,
+        packets,
+        pings
+      ).catch((err) => console.log("Failed to process close event:", err));
+    }
     error([
       `Socket closed for service`,
       evt?.reason,
@@ -41,11 +57,26 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   });
 
   socket.on("error", (err) => {
+    if (hasProcessedClose === false) {
+      hasProcessedClose = true;
+      index(
+        { type: "close", variant: "error", error: err },
+        context,
+        packets,
+        pings
+      ).catch((err) => console.log("Failed to process close event:", err));
+    }
     debug && console.log("Socket error event");
     error(err);
   });
 
   socket.on("end", () => {
+    if (hasProcessedClose === false) {
+      hasProcessedClose = true;
+      index({ type: "close", variant: "end" }, context, packets, pings).catch(
+        (err) => console.log("Failed to process close event:", err)
+      );
+    }
     debug && console.log("Socket end event");
     error([`Socket ended for service`]);
   });
@@ -97,7 +128,6 @@ export async function handleRequestUpgrade(req, socket, head, error) {
           }
         }
         output = `{${parts.join(",")}}`;
-        JSON.parse(output);
       }
       const responseBuffer = Buffer.from(
         output && typeof output === "object"
@@ -143,10 +173,6 @@ export async function handleRequestUpgrade(req, socket, head, error) {
     }
   };
 
-  const context = {};
-  let processing = 0;
-  let packets = 0;
-  let pings = 0;
   socket.on("data", (buffer) => {
     debug &&
       console.log("Received websocket data with", buffer.byteLength, "bytes");
@@ -246,6 +272,11 @@ export async function handleRequestUpgrade(req, socket, head, error) {
         processing++;
         try {
           debug && console.log("Processing packet:", input);
+          if (input?.type === "setup" && hasProcessedClose === null) {
+            hasProcessedClose = false;
+          } else if (input?.type === "close" && hasProcessedClose === false) {
+            hasProcessedClose = true;
+          }
           output = index(input, context, packets, pings);
         } catch (err) {
           console.log("Request handler error:", err);
@@ -268,8 +299,8 @@ export async function handleRequestUpgrade(req, socket, head, error) {
             if (
               output &&
               typeof output === "object" &&
-              input?.replyId &&
-              !output.responseId
+              typeof input?.replyId === 'number' &&
+              output.responseId === undefined
             ) {
               output.responseId = input.replyId;
             }

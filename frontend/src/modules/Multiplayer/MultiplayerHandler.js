@@ -123,6 +123,7 @@ async function performLogin() {
     },
     true
   );
+  console.log("Setup response", initResponse);
   if (initResponse?.success !== true) {
     createSnackbarAlert("The server did not return success", "error");
     console.log("Invalid server object:", initResponse);
@@ -150,7 +151,10 @@ async function performLogin() {
 
   g("player", (player = ctx.player));
 
-  const watching = ctx.player.watching instanceof Array ? ctx.player.watching : Object.keys(ctx.player.watching);
+  const watching =
+    ctx.watching instanceof Array
+      ? ctx.watching
+      : Object.keys(ctx.watching);
 
   console.log(`Chunks:`, JSON.stringify(watching));
 
@@ -258,10 +262,17 @@ export async function sendClientAction(action) {
       "stop-breaking",
       "finish-breaking",
       "place",
-    ].includes(action.type) &&
-    action.pos.some((a) => a !== Math.floor(a))
+      "set",
+      "remove",
+    ].includes(action.type)
   ) {
-    action.pos = action.pos.some((a) => Math.floor(a));
+    if (action.pos instanceof Array) {
+      action.pos = action.pos.map((a,i) => i < 3 ? Math.floor(a) : a);
+    } else if (typeof action.x === "number") {
+      action.x = Math.floor(action.x);
+      action.y = Math.floor(action.y);
+      action.z = Math.floor(action.z);
+    }
   }
   await sendEvent(action);
 }

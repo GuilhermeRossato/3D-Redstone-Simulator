@@ -1,11 +1,6 @@
+import { savePlayer } from "../../lib/PlayerStorage.js";
 import { ServerChunk } from "../../lib/ServerChunk.js";
-import { updatePlayer } from "../../PlayerStorage.js";
-import { getChunksPosListWithin } from "../../utils/getChunksPosListWithin.js";
-
-async function getSurroundingWorld(origin, target) {
-  const ids = getChunksPosListWithin(origin, target);
-  return await Promise.all(ids.map((id) => ServerChunk.from(id).load(true)));
-}
+import { getChunksPosListByDistance } from "../../utils/getChunksPosListWithin.js";
 
 export default async function context(payload, ctx) {
   if (!ctx.player) {
@@ -14,15 +9,25 @@ export default async function context(payload, ctx) {
   if (!isNaN(payload.offset)) {
     ctx.offset = payload.offset;
   }
-  const chunkList = getChunksPosListWithin(
+  const chunkPosList = getChunksPosListByDistance(
     ctx.player.pose.slice(0, 3).map((v) => Math.floor(v / 16)),
-    2
+    16 * 3
   );
-  const now = Date.now();
-  ctx.player.watching = Object.fromEntries(chunkList.map(c=>[c.slice(0, 3).join(','), now]));
-  ctx.player.chunk = chunkList[0];
-  await updatePlayer(ctx.player);
+  if (!chunkPosList.length) {
+    throw new Error("Invalid chunk position list");
+  }
+  const chunkList = chunkPosList.map((a) => ServerChunk.from(a));
+  if (ctx.player.chunk !== chunkList[0]) {
+    ctx.player.chunk = chunkList[0];
+    await savePlayer(ctx.player);
+  }
+  const main = await chunkList[0].load();
+  if (main.state.fileSize === 0) {
+    console.log("Chunk file is empty at context position");
+  }
+  console.log("Context packet finished with", chunkList.length, "chunk positions");
   return {
+    watching: chunkPosList,
     player: ctx.player,
   };
 }
