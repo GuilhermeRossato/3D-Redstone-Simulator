@@ -1,5 +1,6 @@
 /**
  * Extracts sequential arguments from the program arguments if they match a specific value (or any from a list).
+ *
  * @param {string | string[] | string[][]} name - Value or list of values to match in the arguments.
  * @param {number} offset - Number of arguments after the matched argument to extract and include in the result.
  * @param {string[]} argv - Optional list of arguments to search in and remove from (with the splice method).
@@ -18,12 +19,14 @@ export function extractArgs(name, offset = 0, argv = []) {
   )
     .flatMap((a) => (a instanceof Array ? a : a ? [String(a)] : []))
     .flatMap((a) => (a ? [String(a)] : []))
-    .flatMap((a) =>
-      typeof a === "string" && a.trim().length
-        ? [a.startsWith("-") ? a : a.length === 1 ? `-${a}` : `--${a}`]
-        : []
-    );
+    .flatMap((a) => (typeof a === "string" && a.trim().length ? [a] : []));
 
   const i = list.map((elem) => argv.indexOf(elem)).find((i) => i !== -1);
-  return i && typeof i === "number" ? argv.splice(i, 1 + offset) : [];
+  if (typeof i !== "number" || isNaN(i)) {
+    return [];
+  }
+  if (offset < 0) {
+    return argv.splice(Math.max(0, i + offset), - offset);
+  }
+  return argv.splice(i, 1 + offset);
 }
