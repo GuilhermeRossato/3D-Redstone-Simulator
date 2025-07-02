@@ -37,7 +37,7 @@ if (detached) {
   process.exit(0);
 }
 
-import { host, port, url, backendPath } from "./lib/init.js";
+import { host, port, url } from "./lib/init.js";
 import getMimeLookupRecord from "./utils/getMimeLookupRecord.js";
 import { once } from "./utils/once.js";
 import { extractArgs } from "./utils/extractArgs.js";
@@ -47,7 +47,7 @@ import { getProjectFolderPath } from "./utils/getProjectFolderPath.js";
 import getDateTimeString from "./utils/getDateTimeString.js";
 
 const stopFileExtension = process.platform === "win32" ? ".bat" : "";
-const stopFilePath = `${backendPath}/../stop${stopFileExtension}`;
+const stopFilePath = `${getProjectFolderPath('..', `stop${stopFileExtension}`)}`;
 const stopFileContent = process.platform === "win32" 
   ? `taskkill /PID ${process.pid} /F\n` 
   : `kill ${process.pid}\n`;
@@ -95,7 +95,7 @@ async function handleRequest(req, res) {
       })
       .on("end", () => {
         const buffer = Buffer.concat(body);
-        const clientLogFilePath = `${backendPath}/client.log`;
+        const clientLogFilePath = getProjectFolderPath('backend', 'client.log');
         fs.promises
           .appendFile(clientLogFilePath, buffer)
           .then(() => {

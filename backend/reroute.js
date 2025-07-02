@@ -1,13 +1,14 @@
 import fs from 'fs';
 import net from 'net';
+import { host, port } from "./lib/init.js";
 
 /**
  * This script creates a TCP server that listens on a specified local port and relays data to a remote server.
  * It is used to reroute traffic from a local port to a remote server.
  */
 
-const LOCAL_HOST = '0.0.0.0';
-const LOCAL_PORT = process.argv.slice(2).find((f) => f.split('').every(a=>a.charCodeAt(0) >= 48&&a.charCodeAt(0) < 58)) || "8080";
+const LOCAL_HOST = host;
+const LOCAL_PORT = port;
 const REMOTE_PORT = process.argv.slice(2).find((f) => f !== LOCAL_PORT && f.split('').every(a=>a.charCodeAt(0) >= 48&&a.charCodeAt(0) < 58)) || "8080";
 const REMOTE_HOST = process.argv.slice(2).find((f) => f.split('').some(a=>a.charCodeAt(0) < 48 || a.charCodeAt(0) >= 58)) || "127.0.0.1";
 
