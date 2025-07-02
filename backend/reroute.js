@@ -1,4 +1,5 @@
-const net = require('net');
+import fs from 'fs';
+import net from 'net';
 
 /**
  * This script creates a TCP server that listens on a specified local port and relays data to a remote server.
@@ -12,7 +13,6 @@ const REMOTE_HOST = process.argv.slice(2).find((f) => f.split('').some(a=>a.char
 
 const saveRemoteDataFile = '';
 const saveLocalDataFile = '';
-const fs = require('fs');
 
 const server = net.createServer(function (socket) {
   let address;
