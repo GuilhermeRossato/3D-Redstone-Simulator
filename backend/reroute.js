@@ -9,8 +9,8 @@ import { host, port } from "./lib/init.js";
 
 const LOCAL_HOST = host;
 const LOCAL_PORT = port;
-const REMOTE_PORT = process.argv.slice(2).find((f) => f !== LOCAL_PORT && f.split('').every(a=>a.charCodeAt(0) >= 48&&a.charCodeAt(0) < 58)) || "8080";
-const REMOTE_HOST = process.argv.slice(2).find((f) => f.split('').some(a=>a.charCodeAt(0) < 48 || a.charCodeAt(0) >= 58)) || "127.0.0.1";
+const REMOTE_HOST = process.argv[3] || "127.0.0.1";
+const REMOTE_PORT = port;
 
 const saveRemoteDataFile = '';
 const saveLocalDataFile = '';
