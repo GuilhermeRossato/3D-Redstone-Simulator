@@ -1,4 +1,4 @@
-import { backendPath } from "../../lib/init.js";
+const backendPath = './backend';
 import { sfs } from "../../utils/sfs.js";
 import path from "path";
 import setup from "./setup.js";

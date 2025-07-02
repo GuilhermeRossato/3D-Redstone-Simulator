@@ -1,7 +1,7 @@
 import { sfs } from "../../utils/sfs.js";
 import { isProcessRunningByPid } from "../isProcessRunningByPid.js";
 import getDateTimeString from "../../utils/getDateTimeString.js";
-import { backendPath } from "../init.js";
+const backendPath = './backend';
 
 const debugSave = true;
 const debug = false;

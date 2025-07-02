@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { backendPath } from "../init.js";
+
+const backendPath = './backend';
 
 /** @type {Record<string, number>} */
 const countRecord = {};

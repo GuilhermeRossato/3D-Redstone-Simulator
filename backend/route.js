@@ -8,9 +8,13 @@ import { host, port } from "./lib/init.js";
  */
 
 const LOCAL_HOST = host;
+console.log({LOCAL_HOST});
 const LOCAL_PORT = port;
-const REMOTE_HOST = process.argv[3] || "127.0.0.1";
+console.log({LOCAL_PORT});
+const REMOTE_HOST = process.argv[2] || "127.0.0.1";
+console.log({REMOTE_HOST});
 const REMOTE_PORT = port;
+console.log({REMOTE_PORT});
 
 const saveRemoteDataFile = '';
 const saveLocalDataFile = '';

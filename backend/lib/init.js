@@ -1,13 +1,10 @@
 import fs from "node:fs";
 import process from "node:process";
 
-console.log("Starting backend server script...");
+import { getProjectFolderPath } from "../utils/getProjectFolderPath.js";
 
-import { extractArgs } from "../utils/extractArgs.js";
-
-export const backendPath = fs.existsSync("./backend") ? "./backend" : ".";
-
-const envFilePath = `${backendPath}/.env`;
+// Load environment variables from the .env file in the backend folder
+const envFilePath = getProjectFolderPath('backend', '.env');
 if (fs.existsSync(envFilePath)) {
   if (typeof process.loadEnvFile === "function") {
     console.log(
@@ -29,32 +26,23 @@ if (fs.existsSync(envFilePath)) {
   );
 }
 
-let urlParam = extractArgs(["--url", "--host", "--ip", "--address"], 2)[1];
-
-if (
-  !urlParam &&
-  (process.argv[2]?.startsWith?.("localhost") ||
-    process.argv[2]?.split?.(".")?.length === 4)
-) {
-  urlParam = process.argv[2];
-}
-
-if (!urlParam) {
-  urlParam = process.env.URL;
-}
+// Check if the URL environment variable is set
+let urlParam = process.env.URL||process.env.HOST||process.env.IP||process.env.ADDRESS;
 
 if (!urlParam) {
   console.log(
-    "No server address provided. Please provide a URL using the --url argument or the URL env variable."
+    "No server address provided. Please provide a URL for the server using a URL env variable."
   );
   process.exit(4);
 }
 
-if (urlParam.startsWith("http://")) {
-  urlParam = urlParam.substring(7);
-}
-if (urlParam.startsWith("https://")) {
-  urlParam = urlParam.substring(8);
+if (urlParam) {
+  if (urlParam.startsWith("http://") || urlParam.startsWith("https://")) {
+    urlParam = urlParam.substring(urlParam.indexOf("//") + 2);
+  }
+  if (urlParam.includes("/")) {
+    urlParam = urlParam.split("/")[0];
+  }
 }
 if (urlParam.endsWith("/")) {
   urlParam = urlParam.substring(urlParam.length - 1);

@@ -1,6 +1,6 @@
-import { backendPath } from "../init.js";
-import { sfs } from "../../utils/sfs.js";
 
+import { sfs } from "../../utils/sfs.js";
+const backendPath = './backend';
 /**
  * @param {string} type
  * @param {boolean} [singleFile]
