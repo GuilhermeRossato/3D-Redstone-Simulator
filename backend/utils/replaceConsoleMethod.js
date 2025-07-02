@@ -2,7 +2,6 @@ import fs from "fs";
 import { getCurrentStackList } from "./getCurrentStackList.js";
 
 const resetOutput = true;
-const addComment = true;
 const removeColor = true;
 
 /** @type {Record<string, any>} */
@@ -13,15 +12,6 @@ const outputRecord = {};
 
 /** @type {Record<string, Record<string, number>>} */
 const countRecord = {};
-
-const isDebug =
-  true ||
-  process.argv.includes("--debug") ||
-  process.argv.includes("-d") ||
-  process.argv.includes("--verbose") ||
-  process.argv.includes("-vvv") ||
-  process.argv.includes("-vv") ||
-  process.argv.includes("-v");
 
 const write0 = process.stdout.write;
 const write1 = process.stderr.write;

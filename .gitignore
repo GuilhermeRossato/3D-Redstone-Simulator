@@ -43,3 +43,7 @@ project.code-workspace
 tools/ao-extractor/images/
 
 .idea/
+
+stop.bat
+
+backend/pid.txt

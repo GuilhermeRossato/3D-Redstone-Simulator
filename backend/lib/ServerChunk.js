@@ -335,7 +335,9 @@ export class ServerChunk {
     return Date.now() - this.loaded;
   }
 
-  getServerChunkEventsSince(time)
+  getServerChunkEventsSince(time) {
+
+  }
 
   async load() {
     this.state = await loadServerChunkState(this.id, sampleState);

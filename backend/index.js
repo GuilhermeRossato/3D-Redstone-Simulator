@@ -3,8 +3,6 @@ import http from "node:http";
 import process from "node:process";
 import child_process from "node:child_process";
 
-replaceConsoleMethod('log');
-
 const detached = extractArgs([
   "--detach",
   "--detached",
@@ -15,9 +13,15 @@ const detached = extractArgs([
   "-bg",
 ]).length;
 
+const logFilePath = getProjectFolderPath('backend', detached ? 'detached.log' : 'server.log');
+replaceProcessOutput(logFilePath);
+
+console.log('Writing logs to:', logFilePath);
+
 if (detached) {
   console.log("Spawning detached process");
   console.log(" > node", ...process.argv.slice(1));
+  await new Promise((resolve) => setTimeout(resolve, 200));
   const c = child_process.spawn(process.argv[0], process.argv.slice(1), {
     stdio: "ignore",
     detached: true,
@@ -38,9 +42,17 @@ import getMimeLookupRecord from "./utils/getMimeLookupRecord.js";
 import { once } from "./utils/once.js";
 import { extractArgs } from "./utils/extractArgs.js";
 import { handleRequestUpgrade } from "./multiplayer/handleRequestUpgrade.js";
-import { replaceConsoleMethod } from "./utils/replaceConsoleMethod.js";
+import { replaceProcessOutput } from "./utils/replaceProcessOutput.js";
+import { getProjectFolderPath } from "./utils/getProjectFolderPath.js";
+import getDateTimeString from "./utils/getDateTimeString.js";
 
-fs.writeFileSync(`${backendPath}/../stop`, `kill ${process.pid}\n`, 'utf-8');
+const stopFileExtension = process.platform === "win32" ? ".bat" : "";
+const stopFilePath = `${backendPath}/../stop${stopFileExtension}`;
+const stopFileContent = process.platform === "win32" 
+  ? `taskkill /PID ${process.pid} /F\n` 
+  : `kill ${process.pid}\n`;
+
+fs.writeFileSync(stopFilePath, stopFileContent, "utf-8");
 
 if (!host || !port) {
   console.log(
@@ -298,6 +310,7 @@ server.on("upgrade", function (request, socket, head) {
       }
     });
 });
+
 server.on("error", (err) => {
   console.log("Failed to listen to host", host, "on port", port, "with error:");
   if (err["code"] === "EADDRINUSE") {
@@ -311,6 +324,20 @@ server.on("error", (err) => {
   }
 });
 
-server.listen(parseInt(String(port)), host, () => {
+server.listen(parseInt(String(port)), host === 'localhost' ? '127.0.0.1' : host, async () => {
   console.log(`Started listening successfully on ${host}:${port}`);
+  const backendFiles = await fs.promises.readdir(getProjectFolderPath('backend'));
+  for (const file of backendFiles) {
+    if (file === 'pid.txt' || file === 'server.pid' || /^pid-\d+-port-\d+\.log$/.test(file)) {
+      try {
+        await fs.promises.unlink(getProjectFolderPath('backend', file));
+        console.log("Removed file:", file);
+      } catch (err) {
+        console.error("Failed to remove file:", file, err);
+      }
+    }
+  }
+  await fs.promises.writeFile(getProjectFolderPath('backend', `pid.txt`), `${process.pid} ${host}:${port}`, 'utf-8');
+  const filePath = getProjectFolderPath('backend', `pid-${process.pid}-port-${port}.log`);
+  await fs.promises.writeFile(filePath, `Process ${process.pid} started listening to http://${host}:${port}/ on ${getDateTimeString()} running from ${process.cwd()} with the following program arguments:\n${process.argv.join(' ')}\n`, 'utf-8');
 });
