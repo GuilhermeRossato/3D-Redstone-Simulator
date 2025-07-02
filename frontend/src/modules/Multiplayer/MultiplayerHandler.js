@@ -5,10 +5,14 @@ import { updateSelfState } from "./ExternalSelfStateHandler.js";
 import * as EntityHandler from "../EntityHandler.js";
 import * as WorldHandler from "../../world/WorldHandler.js";
 import { initializeSocket, sendEvent } from "./SocketHandler.js";
-import { b } from "../../utils/bezier.js";
 import { createSnackbarAlert } from "../../utils/createSnackbarAlert.js";
+import { g } from "../../utils/g.js";
 
 export let active = false;
+
+export const flags = {
+  connected: false,
+};
 
 const playerEntityRecord = {};
 
@@ -34,6 +38,8 @@ const playerEntityRecord = {};
 
 /** @type {undefined | PlayerObject} */
 let player;
+
+async function processServerChunkResponse(chunk) {}
 
 /**
  * @param {PlayerObject} player
@@ -113,94 +119,90 @@ async function performLogin() {
     {
       type: "setup",
       selfLoginCode: await getSelfLoginCode(),
-      cookieId,
+      cookieId: cookieId || localStorage.getItem("last-cookie-id"),
     },
     true
   );
+  console.log("Setup response", initResponse);
   if (initResponse?.success !== true) {
     createSnackbarAlert("The server did not return success", "error");
     console.log("Invalid server object:", initResponse);
     throw new Error("Server did not return success on connection setup packet");
   }
+  flags.connected = true;
   // Update cookie id
   if (
     typeof initResponse.cookieId === "string" &&
     initResponse.cookieId !== cookieId
   ) {
+    localStorage.setItem("last-cookie-id", initResponse.cookieId);
     console.log("Updating cookieId");
     document.cookie = `id=${initResponse.cookieId}; expires=${new Date(
       new Date().getTime() + 31_536_000_000
     ).toUTCString()}`;
   }
-  // Update player position
-  if (
-    typeof initResponse.x === "number" &&
-    typeof initResponse.y === "number" &&
-    typeof initResponse.z === "number"
-  ) {
-    setPlayerPosition(initResponse);
-  }
-  // Update world in parts
-  const blockStepSize =
-    initResponse.blockList instanceof Array
-      ? Math.min(100, Math.ceil(initResponse.blockList.length / 6))
-      : 0;
-  const entityStepSize =
-    initResponse.entityList instanceof Array
-      ? Math.min(100, Math.ceil(initResponse.entityList.length / 6))
-      : 0;
-  if (initResponse.entityList instanceof Array) {
-    EntityHandler.removeAllEntities();
-  }
+  const ctx = await sendEvent(
+    {
+      type: "context",
+      variant: "spawn",
+    },
+    true
+  );
 
-  let offsets = [];
-  const radius = 1;
-  for (let x = -radius; x <= radius; x++) {
-    for (let y = -radius; y <= radius; y++) {
-      for (let z = -radius; z <= 2; z++) {
-        if (!offsets.find((a) => a[0] === x && a[1] === y && a[2] === z)) {
-          offsets.push([x, y, z, Math.sqrt(x * x + y * y + z * z)]);
-        }
-      }
-    }
-  }
-  offsets = offsets.sort((a, b) => a[3] - b[3]);
-  console.log(`offsets`, offsets);
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  g("player", (player = ctx.player));
+
+  const watching =
+    ctx.watching instanceof Array
+      ? ctx.watching
+      : Object.keys(ctx.watching);
+
+  console.log(`Chunks:`, JSON.stringify(watching));
+
+  await new Promise((resolve) => setTimeout(resolve, 250));
 
   // Perform server time syncronization
-  const datePairList = [];
-  let lastSentTime;
-  for (const offset of offsets) {
-    lastSentTime = new Date().getTime();
+  const syncPairs = [];
+  for (let i = 0; i < 9 || watching.length; i++) {
+    const client = Date.now();
     const response = await sendEvent(
       {
         type: "sync",
-        clientTime: lastSentTime,
-        offset: offset.slice(0, 3),
+        client,
+        chunks: watching,
+        first: i === 0,
+        last: !(i < 9 || watching.length),
       },
       true
     );
+    const server = response?.server;
     if (
-      typeof response.serverTime !== "number" ||
-      Math.abs(response.serverTime - lastSentTime) > 120_000
+      !server ||
+      typeof server !== "number" ||
+      isNaN(server) ||
+      server <= 1000 ||
+      Math.abs(server - client) > 180_000
     ) {
       throw new Error(
-        "Server did not sent time or the client date does not match the server date"
+        "Invalid or missing time values on sync: Server did not sent time or the client date does not match the server date"
       );
     }
-    console.log(response);
-    datePairList.push([lastSentTime, response.serverTime]);
-    if (response.chunk) {
-      console.log("Response chunk", response.chunk);
-    }
-    if (response.entities?.length) {
-      console.log("Response entities", response.entities);
+    syncPairs.push([client, server]);
+    for (let j = 0; j < response.chunks.length; j++) {
+      const chunk = response.chunks[j];
+      const k = watching.findIndex(
+        (c) => [chunk.cx, chunk.cy, chunk.cz].join(",") === c
+      );
+      if (k === -1) {
+        console.warn("Chunk not found", chunk);
+        continue;
+      }
+      watching.splice(k, 1);
+      await processServerChunkResponse(chunk);
     }
   }
 
-  const differenceList = datePairList
-    .slice(datePairList.length - 3)
+  const differenceList = syncPairs
+    .slice(syncPairs.length - 3)
     .map((pair) => pair[0] - pair[1]);
   if (differenceList.length === 0 || differenceList.some((d) => isNaN(d))) {
     throw new Error(
@@ -216,47 +218,61 @@ async function performLogin() {
     offset
   );
 
-  const startResponse = await sendEvent(
+  const spawn = await sendEvent(
     {
-      type: "context",
-      offset,
+      type: "spawn",
     },
     true
   );
 
-  if (typeof startResponse.entity !== "object") {
-    console.log("Invalid server object:", startResponse);
+  console.log(`startResponse`, spawn);
+
+  if (typeof spawn?.player?.pose !== "object") {
+    console.log("Invalid server object:", spawn);
     throw new Error(
-      "First context request did not return current player entity data"
+      "First context request did not return current player position data"
     );
   }
 
-  const [x, y, z] = startResponse.entity.state.position;
-  const [yaw, pitch] = startResponse.entity.state.direction;
-
-  player = startResponse.entity;
+  g("player", (player = spawn.player));
 
   // Update player position
-  setPlayerPosition({ x, y, z, yaw, pitch });
+  const pose = spawn?.player?.pose || ctx?.player?.pose;
+  if (
+    pose instanceof Array &&
+    typeof pose[0] === "number" &&
+    !isNaN(pose[0]) &&
+    typeof pose[1] === "number" &&
+    !isNaN(pose[1]) &&
+    typeof pose[2] === "number" &&
+    !isNaN(pose[2])
+  ) {
+    setPlayerPosition(pose);
+  }
 }
 
 export async function sendClientAction(action) {
   if (!active) {
     return;
   }
-  if (action.type === "move") {
-    action.x = parseFloat(action.x.toFixed(3));
-    action.y = parseFloat(action.y.toFixed(3));
-    action.z = parseFloat(action.z.toFixed(3));
-    action.yaw = parseFloat(action.yaw.toFixed(4));
-    action.pitch = parseFloat(action.pitch.toFixed(4));
-  }
   if (
-    ["start-breaking", "pause-breaking", "pause-breaking"].includes(action.type)
+    [
+      "punch",
+      "start-breaking",
+      "stop-breaking",
+      "finish-breaking",
+      "place",
+      "set",
+      "remove",
+    ].includes(action.type)
   ) {
-    action.x = Math.floor(action.x);
-    action.y = Math.floor(action.y);
-    action.z = Math.floor(action.z);
+    if (action.pos instanceof Array) {
+      action.pos = action.pos.map((a,i) => i < 3 ? Math.floor(a) : a);
+    } else if (typeof action.x === "number") {
+      action.x = Math.floor(action.x);
+      action.y = Math.floor(action.y);
+      action.z = Math.floor(action.z);
+    }
   }
   await sendEvent(action);
 }
@@ -307,8 +323,4 @@ export function getPlayer() {
   return player;
 }
 
-window["setBlock"] = function (x, y, z, id, type) {
-
-}
-
-
+window["setBlock"] = function (x, y, z, id, type) {};

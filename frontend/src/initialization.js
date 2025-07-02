@@ -53,6 +53,12 @@ async function initialization() {
         InputHandler.update(frame);
         if (MultiplayerHandler.active) {
           MultiplayerHandler.update();
+        } else if (InputHandler.flags.dirty) {
+          console.log('Updating player position (local)');
+          InputHandler.flags.dirty = false;
+          const { x, y, z } = InputHandler.position;
+          const { yaw, pitch } = InputHandler.rotation;
+          localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
         }
       },
       GraphicsHandler.draw,
@@ -66,13 +72,11 @@ async function initialization() {
 
     setLoadingText("Initializing Multiplayer");
     try {
-      if (MultiplayerHandler.load()) {
-        console.log("MultiplayerHandler.load() will be loaded");
-      } else {
-        console.log("MultiplayerHandler.load() returned false");
+      if (!MultiplayerHandler.load()) {
+        console.log("MultiplayerHandler returned false");
       }
     } catch (err) {
-      console.log("MultiplayerHandler.load() failed");
+      console.log("MultiplayerHandler failed");
       console.error(err);
     }
 

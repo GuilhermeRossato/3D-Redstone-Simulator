@@ -1,46 +1,33 @@
-import { chunks } from "../../lib/storage.js";
+import { savePlayer } from "../../lib/PlayerStorage.js";
+import { ServerChunk } from "../../lib/ServerChunk.js";
+import { getChunksPosListByDistance } from "../../utils/getChunksPosListWithin.js";
 
-async function getSurroundingWorld(origin, target) {
-  if (typeof target === "number") {
-    origin[0] -= target;
-    origin[1] -= target;
-    origin[2] -= target;
-    target = [origin[0] + target * 2, origin[1] + target, origin[2] + target];
-  }
-  const xmin = Math.floor(Math.min(origin[0], target[0]) / 16);
-  const xmax = Math.ceil(Math.max(origin[0], target[0]) / 16);
-  const ymin = Math.floor(Math.min(origin[1], target[1]) / 16);
-  const ymax = Math.ceil(Math.max(origin[1], target[1]) / 16);
-  const zmin = Math.floor(Math.min(origin[2], target[2]) / 16);
-  const zmax = Math.ceil(Math.max(origin[2], target[2]) / 16);
-  const ids = [];
-  for (let x = xmin; x <= xmax; x++) {
-    for (let y = ymin; y <= ymax; y++) {
-      for (let z = zmin; z <= zmax; z++) {
-        ids.push(`c-${x}-${y}-${z}`);
-      }
-    }
-  }
-  return chunks.load(ids.length, {
-    id: ids,
-  });
-}
-export async function context(payload, ctx) {
-  const { offset } = payload;
-  if (typeof offset !== "number" || isNaN(offset)) {
-    throw new Error("Invalid sync packet type");
-  }
+export default async function context(payload, ctx) {
   if (!ctx.player) {
-    throw new Error("Invalid context missing player");
+    throw new Error("Missing player context");
   }
-  if (!ctx.entity) {
-    throw new Error("Invalid context missing entity");
+  if (!isNaN(payload.offset)) {
+    ctx.offset = payload.offset;
   }
-
-  const world = await getSurroundingWorld(ctx.entity.state.position, 64);
+  const chunkPosList = getChunksPosListByDistance(
+    ctx.player.pose.slice(0, 3).map((v) => Math.floor(v / 16)),
+    16 * 3
+  );
+  if (!chunkPosList.length) {
+    throw new Error("Invalid chunk position list");
+  }
+  const chunkList = chunkPosList.map((a) => ServerChunk.from(a));
+  if (ctx.player.chunk !== chunkList[0]) {
+    ctx.player.chunk = chunkList[0];
+    await savePlayer(ctx.player);
+  }
+  const main = await chunkList[0].load();
+  if (main.state.fileSize === 0) {
+    console.log("Chunk file is empty at context position");
+  }
+  console.log("Context packet finished with", chunkList.length, "chunk positions");
   return {
+    watching: chunkPosList,
     player: ctx.player,
-    entity: ctx.entity,
-    world,
   };
 }

@@ -78,17 +78,3 @@ export const actions = await createStorageClient(
     manualSave: true,
   }
 );
-
-export const chunks = await createStorageClient(
-  "chunks",
-  () => ({
-    position: [0, 0, 0],
-    data: "",
-    players: [""],
-  }),
-  {
-    maxPerFile: 1000,
-    manualSave: true,
-  }
-);
-

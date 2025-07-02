@@ -7,11 +7,25 @@ import { extractArgs } from "../utils/extractArgs.js";
 
 export const backendPath = fs.existsSync("./backend") ? "./backend" : ".";
 
-if (fs.existsSync(`${backendPath}/.env`)) {
-  process.loadEnvFile(`${backendPath}/.env`);
+const envFilePath = `${backendPath}/.env`;
+if (fs.existsSync(envFilePath)) {
+  if (typeof process.loadEnvFile === "function") {
+    console.log(
+      "Loading environment variables with native loadEnvFile from:",
+      envFilePath
+    );
+    process.loadEnvFile(envFilePath);
+  } else {
+    console.log(
+      "Loading environment variables with loadEnvSync from:",
+      envFilePath
+    );
+    const mod = await import("../utils/loadEnvSync.js");
+    mod.loadEnvSync([envFilePath], process.env);
+  }
 } else {
   console.log(
-    "Could not find .env file. Skipping loading environment variables."
+    'Skipping loading of environment variables as (".env" file not found)'
   );
 }
 

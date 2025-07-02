@@ -2,15 +2,14 @@ import {
   getSelfLoginCode,
   getCookieId,
   processServerPacket,
+  flags,
 } from "./MultiplayerHandler.js";
 
 const debug = true;
+const verbose = false;
 
-function getWebsocketEndpoint() {
-  let protocol = window.location.hostname === "localhost" ? "ws" : "wss";
-  let host = window.location.host;
-  // host = "gui-test-zone.com.br";
-  return `${protocol}://${host}/3D-Redstone-Simulator`;
+function onSocketClose() {
+  flags.connected = false;
 }
 
 /** @type {undefined | WebSocket} */
@@ -23,9 +22,14 @@ let lastErrorTime = null;
 let lastCloseTime = null;
 let isSocketClosed = false;
 
-let lastRestartTime = null;
-let lastRestartDelayPeriod = 500;
 let responseResolveRecord = {};
+
+function getWebsocketEndpoint() {
+    const protocol = window.location.hostname === "localhost" ? "ws" : "wss";
+    const host = window.location.host;
+    // host = "gui-test-zone.com.br";
+    return `${protocol}://${host}/3D-Redstone-Simulator`;
+}
 
 async function createSocket() {
   if (lastBeginTime && new Date().getTime() - lastBeginTime < 1000) {
@@ -69,14 +73,13 @@ async function createSocket() {
     }, 7000);
     ws.addEventListener("timeout", (evt) => {
       isSocketClosed = true;
+      onSocketClose();
       clearTimeout(timeoutTimer);
-      const message = `Timeout event emitted for websocket ${
-        evt && typeof evt["message"] === "string"
+      const message = `Timeout event emitted for websocket ${evt && typeof evt["message"] === "string"
           ? evt["message"]
           : "without message"
-      } at phase ${evt.eventPhase} (${
-        resolved ? "after resolving" : "before resolving"
-      })`;
+        } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
+        })`;
       debug && console.log("[D]", message);
       if (!resolved) {
         resolved = true;
@@ -90,22 +93,21 @@ async function createSocket() {
         console.log(
           "Websocket was received by the listener but the communication failed"
         );
+        // @ts-ignore
         console.log("Event", evt?.reason, evt?.cause, evt?.message, evt);
       } else {
         console.log("Websocket error event:", evt);
       }
       isSocketClosed = true;
+      onSocketClose();
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
-      const message = `Error event emitted for websocket ${
-        evt && typeof evt["message"] === "string"
+      const message = `Error event emitted for websocket ${evt && typeof evt["message"] === "string"
           ? evt["message"]
           : "without message"
-      } at phase ${evt.eventPhase} (${
-        resolved ? "after resolving" : "before resolving"
-      }),  ${now - lastBeginTime} ms since begining connection and ${
-        now - lastErrorTime
-      } ms since last error event`;
+        } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
+        }),  ${now - lastBeginTime} ms since begining connection and ${now - lastErrorTime
+        } ms since last error event`;
       lastErrorTime = new Date().getTime();
       debug && console.log("[D]", message);
       debug && console.log("[D]", "Error event object:", evt);
@@ -120,15 +122,13 @@ async function createSocket() {
     ws.addEventListener("close", () => {
       console.log("Socket closed");
       isSocketClosed = true;
+      onSocketClose();
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
-      const message = `Socket close event emitted ${
-        now - lastBeginTime
-      } ms since begining connection, ${
-        now - lastStartTime
-      } ms since last connection start, ${
-        now - lastCloseTime
-      } ms since last connection close`;
+      const message = `Socket close event emitted ${now - lastBeginTime
+        } ms since begining connection, ${now - lastStartTime
+        } ms since last connection start, ${now - lastCloseTime
+        } ms since last connection close`;
       debug && console.log("[D]", message);
       closeReason = new Error(message);
       lastCloseTime = now;
@@ -145,6 +145,7 @@ async function createSocket() {
           );
         try {
           isSocketClosed = true;
+          onSocketClose();
           ws.close();
         } catch (err) {
           // Ignore
@@ -162,6 +163,7 @@ async function createSocket() {
             );
           try {
             isSocketClosed = true;
+            onSocketClose();
             ws.close();
           } catch (err) {
             // Ignore
@@ -183,6 +185,7 @@ async function createSocket() {
       } catch (err) {
         debug &&
           console.log("[D]", "Failed to parse data from socket:", err.message);
+        debug && console.log("[D]", "Event data:", { data: event.data });
         ws.close();
         return;
       }
@@ -191,14 +194,14 @@ async function createSocket() {
         window["messages"].pop();
       }
 
-      console.log("Received message:", obj);
+      verbose && console.log("[V]", "Received message:", obj);
       if (responseResolveRecord[obj.responseId]) {
-        debug && console.log("[D]", "Routed server packet to response");
+        verbose && console.log("[D]", "Routed server packet to response");
         responseResolveRecord[obj.responseId].resolve(obj);
         delete responseResolveRecord[obj.responseId];
         return;
       }
-      debug &&
+      verbose &&
         console.log("[D]", "Routed server packet to process server event");
       processServerPacket(obj);
     });

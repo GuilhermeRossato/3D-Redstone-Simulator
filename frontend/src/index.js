@@ -8,14 +8,14 @@ window.addEventListener("keydown", (event) => {
 
 document.addEventListener("visibilitychange", function (...args) {
   if (args.length) {
-    console.log(
-      "There are",
-      args.length,
-      "arguments to",
-      "visibilitychange",
-      "event"
-    );
-    console.log(...args);
+    // console.log(
+    //   "There are",
+    //   args.length,
+    //   "arguments to",
+    //   "visibilitychange",
+    //   "event"
+    // );
+    //console.log(...args);
   }
   if (document?.hidden) {
     console.log("Document became hidden");

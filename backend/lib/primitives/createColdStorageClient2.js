@@ -1,5 +1,5 @@
 import { backendPath } from "../init.js";
-import { sfs } from "../sfs.js";
+import { sfs } from "../../utils/sfs.js";
 
 /**
  * @param {string} type

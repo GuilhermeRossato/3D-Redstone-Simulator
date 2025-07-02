@@ -1,6 +1,6 @@
-import { sfs } from "../sfs.js";
+import { sfs } from "../../utils/sfs.js";
 import { isProcessRunningByPid } from "../isProcessRunningByPid.js";
-import getDateTimeString from "../getDateTimeString.js";
+import getDateTimeString from "../../utils/getDateTimeString.js";
 import { backendPath } from "../init.js";
 
 const debugSave = true;
@@ -37,8 +37,6 @@ export async function createStorageClient(
   let currentFile = "";
   let currentCount = 0;
 
-  // Define a mutex for the `operateMetadata` method
-  let metadataMutex = Promise.resolve();
   let metadataBusy = false;
 
   let metadataPromises = [];
