@@ -15,6 +15,8 @@ function generateAcceptKey(key) {
     .digest("base64");
 }
 
+
+
 /**
  * @param {http.IncomingMessage} req
  * @param {stream.Duplex} socket
@@ -31,13 +33,18 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   let processing = 0;
   let packets = 0;
   let pings = 0;
+  let playerId = '';
 
   global.socket = socket;
 
   let hasProcessedClose = null;
 
   socket.on("close", (evt) => {
-    debug && console.log("Socket error event");
+    debug && console.log("Socket close event");
+    if (playerId) {
+      
+      playerId = '';
+    }
     if (hasProcessedClose === false) {
       hasProcessedClose = true;
       index(
@@ -57,6 +64,10 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   });
 
   socket.on("error", (err) => {
+    if (playerId) {
+      
+      playerId = '';
+    }
     if (hasProcessedClose === false) {
       hasProcessedClose = true;
       index(
@@ -71,6 +82,10 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   });
 
   socket.on("end", () => {
+    if (playerId) {
+      
+      playerId = '';
+    }
     if (hasProcessedClose === false) {
       hasProcessedClose = true;
       index({ type: "close", variant: "end" }, context, packets, pings).catch(
@@ -173,10 +188,38 @@ export async function handleRequestUpgrade(req, socket, head, error) {
     }
   };
 
+  const pending = {
+    size: 0,
+    received: 0,
+    length: 0,
+    parts: [],
+    mask: Buffer.alloc(4),
+  }
+
   socket.on("data", (buffer) => {
+    let input;
+    let output;
+    let message;
     debug &&
       console.log("Received websocket data with", buffer.byteLength, "bytes");
+
     try {
+    if (pending?.size) {
+      const payload = buffer.slice(0, Math.min(buffer.byteLength, pending.size));
+      // Unmask the payload
+      for (let i = 0; i < payload.byteLength; i++) {
+        payload[i] = payload[i] ^ pending.mask[(pending.received + i) % 4];
+      }
+      pending.received += payload.byteLength;
+      pending.parts.push(payload.toString("utf8"));
+      pending.size -= payload.byteLength;
+      if (pending.size > 0) {
+        console.log('Unfinished partial message');
+        return;
+      }
+        // console.log('Finished partial message', pending.parts);
+        message = pending.parts.join("");
+    } else {
       if (packets === 0 || packets === 1) {
         const masked = (buffer[1] & 0b10000000) >> 7;
         if (masked !== 1) {
@@ -199,17 +242,17 @@ export async function handleRequestUpgrade(req, socket, head, error) {
         return;
       }
 
-      let input;
-      let output;
-
       if (opcode === 0x8) {
+        if (playerId) {
+          
+          playerId = '';
+        }
         // Close frame received
         console.log("Close frame received, closing connection");
         socket.end();
         input = { type: "close" };
       } else {
         packets++;
-
         // Basic WebSocket frame parsing (text only)
         const fin = (buffer[0] & 0b10000000) >> 7;
         let payloadLength = buffer[1] & 0b01111111;
@@ -229,11 +272,32 @@ export async function handleRequestUpgrade(req, socket, head, error) {
           payloadStart,
           payloadStart + Number(payloadLength)
         );
+        if (pending.size<=0) {
+          const missing = payloadLength - payload.byteLength;
+          if (missing > 0) {
+            pending.size = missing;
+            // console.log("Payload too long:",pending.size," bytes pending (partial request)");
+          }
+        }
         // Unmask the payload
         for (let i = 0; i < payload.length; i++) {
           payload[i] = payload[i] ^ maskingKey[i % 4];
         }
-        const message = payload.toString("utf8");
+        message = payload.toString("utf8");
+        if (pending.size) {
+          pending.mask[0] = maskingKey[0];
+          pending.mask[1] = maskingKey[1];
+          pending.mask[2] = maskingKey[2];
+          pending.mask[3] = maskingKey[3];
+          pending.received = payload.length;
+          pending.length = payloadLength;
+          pending.parts = [message];
+          pending.size = pending.length - pending.received;
+          return;
+        }
+      }
+    }
+    if (!input&&message) {
         const jsonType = { "{}": "object", "[]": "array", '""': "object" }[
           message[0] + message[message.length - 1]
         ];
@@ -258,7 +322,11 @@ export async function handleRequestUpgrade(req, socket, head, error) {
             ? { type: "error", message }
             : { type: "string", text: message };
         }
-        if (!input.type) {
+        if (!input.type||input.type==='string') {
+          if (input?.type === 'string' && input?.text?.includes('AAAAAA')) {
+            console.log("Ignoring special string packet:", input);
+            return;
+          }
           console.error("Ignoring invalid packet type:", input);
           output = {
             type: "error",
@@ -267,7 +335,10 @@ export async function handleRequestUpgrade(req, socket, head, error) {
           };
         }
       }
-
+      if (!message&&!input) {
+        debug && console.log("No message or input received");
+        return;
+      }
       if (!output) {
         processing++;
         try {
@@ -278,6 +349,10 @@ export async function handleRequestUpgrade(req, socket, head, error) {
             hasProcessedClose = true;
           }
           output = index(input, context, packets, pings);
+          if (input.type === 'setup' && context?.player?.id) {
+            playerId = context.player.id;
+            context.send = sendSocket;
+          }
         } catch (err) {
           console.log("Request handler error:", err);
           console.log("        input:", input);
@@ -294,6 +369,10 @@ export async function handleRequestUpgrade(req, socket, head, error) {
       if (output && output instanceof Promise) {
         output
           .then((result) => {
+          if (input.type === 'setup' && context?.player?.id) {
+            playerId = context.player.id;
+            context.send = sendSocket;
+          }
             processing--;
             output = result;
             if (
@@ -308,8 +387,9 @@ export async function handleRequestUpgrade(req, socket, head, error) {
               return;
             }
             return sendSocket(output);
-          })
-          .catch((err) => {
+          }).catch((err) => {
+            console.error("Error in packet processing promise:", err);
+            console.log("        input:", input);
             processing--;
             output = {
               type: "error",

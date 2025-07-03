@@ -22,7 +22,7 @@ if (fs.existsSync(envFilePath)) {
   }
 } else {
   console.log(
-    'Skipping loading of environment variables as (".env" file not found)'
+    'Skipping loading of environment variables as (.env file not found)'
   );
 }
 

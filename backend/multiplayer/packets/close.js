@@ -1,8 +1,10 @@
 import { loadEntity, removeEntity } from "../../lib/EntityStorage.js";
 import { loadPlayer, savePlayer } from "../../lib/PlayerStorage.js";
+import { ServerRegion } from "../../lib/ServerRegion.js";
 
 export default async function close(packet, ctx) {
   console.log("Received close packet:", packet, ctx);
+  ServerRegion.removeConnectedPlayer(ctx);
   if (ctx.player && ctx.player.entity) {
     const entity = await loadEntity(ctx.player.entity);
     if (entity) {

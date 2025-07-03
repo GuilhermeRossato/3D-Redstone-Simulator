@@ -1,24 +1,24 @@
+
 import { savePlayer } from "../../lib/PlayerStorage.js";
 import { ServerChunk } from "../../lib/ServerChunk.js";
-import { getChunksPosListByDistance } from "../../utils/getChunksPosListWithin.js";
+import { getChunkOffsets } from "../../scripts/chunkDistance.js";
 
 export default async function context(payload, ctx) {
   if (!ctx.player) {
-    throw new Error("Missing player context");
+    throw new Error("Missing player context: Send setup first.");
   }
   if (!isNaN(payload.offset)) {
     ctx.offset = payload.offset;
   }
-  const chunkPosList = getChunksPosListByDistance(
-    ctx.player.pose.slice(0, 3).map((v) => Math.floor(v / 16)),
-    16 * 3
-  );
+  const chunkPosList = await getChunkOffsets(10, 2);
   if (!chunkPosList.length) {
     throw new Error("Invalid chunk position list");
   }
-  const chunkList = chunkPosList.map((a) => ServerChunk.from(a));
-  if (ctx.player.chunk !== chunkList[0]) {
-    ctx.player.chunk = chunkList[0];
+  const absPosList = chunkPosList.map((a) => a.split(',').slice(0, 3).map((a,i)=>parseInt(a)*16+ctx.player.pose[i]));
+  const chunkList = absPosList.map(a=>ServerChunk.fromAbsolute(a));
+  if (!ctx.player.chunk || ctx.player.chunk !== chunkList[0].id) {
+    console.log('Setting player chunk to', chunkList[0].id, 'from context packet');
+    ctx.player.chunk = chunkList[0].id;
     await savePlayer(ctx.player);
   }
   const main = await chunkList[0].load();
@@ -27,7 +27,15 @@ export default async function context(payload, ctx) {
   }
   console.log("Context packet finished with", chunkList.length, "chunk positions");
   return {
-    watching: chunkPosList,
     player: ctx.player,
+    surrounding: chunkPosList,
+    chunks: [{
+      id: main.id,
+      cx: main.cx,
+      cy: main.cy,
+      cz: main.cz,
+      blocks: main.state.blocks,
+      entities: main.state.entities,
+    }]
   };
 }

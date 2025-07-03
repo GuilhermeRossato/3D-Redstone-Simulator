@@ -11,7 +11,7 @@ const cookieIdRecord = {};
 
 let playerList = undefined;
 
-export async function getPlayerSpawnPose(player) {
+export async function getNewPlayerSpawnPose(player) {
   return [-5, 3, 7, 0, 0, 0].map((v, i) =>
     i < 3 ? Math.floor(i === 1 ? v : (Math.random() - 0.5) * 2 * v) : v
   );
@@ -53,7 +53,7 @@ export async function loadPlayer(obj_or_id) {
     !obj_or_id.startsWith("p") &&
     obj_or_id.length > 4
   ) {
-    if (!obj_or_id.match(/^\d+$/)) {
+    if (!obj_or_id.substring(1).match(/^\d+$/)) {
       throw new Error("Invalid player ID: must contain digits only");
     }
     obj_or_id = `p${obj_or_id}`;

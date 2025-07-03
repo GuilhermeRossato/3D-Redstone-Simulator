@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
+import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
 
-const backendPath = './backend';
+const dataFolderPath = getProjectFolderPath('backend', 'data');
 
 /** @type {Record<string, number>} */
 const countRecord = {};
@@ -10,7 +11,7 @@ const countRecord = {};
 const confirmRecord = {};
 
 function getStorageObjectFilePath(type, name, id, isArray = false) {
-  return `${backendPath}/data/${[type, name, id]
+  return `${dataFolderPath}/${[type, name, id]
     .filter((p) => (typeof p === "string" && p.length) || typeof p === "number")
     .join("/")}.json${isArray ? "l" : ""}`;
 }
@@ -123,7 +124,16 @@ export async function appendStorageArray(type, name, id, array = []) {
       .join("\n");
     const target = getStorageObjectFilePath(type, name, id, true);
     await confirmPath(target);
-    await fs.promises.appendFile(target, `${text}\n`, "utf-8");
+    try {
+      await fs.promises.appendFile(target, `${text}\n`, "utf-8");
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        await fs.promises.mkdir(path.dirname(target), { recursive: true });
+        await fs.promises.writeFile(target, `${text}\n`, "utf-8");
+      } else {
+        throw err;
+      }
+    }
     return (countRecord[id] =
       (countRecord[id] || 0) + (array instanceof Array ? array.length : 1));
   } catch (err) {

@@ -26,7 +26,7 @@ export class ServerEntityEventHandler {
   }
   
   static addEntityToScene(entity) {
-    entity.pose[0]
+    //entity.pose[0]
     // find nearby players
     // send the entity to them
     

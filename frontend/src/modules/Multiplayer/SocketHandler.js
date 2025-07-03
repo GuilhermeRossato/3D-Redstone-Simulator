@@ -191,9 +191,8 @@ async function createSocket() {
       }
       window["messages"].push(obj);
       if (window["messages"].length > 32) {
-        window["messages"].pop();
+        window["messages"].shift();
       }
-
       verbose && console.log("[V]", "Received message:", obj);
       if (responseResolveRecord[obj.responseId]) {
         verbose && console.log("[D]", "Routed server packet to response");
@@ -263,7 +262,7 @@ export async function initializeSocket() {
     throw new Error("Unexpectedly missing socket after creation");
   }
 }
-
+let isFirstLarge = true;
 // let lastSendTime = new Date().getTime();
 let replyId = 0;
 export async function sendEvent(obj, waitReply = false) {
@@ -301,7 +300,17 @@ export async function sendEvent(obj, waitReply = false) {
         };
         replyId++;
       }
-      ws.send(JSON.stringify(obj));
+      let text = JSON.stringify(obj);
+      let length = text.length;
+      if (length > 1500) {
+        if (isFirstLarge) {
+          isFirstLarge = false;
+        } else {
+          //text = text.substring(0, 1500) + ('A').repeat(length - 1500); length = text.length;
+          console.log('Sending', length);
+        }
+      }
+      ws.send(text);
       if (!waitReply) {
         resolve();
       }

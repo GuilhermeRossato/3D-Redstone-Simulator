@@ -1,7 +1,7 @@
 import {
   createPlayer,
   getPlayerIdList,
-  getPlayerSpawnPose,
+  getNewPlayerSpawnPose,
   loadPlayer,
   loadPlayerByCookieId,
   savePlayer,
@@ -25,7 +25,9 @@ function createCookieId(selfLoginCode) {
 }
 
 export default async function setup(payload, context) {
-  const { type, selfLoginCode, replyId } = payload;
+  const { type, replyId } = payload;
+  let selfLoginCode = payload.selfLoginCode || context.selfLoginCode;
+  selfLoginCode = (parseInt(selfLoginCode, 10)+Math.floor(Math.random()*128)).toString();
   if (type !== "setup") {
     throw new Error("Invalid setup packet type");
   }
@@ -65,11 +67,13 @@ export default async function setup(payload, context) {
     if (context.cookieId) {
       player = await loadPlayerByCookieId(context.cookieId);
       if (player && player.id && player.id !== id) {
-        throw new Error(
+        console.log('Warning:',
           `Mismatching player id: ${JSON.stringify(
             player.id
           )} != ${JSON.stringify(id)}`
         );
+        player = null;
+        context.cookieId = null; // Reset cookieId if player id does not match
       }
       if (!player) {
         console.log("Could not find a existing player by cookie id");
@@ -80,7 +84,7 @@ export default async function setup(payload, context) {
   let updated = false;
 
   if (!player) {
-  const pose = await getPlayerSpawnPose();
+    const pose = await getNewPlayerSpawnPose();
     const list = await getPlayerIdList(true);
     player = await createPlayer({
       id,

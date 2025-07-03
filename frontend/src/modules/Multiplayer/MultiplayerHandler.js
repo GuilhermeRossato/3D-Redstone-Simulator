@@ -39,7 +39,17 @@ const playerEntityRecord = {};
 /** @type {undefined | PlayerObject} */
 let player;
 
-async function processServerChunkResponse(chunk) {}
+async function processServerChunkResponse(chunks) {
+  if (!chunks || (Array.isArray(chunks) && chunks.length === 0)) {
+    return;
+  }
+  if (!Array.isArray(chunks)) {
+    console.warn(
+      "Received chunks in invalid format, expected an array of chunks"
+    );
+  }
+  console.log(chunks);
+}
 
 /**
  * @param {PlayerObject} player
@@ -114,7 +124,7 @@ export async function getCookieId() {
 
 async function performLogin() {
   createSnackbarAlert("Performing login...", "info");
-  const cookieId = await getCookieId();
+  let cookieId = await getCookieId();
   const initResponse = await sendEvent(
     {
       type: "setup",
@@ -140,6 +150,7 @@ async function performLogin() {
     document.cookie = `id=${initResponse.cookieId}; expires=${new Date(
       new Date().getTime() + 31_536_000_000
     ).toUTCString()}`;
+    cookieId = initResponse.cookieId;
   }
   const ctx = await sendEvent(
     {
@@ -151,26 +162,26 @@ async function performLogin() {
 
   g("player", (player = ctx.player));
 
-  const watching =
-    ctx.watching instanceof Array
-      ? ctx.watching
-      : Object.keys(ctx.watching);
+  await processServerChunkResponse(ctx.chunks);
 
-  console.log(`Chunks:`, JSON.stringify(watching));
+  const surrounding =
+    ctx.surrounding instanceof Array
+      ? ctx.surrounding
+      : Object.keys(ctx.surrounding);
+
+  console.log(`Chunks:`, JSON.stringify(surrounding));
 
   await new Promise((resolve) => setTimeout(resolve, 250));
 
   // Perform server time syncronization
   const syncPairs = [];
-  for (let i = 0; i < 9 || watching.length; i++) {
+  for (let i = 0; i < 9; i++) {
     const client = Date.now();
     const response = await sendEvent(
       {
         type: "sync",
         client,
-        chunks: watching,
-        first: i === 0,
-        last: !(i < 9 || watching.length),
+        chunks: surrounding[i] ? [surrounding[i]] : [],
       },
       true
     );
@@ -187,20 +198,8 @@ async function performLogin() {
       );
     }
     syncPairs.push([client, server]);
-    for (let j = 0; j < response.chunks.length; j++) {
-      const chunk = response.chunks[j];
-      const k = watching.findIndex(
-        (c) => [chunk.cx, chunk.cy, chunk.cz].join(",") === c
-      );
-      if (k === -1) {
-        console.warn("Chunk not found", chunk);
-        continue;
-      }
-      watching.splice(k, 1);
-      await processServerChunkResponse(chunk);
-    }
+    await processServerChunkResponse(response.chunks);
   }
-
   const differenceList = syncPairs
     .slice(syncPairs.length - 3)
     .map((pair) => pair[0] - pair[1]);
@@ -284,16 +283,18 @@ export function update() {
 }
 
 export async function processServerPacket(packet) {
-  if (packet.event === "spawn") {
-    EntityHandler.addEntityToScene(packet.entity);
+  if (packet.type === "spawn") {
+    console.warn("Spawn packet received", packet);
+    EntityHandler.addEntityToScene(packet);
     return;
   }
 
-  if (packet.event === "move" && packet.entity.id !== player?.id) {
-    if (EntityHandler.entityRecord[packet.entity.id]) {
+  if (packet.type === "move" && packet.entity !== player?.id) {
+    console.warn("Move packet received", packet);
+    if (EntityHandler.entityRecord[packet.entity]) {
       return EntityHandler.setEntityTargetPosition(
-        packet.entity,
-        500,
+        packet,
+        0,
         packet.time
       );
     }
@@ -314,6 +315,10 @@ export async function processServerPacket(packet) {
 
   if (Object.keys(packet).length === 1 && packet.success === true) {
     return; // Ignore success
+  }
+
+  if (packet.type === 'move') {
+    console.log(packet.type, packet);
   }
 
   console.warn("Unknown packet", packet);

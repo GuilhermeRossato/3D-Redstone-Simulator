@@ -17,6 +17,11 @@ const sample = {
   events: 0,
 }
 
+export async function loadServerEntity(id) {
+  const data = await loadRawEntityData(id);
+  return data;
+}
+
 /**
  * Create a new server entity and save it to the storage.
  * @template {Record<string, unknown>&Partial<typeof sample>} T

@@ -16,7 +16,7 @@ export async function sync(payload, context) {
   if (!context?.player?.id) {
     throw new Error("Missing context player id");
   }
-  if (payload.first) {
+  if (!context.syncPairs) {
     context.syncPairs = [];
   }
   const server = Date.now();

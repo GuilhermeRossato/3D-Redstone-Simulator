@@ -25,7 +25,7 @@ export function index(packet, ctx, count, pings) {
   if (packet.type === "place" || packet.type === "remove") {
     packet.type = "block";
   }
-  logPacketTypes && console.log('[Packet]', packet.type, "received");
+  logPacketTypes && packet.type !== 'move' && console.log('[Packet]', packet.type, "received");
   const relative = `${backendPath}/multiplayer/packets/${packet.type}.js`;
   if (typeof record[packet.type]?.handler === "function") {
     return record[packet.type].handler(packet, ctx, count, pings);
@@ -92,6 +92,7 @@ export function index(packet, ctx, count, pings) {
         ].find((h) => h.name === packet.type);
       }
       result = record[packet.type].handler(packet, ctx, count, pings);
+      
       if (packet.replyId === undefined && result === undefined) {
         return resolve();
       }

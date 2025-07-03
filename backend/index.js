@@ -147,6 +147,7 @@ function execSafe(...args) {
 }
 
 const server = http.createServer((req, res) => {
+  console.log('Handling', req.method, req.url);
   handleRequest(req, res)
     .then((data) => {
       if (
