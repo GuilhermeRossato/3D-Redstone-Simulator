@@ -1,0 +1,20 @@
+{
+  "id": "p45142944193",
+  "cookieId": "00559025551010",
+  "lastLogin": 1751522826787,
+  "name": "Player39",
+  "pose": [
+    -5,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  "entity": "0114549ec",
+  "chunk": "b0/-1x0",
+  "health": 20,
+  "maxHealth": 20,
+  "spawned": 1751544114554,
+  "region": "r-1x0x0"
+}

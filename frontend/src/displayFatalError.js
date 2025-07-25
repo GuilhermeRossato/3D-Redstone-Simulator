@@ -96,7 +96,7 @@ export function displayFatalError(error) {
         line => line.replaceAll('<', '&gt;').replaceAll('>', '&lt;')
     ).map(
         line => line.startsWith('    at ') && line.includes('(') && line.includes(':') && line.indexOf(')') > line.indexOf('(') ? (
-            line.split('(')[0] + '(<a href="vscode://file/C:/Users/gui_r/dev/3D-Redstone-Simulator'+(line.substring(line.indexOf('(')+1, line.lastIndexOf(')')))+'">' + (line.substring(line.indexOf('(')+1, line.lastIndexOf(')'))) + '</a>' + line.substring(line.lastIndexOf(')'))
+            line.split('(')[0] + '(<a href="vscode://file/D:/dev'+(line.substring(line.indexOf('(')+1, line.lastIndexOf(')')))+'">' + (line.substring(line.indexOf('(')+1, line.lastIndexOf(')'))) + '</a>' + line.substring(line.lastIndexOf(')'))
         ) : line
     );
 

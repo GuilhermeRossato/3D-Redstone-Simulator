@@ -1,0 +1,36 @@
+.mobile-controls {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 101;
+}
+
+.mobile-controls button {
+  background: url('/3D-Redstone-Simulator/frontend/assets/images/mobile-controls.png') no-repeat;
+  background-size: cover;
+  border: none;
+  outline: none;
+  user-select: none;
+}
+
+.left-buttons {
+  position: absolute;
+  bottom: 7.5vh;
+  left: 4vw;
+  display: flex;
+}
+
+.left-buttons button {
+  width: 30vw;
+  height: 30vw;
+}
+
+
+.right-buttons {
+  position: absolute;
+  bottom: 7.5vh;
+  right: 4vw;
+  display: flex;
+}

@@ -11,8 +11,10 @@ const cookieIdRecord = {};
 
 let playerList = undefined;
 
+export const playerCache = new Map();
+
 export async function getNewPlayerSpawnPose(player) {
-  return [-5, 3, 7, 0, 0, 0].map((v, i) =>
+  return [0, 2, 0, 0, 0, 0].map((v, i) =>
     i < 3 ? Math.floor(i === 1 ? v : (Math.random() - 0.5) * 2 * v) : v
   );
 }

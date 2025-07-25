@@ -1,6 +1,7 @@
 import * as THREE from '../libs/three.module.js';
 import loadTextResource from '../utils/loadTextResource.js';
 import * as TextureHandler from '../modules/TextureHandler.js';
+import { g } from '../utils/g.js';
 
 let aaScale = 1;
 let fixedSize = false;
@@ -69,6 +70,14 @@ export async function load(canvas, gl) {
     scene = new THREE.Scene();
     window["scene"] = scene;
 
+    // Add light to the scene
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // Bright directional light
+    directionalLight.position.set(10, 10, 10); // Position the light
+    scene.add(directionalLight);
+    
     const rendererConfig = {
         canvas,
         antialias: false,
@@ -80,6 +89,9 @@ export async function load(canvas, gl) {
     renderer = new THREE.WebGLRenderer(rendererConfig);
     renderer.setClearColor(0x333333, 1);
     renderer.setSize(canvas.width, canvas.height);
+
+    g("renderer", renderer);
+    g("canvas", canvas);
 
     vertexShader = await loadTextResource("assets/vertex-shader.glsl");
     fragmentShader = await loadTextResource("assets/fragment-shader.glsl");

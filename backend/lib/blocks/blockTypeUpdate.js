@@ -1,11 +1,11 @@
 import {
   reloadCount,
-  loadBlockTypeData,
+  loadBlockTypeKeyData,
   lookup,
   ids,
   keys,
   blockStore,
-} from "./BlockTypeStorage.js";
+} from "./BlockNamingStorage.js";
 
 const saveDelay = 0;
 
@@ -32,7 +32,7 @@ export async function blockTypeUpdate(
       ? id_or_name_or_data.toLowerCase().trim()
       : id_or_name_or_data;
   if (reloadCount === 0) {
-    await loadBlockTypeData();
+    await loadBlockTypeKeyData();
   }
   if (typeof data === "string") {
     if (strict && !lookup["key-data"][data]) {
@@ -132,7 +132,7 @@ export async function blockTypeUpdate(
 let tmr;
 async function blockTypeSave(source) {
   if (reloadCount === 0) {
-    await loadBlockTypeData();
+    await loadBlockTypeKeyData();
   }
   if (saveDelay && source === "update" && !tmr) {
     tmr = setTimeout(blockTypeSave, saveDelay);

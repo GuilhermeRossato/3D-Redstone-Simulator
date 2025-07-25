@@ -10,7 +10,7 @@ const countRecord = {};
 /** @type {Record<string, number>} */
 const confirmRecord = {};
 
-function getStorageObjectFilePath(type, name, id, isArray = false) {
+export function getStorageObjectFilePath(type, name, id, isArray = false) {
   return `${dataFolderPath}/${[type, name, id]
     .filter((p) => (typeof p === "string" && p.length) || typeof p === "number")
     .join("/")}.json${isArray ? "l" : ""}`;

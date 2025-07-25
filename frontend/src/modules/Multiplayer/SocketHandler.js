@@ -43,12 +43,16 @@ async function createSocket() {
       );
     await new Promise((resolve) => setTimeout(() => resolve, 1000));
   }
-  const [selfLoginCode, cookieId] = await Promise.all([
+  lastBeginTime = new Date().getTime();
+  let [selfLoginCode, cookieId] = await Promise.all([
     getSelfLoginCode(),
     getCookieId(),
   ]);
+  if (selfLoginCode.split("|").length > 3) {
+    debug && console.log("[D]", "Self login code is too long, limiting it");
+    selfLoginCode = selfLoginCode.split("|").slice(0, 3).join("|");
+  }
   return await new Promise((resolve, reject) => {
-    lastBeginTime = new Date().getTime();
     const base = getWebsocketEndpoint();
     const url = `${base}/ws/${selfLoginCode}/${cookieId ? cookieId + "/" : ""}`;
     debug && console.log("[D]", "Creating websocket to", url);
@@ -94,7 +98,7 @@ async function createSocket() {
           "Websocket was received by the listener but the communication failed"
         );
         // @ts-ignore
-        console.log("Event", evt?.reason, evt?.cause, evt?.message, evt);
+        console.log("Event", ...([evt?.reason, evt?.cause, evt?.message].filter(Boolean)), evt);
       } else {
         console.log("Websocket error event:", evt);
       }
@@ -132,6 +136,11 @@ async function createSocket() {
       debug && console.log("[D]", message);
       closeReason = new Error(message);
       lastCloseTime = now;
+      if (!resolved&&reject) {
+        debug && console.log("[D]", "Resolving socket close event");
+        resolved = true;
+        reject(closeReason);
+      }
     });
 
     ws.addEventListener("open", () => {
@@ -145,7 +154,7 @@ async function createSocket() {
           );
         try {
           isSocketClosed = true;
-          onSocketClose();
+          onSocketClose&&onSocketClose();
           ws.close();
         } catch (err) {
           // Ignore

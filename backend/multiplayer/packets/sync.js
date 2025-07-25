@@ -1,69 +1,58 @@
 import { ServerChunk } from "../../lib/ServerChunk.js";
+import { ServerRegion } from "../../lib/ServerRegion.js";
 
 const chunk_data_size_limit = 1024 * 256;
 
-export async function sync(payload, context) {
-  const { type, client, replyId } = payload;
+export async function sync(payload, ctx) {
+  const { type, client } = payload;
   if (type !== "sync") {
     throw new Error("Invalid sync packet type");
   }
   if (!client || typeof client !== "number") {
     throw new Error("Missing or invalid client time");
   }
-  if (!replyId) {
+  if (!payload.replyId) {
     throw new Error("Missing replyId");
   }
-  if (!context?.player?.id) {
+  if (!ctx?.player?.id) {
     throw new Error("Missing context player id");
   }
-  if (!context.syncPairs) {
-    context.syncPairs = [];
+  if (!ctx.syncPairs) {
+    ctx.syncPairs = [];
   }
   const server = Date.now();
-  context.syncPairs.push([client, server]);
-  const chunkList = [];
-  let size = 0;
-  if (payload.chunks) {
-    for (
-      let i = 0;
-      i < payload.chunks.length &&
-      chunkList.length < 16 &&
-      size < chunk_data_size_limit;
-      i++
-    ) {
-      const c = ServerChunk.from(payload.chunks[i]);
-      if (
-        !(
-          c?.loaded &&
-          c?.state &&
-          typeof c?.state?.fileSize === "number" &&
-          !isNaN(c.state.fileSize)
-        )
-      ) {
-        await c.load(true);
+  ctx.syncPairs.push([client, server]);
+  const subs = payload.subjects || [];
+  const results = [];
+  for (const id of subs) {
+    if (!id) continue;
+    if (id.startsWith('b')||id.startsWith('c')) {
+      const chunk = ServerChunk.from(id);
+      if (!chunk) {
+        throw new Error(`Invalid chunk identifier: ${id}`);
       }
-      if (
-        c?.state &&
-        typeof c?.state?.fileSize === "number" &&
-        !isNaN(c.state.fileSize)
-      ) {
-        size += c.state.fileSize;
-        chunkList.push(c);
-        continue;
+      if (!chunk.loaded){
+        await chunk.load();
       }
+      results.push({...chunk.state, id: chunk.id});
+      continue;
     }
+    if (id.startsWith('r')) {
+      const region = ServerRegion.from(id);
+      if (!region) {
+        throw new Error(`Invalid region identifier: ${id}`);
+      }
+      if (!region.loaded) {
+        await region.load();
+      }
+      results.push(region.state);
+      continue;
+    }
+    console.warn(`Unknown subject identifier: ${id}`);
   }
-  const chunks = chunkList.map((c) => ({
-    cx: c.cx,
-    cy: c.cy,
-    cz: c.cz,
-    blocks: c.state?.blocks,
-    entities: c.state?.entities,
-    inside: c.state?.inside,
-  }));
   return {
     server,
-    chunks,
-    syncParis: payload?.last ? context.syncPairs : undefined,
+    syncPairs: payload?.last ? ctx.syncPairs : undefined,
+    results,
   };
 }

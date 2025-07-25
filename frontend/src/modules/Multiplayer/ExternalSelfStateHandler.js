@@ -29,18 +29,20 @@ export function updateSelfState() {
   if (sendingPosition) {
     return;
   }
-  if (requestDebounceIndex < 5) {
-    requestDebounceIndex += 1;
+  if (requestDebounceIndex < 10) {
+    requestDebounceIndex++;
     return;
   }
   if (playerActionBuffer.length === 0 && !InputHandler.flags.dirty) {
     return;
   }
+  requestDebounceIndex = 0;
   if (InputHandler.flags.dirty && MultiplayerHandler.flags.connected) {
     // console.log('Sending player position');
     const { x, y, z } = InputHandler.position;
     const { yaw, pitch } = InputHandler.rotation;
     const list = [x, y, z, yaw, pitch];
+    console.log(list);
     playerActionBuffer.push({
       type: "move",
       pose: list,
@@ -48,7 +50,6 @@ export function updateSelfState() {
     InputHandler.flags.dirty = false;
     localStorage.setItem("last-player-pose", list.join(","));
   }
-  requestDebounceIndex = 0;
   sendingPosition = true;
   sendPlayerMadeActions().then(
     () => (sendingPosition = false),

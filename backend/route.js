@@ -8,13 +8,10 @@ import { host, port } from "./lib/init.js";
  */
 
 const LOCAL_HOST = host;
-console.log({LOCAL_HOST});
 const LOCAL_PORT = port;
-console.log({LOCAL_PORT});
-const REMOTE_HOST = process.argv[2] || "127.0.0.1";
-console.log({REMOTE_HOST});
+const REMOTE_HOST = process.argv[2] || "192.168.15.25";
 const REMOTE_PORT = port;
-console.log({REMOTE_PORT});
+console.log({LOCAL_HOST,LOCAL_PORT,REMOTE_HOST,REMOTE_PORT});
 
 const saveRemoteDataFile = '';
 const saveLocalDataFile = '';
@@ -52,7 +49,8 @@ const server = net.createServer(function (socket) {
     if (state === 'connected-to-socket') {
       socket.write(data);
     } else {
-      throw new Error('Cannot send data to original server because state is "' + state + '"');
+      console.warn('Warning: Cannot send data to original server because state is "' + state + '"');
+      serviceSocket.end();
     }
   });
   serviceSocket.on('error', (err) => {

@@ -75,7 +75,6 @@ export function index(packet, ctx, count, pings) {
       }" packet handler: ${
         err.message
       } on "${relative}" from "${process.cwd()}"`;
-      console.error(err);
       throw err;
     }
     try {

@@ -1,0 +1,20 @@
+{
+  "id": "p075855296403",
+  "cookieId": "00559025551010",
+  "lastLogin": 1752201583843,
+  "name": "Player115",
+  "pose": [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  "spawned": 1753422391888,
+  "health": 20,
+  "maxHealth": 20,
+  "despawned": 1753419458055,
+  "region": "r0x0x0",
+  "entity": "eq00oig"
+}

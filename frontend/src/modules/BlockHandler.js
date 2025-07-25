@@ -38,7 +38,7 @@ function getSideName(side) {
  * @returns {string}
  */
 export function getTextureFromBlock(blockData, sideNumber, x = 0, y = 0, z = 0) {
-    if (!blockData.data.texture) {
+    if (!blockData?.data?.texture) {
         return FALLBACK_TEXTURE;
     }
     

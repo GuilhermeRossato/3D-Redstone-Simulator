@@ -13,6 +13,7 @@ export default class WorldBlock {
         this.y = y;
         this.z = z;
         this.id = id;
+        /** @type {any} */
         this.data = BlockData[id];
         this.texture = texture;
     }

@@ -1,0 +1,1 @@
+{"texture": ["jungle_log.png", "jungle_log_top.png"], "hardness": 2.0, "resistance": 5.0, "flammable": true, "flammability": 5, "burns": true, "tool": "axe", "tool_level": 0, "transparent": false, "solid": true, "opaque": true, "collision_box": {"type": "block", "size": [1.0, 1.0, 1.0]}, "light_emission": 0}

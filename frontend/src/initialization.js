@@ -5,6 +5,7 @@ import * as WorldHandler from "./world/WorldHandler.js";
 import * as GameLoopHandler from "./modules/GameLoopHandler.js";
 import * as ForegroundHandler from "./modules/ForegroundHandler.js";
 import * as InputHandler from "./modules/InputHandler.js";
+import * as EntityHandler from "./modules/EntityHandler.js";
 import * as MultiplayerHandler from "./modules/Multiplayer/MultiplayerHandler.js";
 import { sleep } from "./utils/sleep.js";
 
@@ -60,6 +61,7 @@ async function initialization() {
           const { yaw, pitch } = InputHandler.rotation;
           localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
         }
+        EntityHandler.update(frame);
       },
       GraphicsHandler.draw,
       (ms) => {

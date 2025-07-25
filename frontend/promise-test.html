@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Worker Promise Tracking Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ccc; 
+            background: white;
+            border-radius: 5px;
+        }
+        .log { 
+            background: #f8f8f8; 
+            border: 1px solid #ddd;
+            padding: 10px; 
+            height: 200px; 
+            overflow-y: auto; 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        button { 
+            margin: 5px; 
+            padding: 8px 15px; 
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover { background: #005a9e; }
+        .status { font-weight: bold; }
+        .status-good { color: #008800; }
+        .status-warning { color: #ff6600; }
+        .status-error { color: #cc0000; }
+        .promise-list {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Service Worker Promise Tracking Test</h1>
+        
+        <div class="test-section">
+            <h3>📊 Status Dashboard</h3>
+            <div>Service Worker: <span id="swStatus" class="status">Loading...</span></div>
+            <div>Open Promises: <span id="promiseCount" class="status">0</span></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Promise Management</h3>
+            <button onclick="getPromiseStatus()">Get Promise Status</button>
+            <button onclick="forceFinalize()">Force Finalize All Promises</button>
+            <button onclick="clearAllPromises()">Clear All Promises</button>
+        </div>
+
+        <div class="test-section">
+            <h3>⚡ Speed Tests</h3>
+            <button onclick="loadSlowFiles()">Load Slow Files (Trigger Timeout)</button>
+            <button onclick="loadManyFiles()">Load Many Files</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Active Promises</h3>
+            <div id="promiseList" class="promise-list">No active promises</div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Event Log</h3>
+            <div id="log" class="log">Initializing...\n</div>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <script>
+        let swRegistration = null;
+
+        function log(message, level = 'info') {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = level === 'error' ? '❌' : level === 'warn' ? '⚠️' : level === 'success' ? '✅' : 'ℹ️';
+            logEl.innerHTML += `[${timestamp}] ${prefix} ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function registerSW() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+                    log('Service Worker registered successfully', 'success');
+                    refreshStatus();
+                } catch (error) {
+                    log(`Service Worker registration failed: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function sendMessage(type, data = {}) {
+            if (!swRegistration?.active) return null;
+            const messageChannel = new MessageChannel();
+            return new Promise((resolve) => {
+                messageChannel.port1.onmessage = (event) => resolve(event.data);
+                swRegistration.active.postMessage({ type, data }, [messageChannel.port2]);
+            });
+        }
+
+        async function refreshStatus() {
+            const swStatusEl = document.getElementById('swStatus');
+            const promiseCountEl = document.getElementById('promiseCount');
+
+            if (swRegistration?.active) {
+                swStatusEl.textContent = 'Active ✅';
+                swStatusEl.className = 'status status-good';
+
+                const promiseStatus = await sendMessage('GET_PROMISE_STATUS');
+                if (promiseStatus) {
+                    promiseCountEl.textContent = promiseStatus.openPromises;
+                    promiseCountEl.className = `status ${promiseStatus.openPromises > 0 ? 'status-warning' : 'status-good'}`;
+                    updatePromiseList(promiseStatus.promiseList || []);
+                }
+            } else {
+                swStatusEl.textContent = 'Inactive ❌';
+                swStatusEl.className = 'status status-error';
+            }
+        }
+
+        function updatePromiseList(promises) {
+            const listEl = document.getElementById('promiseList');
+            if (promises.length === 0) {
+                listEl.innerHTML = 'No active promises';
+                return;
+            }
+            listEl.innerHTML = promises.map(p => 
+                `<div><strong>${new URL(p.url).pathname}</strong> - Age: ${p.age}ms</div>`
+            ).join('');
+        }
+
+        async function getPromiseStatus() {
+            log('Getting promise status...');
+            const status = await sendMessage('GET_PROMISE_STATUS');
+            if (status) {
+                log(`Promise status: ${status.openPromises} open promises`, 'success');
+            }
+        }
+
+        async function forceFinalize() {
+            log('Force finalizing all promises...');
+            const result = await sendMessage('FORCE_FINALIZE_PROMISES');
+            if (result?.success) {
+                log('All promises finalized successfully', 'success');
+                refreshStatus();
+            }
+        }
+
+        async function clearAllPromises() {
+            log('Clearing all promises...');
+            const result = await sendMessage('CLEAR_ALL_PROMISES');
+            if (result?.success) {
+                log('All promises cleared', 'success');
+                refreshStatus();
+            }
+        }
+
+        async function loadSlowFiles() {
+            log('Loading slow files (will trigger timeouts)...');
+            const files = [
+                '/test-slow.js?delay=8000&file=1',
+                '/test-slow.js?delay=9000&file=2'
+            ];
+
+            files.forEach(file => {
+                fetch(file).then(() => {
+                    log(`Slow file completed: ${file}`, 'success');
+                }).catch(error => {
+                    log(`Slow file failed: ${file}`, 'error');
+                });
+            });
+            
+            setTimeout(refreshStatus, 1000);
+        }
+
+        async function loadManyFiles() {
+            log('Loading many files simultaneously...');
+            for (let i = 1; i <= 5; i++) {
+                const file = `/test-slow.js?delay=${5000 + (i * 1000)}&file=batch${i}`;
+                fetch(file).catch(() => {});
+            }
+            setTimeout(refreshStatus, 1000);
+        }
+
+        setInterval(refreshStatus, 2000);
+
+        window.addEventListener('load', () => {
+            log('Page loaded, registering service worker...');
+            registerSW();
+        });
+    </script>
+</body>
+</html>

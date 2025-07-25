@@ -43,12 +43,12 @@ export async function getChunkOffsets(maxCount = 64, maxDistance = 16) {
       file.offsets = module.offsets;
     }
     for (let i = 0; i < file.offsets.length; i++) {
-      if (file.distances[i] > maxDistance) {
+      if (maxDistance && file.distances[i] > maxDistance) {
         localCache.set(cacheKey, result);
         return result;
       }
       for (let j = 0; j < file.offsets[i].length; j++) {
-        if (result.length > maxCount) {
+        if (maxCount && result.length >= maxCount) {
           localCache.set(cacheKey, result);
           return result;
         }

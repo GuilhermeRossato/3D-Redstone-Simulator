@@ -16,6 +16,7 @@ function generateAcceptKey(key) {
 }
 
 
+const pingFrame = Buffer.from([0b10001001, 0x00]); // FIN + Ping opcode, no payload
 
 /**
  * @param {http.IncomingMessage} req
@@ -25,11 +26,14 @@ function generateAcceptKey(key) {
  * @returns {Promise<void>}
  */
 export async function handleRequestUpgrade(req, socket, head, error) {
+  let watchDog=null;
   debug && console.log("Upgrade request received");
   debug && console.log("Upgrade request headers:", req.headers);
   debug && console.log("Upgrade request head:", head);
 
-  const context = {};
+  const context = {
+    send: async ()=>{console.log("Context send function called, but not implemented")},
+  };
   let processing = 0;
   let packets = 0;
   let pings = 0;
@@ -42,7 +46,6 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   socket.on("close", (evt) => {
     debug && console.log("Socket close event");
     if (playerId) {
-      
       playerId = '';
     }
     if (hasProcessedClose === false) {
@@ -65,7 +68,6 @@ export async function handleRequestUpgrade(req, socket, head, error) {
 
   socket.on("error", (err) => {
     if (playerId) {
-      
       playerId = '';
     }
     if (hasProcessedClose === false) {
@@ -83,7 +85,6 @@ export async function handleRequestUpgrade(req, socket, head, error) {
 
   socket.on("end", () => {
     if (playerId) {
-      
       playerId = '';
     }
     if (hasProcessedClose === false) {
@@ -97,51 +98,77 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   });
 
   if (req.headers["upgrade"] !== "websocket") {
-    debug && console.log("Socket invalid header");
-    return error("WebSocket connection failed: Upgrade header not present");
+    debug && console.log("Socket invalid header:", req.headers["upgrade"]);
+    return error("WebSocket connection failed: Upgrade header invalid");
   }
 
   const accept = req.headers["sec-websocket-key"];
   if (!accept) {
-    debug && console.log("Socket invalid accept");
+    debug && console.log("Socket missing accept header:", accept);
     return error(
       "WebSocket connection failed: Sec-WebSocket-Key header missing"
     );
   }
+  const watchDogHandler = () => {
+    debug && console.log("WebSocket watchDog timeout, checking socket health");
+    if (watchDog) {
+      clearTimeout(watchDog);
+      watchDog = null;
+    }
+    if (!socket || socket.destroyed) {
+    debug && console.log("Socket is destroyed, closing connection");
+    socket.end();
+    return;
+    }
+    // Send a ping frame to check socket health
+    debug && console.log("Sending WebSocket ping to check health");
+    const pingFrame = Buffer.from([0b10001001, 0x00]); // FIN + Ping opcode, no payload
+    socket.write(pingFrame);
+
+    watchDog = setTimeout(watchDogHandler, 8000);
+    return;
+  };
+  let lastSendBuffer;
   const sendSocket = (output) => {
+    if (watchDog) {
+      clearTimeout(watchDog);
+      watchDog = null;
+    }
+    socket.write(pingFrame);
+    watchDog = setTimeout(watchDogHandler, 8000);
+    debug && console.log("Sending WebSocket data:", output);
     try {
       if (typeof output === "function") {
-        debug && console.log("Socket invalid output");
-        throw new Error(`Invalid output type: ${typeof output}`);
+      debug && console.log("Socket invalid output");
+      throw new Error(`Invalid output type: ${typeof output}`);
       }
       debug && console.log("Sending to client:", output);
-
       if (output && typeof output === "object") {
-        const parts = [];
-        const list = Object.keys(output);
-        for (let i = 0; i < list.length; i++) {
-          const key = list[i];
-          if (output[key] === undefined) {
-            continue;
-          }
-          try {
-            parts.push(`${JSON.stringify(key)}:${JSON.stringify(output[key])}`);
-          } catch (err) {
-            console.log(
-              "Failed to stringify event key:",
-              key,
-              "of event:",
-              output
-            );
-            console.log("Error:", err);
-            parts.push(
-              `${JSON.stringify(key)}:${JSON.stringify({
-                error: err.message,
-                stack: err.stack,
-              })}`
-            );
-          }
+      const parts = [];
+      const list = Object.keys(output);
+      for (let i = 0; i < list.length; i++) {
+        const key = list[i];
+        if (output[key] === undefined) {
+        continue;
         }
+        try {
+        parts.push(`${JSON.stringify(key)}:${JSON.stringify(output[key])}`);
+        } catch (err) {
+        console.log(
+          "Failed to stringify event key:",
+          key,
+          "of event:",
+          output
+        );
+        console.log("Error:", err);
+        parts.push(
+          `${JSON.stringify(key)}:${JSON.stringify({
+          error: err.message,
+          stack: err.stack,
+          })}`
+        );
+        }
+      }
         output = `{${parts.join(",")}}`;
       }
       const responseBuffer = Buffer.from(
@@ -152,33 +179,40 @@ export async function handleRequestUpgrade(req, socket, head, error) {
           : String(output),
         "utf8"
       );
-
       let payloadLength = responseBuffer.byteLength;
-      let payloadLengthBytes;
-
-      if (payloadLength <= 125) {
-        debug && console.log("Payload length is small");
-        payloadLengthBytes = Buffer.from([payloadLength]);
-      } else if (payloadLength <= 65535) {
-        debug && console.log("Payload length is medium");
-        payloadLengthBytes = Buffer.alloc(3);
-        payloadLengthBytes.writeUInt16BE(payloadLength, 1);
-        payloadLengthBytes[0] = 126;
-      } else {
-        debug && console.log("Payload length is large");
-        payloadLengthBytes = Buffer.alloc(9);
-        payloadLengthBytes.writeBigUInt64BE(BigInt(payloadLength), 1);
-        payloadLengthBytes[0] = 127;
+      if (lastSendBuffer && lastSendBuffer.byteLength === payloadLength) {
+        let i;
+        for (i = 0; i < lastSendBuffer.byteLength; i++) {
+          if (lastSendBuffer[i] !== responseBuffer[i]) {
+            break;
+          }
+        }
+        if (i === lastSendBuffer.byteLength) {
+          throw new Error(`WebSocket data not changed, not sending: ${output}`);
+        }
       }
-
-      const responseHeader = Buffer.concat([
-        Buffer.from([0b10000001]),
-        payloadLengthBytes,
-      ]);
+      lastSendBuffer = responseBuffer;
+      let header;
+      if (payloadLength <= 125) {
+        header = Buffer.from([0b10000001, payloadLength]);
+      } else if (payloadLength <= 65535) {
+        header = Buffer.alloc(4);
+        header[0] = 0b10000001;
+        header[1] = 126;
+        header.writeUInt16BE(payloadLength, 2);
+      } else {
+        header = Buffer.alloc(10);
+        header[0] = 0b10000001;
+        header[1] = 127;
+        header.writeBigUInt64BE(BigInt(payloadLength), 2);
+      }
 
       debug && console.log("WebSocket response size:", payloadLength);
 
-      const buffer = Buffer.concat([responseHeader, responseBuffer]);
+      const buffer = Buffer.concat([header, responseBuffer]);
+
+      debug && payloadLength<64&&console.log("WebSocket response:", buffer);
+
       // console.log("Sending buffer:", buffer);
       socket.write(buffer);
     } catch (err) {
@@ -187,6 +221,9 @@ export async function handleRequestUpgrade(req, socket, head, error) {
       return error("WebSocket data send failed");
     }
   };
+
+  // @ts-ignore
+  context.send = sendSocket;
 
   const pending = {
     size: 0,
@@ -197,6 +234,10 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   }
 
   socket.on("data", (buffer) => {
+    if (watchDog) {
+      clearTimeout(watchDog);
+      watchDog = null;
+    }
     let input;
     let output;
     let message;
@@ -244,7 +285,6 @@ export async function handleRequestUpgrade(req, socket, head, error) {
 
       if (opcode === 0x8) {
         if (playerId) {
-          
           playerId = '';
         }
         // Close frame received
@@ -253,6 +293,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
         input = { type: "close" };
       } else {
         packets++;
+        
         // Basic WebSocket frame parsing (text only)
         const fin = (buffer[0] & 0b10000000) >> 7;
         let payloadLength = buffer[1] & 0b01111111;
@@ -298,7 +339,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
       }
     }
     if (!input&&message) {
-        const jsonType = { "{}": "object", "[]": "array", '""': "object" }[
+        const jsonType = { "{}": "object", "[]": "array", '""': "string" }[
           message[0] + message[message.length - 1]
         ];
         if (jsonType) {
@@ -351,6 +392,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
           output = index(input, context, packets, pings);
           if (input.type === 'setup' && context?.player?.id) {
             playerId = context.player.id;
+            // @ts-ignore
             context.send = sendSocket;
           }
         } catch (err) {
@@ -369,8 +411,9 @@ export async function handleRequestUpgrade(req, socket, head, error) {
       if (output && output instanceof Promise) {
         output
           .then((result) => {
-          if (input.type === 'setup' && context?.player?.id) {
+          if (input.type === 'setup' && context?.player?.id && playerId !== context?.player?.id) {
             playerId = context.player.id;
+            // @ts-ignore
             context.send = sendSocket;
           }
             processing--;

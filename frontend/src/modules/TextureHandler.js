@@ -1,4 +1,4 @@
-import BlockData from '../data/BlockData.js';
+import BlockData, { legacyBlockData } from '../data/BlockData.js';
 import { getTextureListFromBlock, getTextureFromBlock, FALLBACK_TEXTURE } from './BlockHandler.js';
 import * as THREE from '../libs/three.module.js';
 
@@ -105,7 +105,7 @@ export async function load() {
 
     let textureFilenameList = [FALLBACK_TEXTURE];
     
-    for (let block of BlockData) {
+    for (let block of legacyBlockData) {
         if (block.name === 'Air') {
             continue;
         }

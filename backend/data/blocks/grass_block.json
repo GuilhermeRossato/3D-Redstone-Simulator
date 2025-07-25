@@ -1,0 +1,1 @@
+{"texture": ["grass_path_top.png", "grass_path_side.png", "dirt.png"], "hardness": 0.6, "name": "Grass Block", "id": 2, "type": "block", "is_solid": true, "is_transparent": false, "is_opaque": true, "is_flammable": false, "is_mineable_with_shovel": true, "is_mineable_with_pickaxe": false, "is_mineable_with_axe": false, "is_mineable_with_hoe": false}

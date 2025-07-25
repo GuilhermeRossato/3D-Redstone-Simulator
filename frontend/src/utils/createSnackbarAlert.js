@@ -1,8 +1,13 @@
+import { g } from "./g.js";
+
+g("createSnackbarAlert", createSnackbarAlert);
+
 /**
  *
  * @param {string | string[]} message The message to show
  * @param {'info' | 'error' | 'success' | 'warn' | 'warning'} variant  The style of the snackbar
  * @param {number} [visibleTime] Time in seconds to show the snackbar
+ * @returns {Promise<(message?: string | string[]) => void>} A function to close or update the snackbar alert with a new message
  */
 export async function createSnackbarAlert(message, variant, visibleTime = 6) {
   /** @type {HTMLElement} */
@@ -11,6 +16,7 @@ export async function createSnackbarAlert(message, variant, visibleTime = 6) {
     wrapper = document.createElement("div");
     wrapper.classList.add("standalone-snackbar-alert-wrapper");
     wrapper.style.position = "fixed";
+    wrapper.style.zIndex = "1001";
     wrapper.style.bottom = "24px";
     wrapper.style.left = "24px";
     wrapper.style.minWidth = "288px";
@@ -162,7 +168,24 @@ export async function createSnackbarAlert(message, variant, visibleTime = 6) {
 
   wrapper.appendChild(element);
 
-  setTimeout(() => {
+  let tmr = setTimeout(() => {
     performSnackClose();
   }, visibleTime * 1000);
+  /**
+   * Closes or updates the snackbar alert with a new message.
+   */
+  return (message) => {
+    if (!message) {
+      performSnackClose();
+      return;
+    }
+    if (message instanceof Array) {
+      message = message.join(" ").trim();
+    }
+    text.textContent = message.trim();
+    clearTimeout(tmr);
+    tmr = setTimeout(() => {
+        performSnackClose();
+      }, visibleTime * 1000);
+  }
 }

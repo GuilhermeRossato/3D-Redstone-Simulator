@@ -49,7 +49,7 @@ function getFaceRightDirection(rotationId) {
  */
 export default function getFaceBounds(face, cx = 0, cy = 0, cz = 0) {
 	// @ts-ignore
-	if (face.ref && face.ref.data.isTorch) {
+	if (face.ref && face.ref.data?.isTorch) {
 		throw new Error('Unimplemented');
 	}
 	const up = getFaceUpDirection(face.rotationId);

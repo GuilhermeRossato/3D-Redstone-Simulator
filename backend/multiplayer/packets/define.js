@@ -1,13 +1,13 @@
-import { loadBlockTypeMetadata } from "../../lib/blocks/BlockTypeMetadata.js";
-import { getBlockTypeDataFrom } from "../../lib/blocks/BlockTypeStorage.js";
+import { loadBlockMetadata } from "../../lib/blocks/BlockMetadataStorage.js";
+import { getBlockTypeKeyDataFrom } from "../../lib/blocks/BlockNamingStorage.js";
 
 export default async function define(payload, ctx) {
   const subject = payload.id || payload.key;
   if (!subject) {
     throw new Error("Missing subject id or key in \"define\" packet");
   }
-  const info = await getBlockTypeDataFrom(subject);
-  const metadata = await loadBlockTypeMetadata(subject);
+  const info = await getBlockTypeKeyDataFrom(subject);
+  const metadata = await loadBlockMetadata(subject);
   return {
     info,
     metadata,

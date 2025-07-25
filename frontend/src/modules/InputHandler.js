@@ -6,6 +6,8 @@ import SIDE_DISPLACEMENT from "../data/SideDisplacement.js";
 import { sendPlayerActionToServerEventually } from "./Multiplayer/ExternalSelfStateHandler.js";
 import { reliveWorld } from "./DebugHandler.js";
 import * as MultiplayerHandler from "./Multiplayer/MultiplayerHandler.js";
+import * as ForegroundHandler from "./ForegroundHandler.js";
+
 
 let camera;
 let isPointerlocked = false;
@@ -19,7 +21,108 @@ let selectedBlockType = 2;
 
 export const flags = {
   dirty: false,
+  isMobileControlsActive: false,
 };
+
+let activeTouches = {};
+
+function handleTouchEvent(event) {
+  if (event.type === 'touchstart') {
+    for (const touch of event.changedTouches) {
+      activeTouches[touch.identifier] = { startX: touch.clientX, startY: touch.clientY, lastX: touch.clientX, lastY: touch.clientY };
+    }
+  } else if (event.type === 'touchmove') {
+    for (const touch of event.changedTouches) {
+      const activeTouch = activeTouches[touch.identifier];
+      if (activeTouch) {
+        const deltaX = touch.clientX - activeTouch.lastX;
+        const deltaY = touch.clientY - activeTouch.lastY;
+
+        activeTouch.lastX = touch.clientX;
+        activeTouch.lastY = touch.clientY;
+        console.log(`Touch ${touch.identifier} moved: deltaX=${deltaX}, deltaY=${deltaY}`);
+        if (touch.startX > window.innerWidth / 2) {
+          
+        }
+      }
+    }
+  } else if (event.type === 'touchend' || event.type === 'touchcancel') {
+    for (const touch of event.changedTouches) {
+      delete activeTouches[touch.identifier];
+    }
+  }
+  console.log(event.type);
+}
+
+function handleDirectionalClick(event) {
+  if (event.type === "click" || event.type === "touchstart" || event.type === "touchmove") {
+    const button = document.querySelector(".mobile-controls button");
+    if (!button) {
+      console.warn("Button not found");
+      return;
+    }
+
+    const rect = button.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    let clientX, clientY;
+    if (event.type === "click") {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    } else if (event.type === "touchstart" || event.type === "touchmove") {
+      const touch = event.changedTouches[0];
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    }
+
+    const deltaX = clientX - centerX;
+    const deltaY = clientY - centerY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const angle = Math.atan2(deltaY, deltaX);
+
+    console.log(`Distance: ${distance}, Angle: ${angle}`);
+  }
+}
+
+
+function startMobileControls() {
+  if (flags.isMobileControlsActive) {
+    console.warn("Mobile controls are already active, skipping");
+    return;
+  }
+  console.log('Activating mobile controls...');
+  flags.isMobileControlsActive = true;
+  localStorage.setItem("mobile-control-open", String(Date.now()));
+  const mobileControls = document.querySelector(".mobile-controls");
+  if (mobileControls instanceof HTMLElement) {
+    mobileControls.style.display = 'flex';
+  }
+  const btn = document.querySelector(".mobile-controls button");
+  btn.addEventListener("click", handleDirectionalClick);
+  btn.addEventListener("touchstart", handleDirectionalClick);
+  btn.addEventListener("touchmove", handleDirectionalClick);
+  window.addEventListener("touchend", handleDirectionalClick);
+  window.addEventListener("touchcancel", handleDirectionalClick);
+}
+
+function stopMobileControls() {
+  if (!flags.isMobileControlsActive) {
+    console.warn("Mobile controls are already inactive, skipping");
+    return;
+  }
+  localStorage.removeItem("mobile-control-open");
+  flags.isMobileControlsActive = false;
+  const mobileControls = document.querySelector(".mobile-controls");
+  if (mobileControls instanceof HTMLElement) {
+    mobileControls.style.display = 'none';
+  }
+  const btn = document.querySelector(".mobile-controls button");
+  btn.removeEventListener("click", handleDirectionalClick);
+  btn.removeEventListener("touchstart", handleDirectionalClick);
+  window.removeEventListener("touchend", handleDirectionalClick);
+  window.removeEventListener("touchcancel", handleDirectionalClick);
+}
 
 export const position = yawObject.position;
 
@@ -255,17 +358,63 @@ let left = 0;
 let backward = 0;
 let up = 0;
 let down = 0;
-
+let menuOpenTime = 0;
 export async function load(canvas, scene, receivedCamera) {
   camera = receivedCamera;
+  
+  const stored = localStorage.getItem("mobile-control-open");
+  if (stored && ((stored === '1')|| ((Date.now() - parseInt(stored || String(Date.now()))) < 5 * 60 * 1000))) {
+    startMobileControls();
+  } else {
+    console.log('Not initialized in mobile mode');
+  }
 
-  canvas.addEventListener("click", (_event) => {
+  let mouseMoveCount = 0;
+  let touchMoveCount = 0;
+
+  window.addEventListener("touchstart", (event) => {
+    if (flags.isMobileControlsActive) {
+      return handleTouchEvent(event);
+    }
+    if (!flags.isMobileControlsActive && touchMoveCount < 200) {
+      touchMoveCount += 5;
+    }
+  });
+
+  window.addEventListener("mousemove", (event) => {
+    if (flags.isMobileControlsActive) {
+      return handleTouchEvent(event);
+    }
+    if (!flags.isMobileControlsActive && mouseMoveCount < 200) {
+      mouseMoveCount += 1;
+    }
+  });
+
+  window.addEventListener("touchmove", (event) => {
+    if (flags.isMobileControlsActive) {
+      return handleTouchEvent(event);
+    }
+    if (!flags.isMobileControlsActive && touchMoveCount < 200) {
+      touchMoveCount += 3;
+    }
+  });
+  //setInterval(() => { console.log(`Mouse move count: ${mouseMoveCount}`); console.log(`Touch move count: ${touchMoveCount}`); }, 2000);
+
+  canvas.addEventListener("click", (event) => {
     if (isFirstClick && !isFullScreen) {
       isFirstClick = false;
       document.body
         .requestFullscreen()
         .then(requestPointerlock, fullScreenRequestUnsuccessful);
     } else if (!isPointerlocked) {
+      if (ForegroundHandler.flags.chatOpened) {
+        if (Math.abs(Date.now() - menuOpenTime) < 750) {
+          return;
+        }
+        ForegroundHandler.closeChat();
+      } else if (event.clientY > window.innerHeight * 0.8) {
+        return;
+      }
       requestPointerlock();
     }
   });
@@ -370,6 +519,12 @@ export async function load(canvas, scene, receivedCamera) {
     isPointerlocked =
       document.pointerLockElement !== null &&
       document.pointerLockElement !== undefined;
+    if (!isPointerlocked && !ForegroundHandler.flags.chatOpened) {
+      menuOpenTime = Date.now();
+      ForegroundHandler.openChat();
+    } else if (isPointerlocked && flags.isMobileControlsActive) {
+      stopMobileControls();
+    }
   });
 
   document.addEventListener("pointerlockerror", function (event) {
@@ -379,11 +534,32 @@ export async function load(canvas, scene, receivedCamera) {
       // do nothing on error
     }
     isPointerlocked = false;
-    console.error("Pointer lock error event:", event);
-    // requestPointerlock(); // Do not call again because it will just fail again in loop
+    if (!flags.mobileControlsActive) {
+      console.error("Pointer lock error event:", event);
+      // requestPointerlock(); // Do not call again because it will just fail again in loop
+      if (mouseMoveCount < touchMoveCount) {
+        console.log('Initializing mobile controls');
+        startMobileControls();
+      }
+    }
   });
 
   window.addEventListener("keydown", (event) => {
+    if (flags.isMobileControlsActive && event.code === "Escape") {
+      stopMobileControls();
+      return;
+    }
+    if (ForegroundHandler.flags.chatOpened) {
+      // console.log("Chat opened, handling keydown event:", event);
+      if (event.code === "Escape" || (event.code === "ArrowLeft" && event.altKey)) {
+        ForegroundHandler.closeChat();
+        requestPointerlock();
+      }
+      if (event.code === "Enter" || event.code === "Return" || event.key === "Enter" || event.key === "Return") {
+        ForegroundHandler.sendChatMessage();
+      }
+      return;
+    }
     if (event.code === "KeyW") {
       forward = 1;
     } else if (event.code === "KeyA") {
@@ -412,6 +588,17 @@ export async function load(canvas, scene, receivedCamera) {
       selectedBlockType = 3;
     } else if (event.code === "Digit4" || event.code === "Numpad4") {
       selectedBlockType = 4;
+    } else if (event.code === "KeyT" || event.code === "KeyI" || (event.code === "KeyC" && event.ctrlKey)) {
+      if (isPointerlocked) {
+        try {
+          document.exitPointerLock();
+          isPointerlocked = false;
+        } catch (err) {
+          console.error("Error exiting pointer lock:", err);
+        }
+      }
+      menuOpenTime = Date.now();
+      ForegroundHandler.openChat();
     }
   });
 
@@ -561,7 +748,7 @@ export function update(frame) {
       selectionBox.visible = false;
       frame = 0; // This makes the selection box be updated
       sendPlayerActionToServerEventually({
-        type: "delete",
+        type: "punch",
         x: nextUpdateAction.x,
         y: nextUpdateAction.y,
         z: nextUpdateAction.z,

@@ -5,10 +5,19 @@ import { appendStorageArray, clearStorageArray, clearStorageObject, loadStorageA
  * @template T
  * @param {string} id
  * @param {T | undefined | null} fallback
- * @returns {Promise<T>}
+ * @returns {Promise<T&{id: string}>}
  */
 export async function loadServerChunkState(id = "", fallback = undefined) {
-  return await loadStorageObject("chunks", id, null, fallback);
+  /** @type {any} */
+  const record = await loadStorageObject("chunks", id, null, fallback);
+  // @ts-ignore
+  record.id = id;
+  if (record.entities||record.inside) {
+    delete record.entities;
+    delete record.inside;
+    await writeServerChunkState(id, record);
+  }
+  return record;
 }
 
 /**
