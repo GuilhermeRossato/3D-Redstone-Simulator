@@ -1,3 +1,7 @@
+# Application specific
+backend/data/
+
+backend/pid.txt
 
 # Logs
 logs
@@ -40,10 +44,4 @@ project.code-workspace
 
 .vscode/
 
-tools/ao-extractor/images/
-
 .idea/
-
-stop.bat
-
-backend/pid.txt
