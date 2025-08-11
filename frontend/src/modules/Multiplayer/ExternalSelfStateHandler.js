@@ -1,9 +1,15 @@
 import * as InputHandler from "../InputHandler.js";
 import * as MultiplayerHandler from "./MultiplayerHandler.js";
+import { getPlayerEntityId } from "./MultiplayerHandler.js";
 
-let sendingPosition = false;
+let sendCount = 0;
+let sendingPackets = false;
 let playerActionBuffer = [];
 export let error = null;
+export let movement = [];
+
+// Variable to store the last sent movement JSON string
+let previousMovementText = "";
 
 export async function sendPlayerActionToServerEventually(action) {
   if (MultiplayerHandler.active) {
@@ -12,25 +18,53 @@ export async function sendPlayerActionToServerEventually(action) {
 }
 
 async function sendPlayerMadeActions() {
-  const promises = [];
-  while (playerActionBuffer.length) {
-    const action = playerActionBuffer.pop();
-    promises.push(MultiplayerHandler.sendClientAction(action));
+  if (playerActionBuffer.length > 1) {
+    console.log("Sending", playerActionBuffer.length, "player actions to server");
   }
-  await Promise.all(promises);
+  const playerEntityId = getPlayerEntityId();
+  if (!playerEntityId) {
+    console.warn("No player entity ID found, cannot send actions");
+    return;
+  }
+  while (playerActionBuffer.length) {
+    const action = playerActionBuffer.shift();
+    if (action.id !== playerEntityId) {
+      action.id = playerEntityId;
+    }
+    await MultiplayerHandler.sendClientAction(action);
+  }
+  if (sendCount===0) {
+    localStorage.setItem("last-entity-id", playerEntityId);
+  }
+  if (movement.length) {
+    const currentMovementText = JSON.stringify(movement);
+    if (currentMovementText !== previousMovementText) {
+      previousMovementText = currentMovementText;
+      await MultiplayerHandler.sendClientAction({
+        type: "move",
+        pose: movement.slice(0, 6),
+        id: playerEntityId,
+      });
+      localStorage.setItem("last-player-pose", movement.join(","));
+      sessionStorage.setItem("last-player-pose", movement.join(","));
+    }
+    movement.length = 0;
+  }
+  sendCount++;
 }
 
 let requestDebounceIndex = 0;
+let requestDebounceLength = 20;
 
-export function updateSelfState() {
+export function updateSelfState(frame) {
   if (error) {
     return;
   }
-  if (sendingPosition) {
+  if (requestDebounceIndex < requestDebounceLength) {
+    requestDebounceIndex++;
     return;
   }
-  if (requestDebounceIndex < 10) {
-    requestDebounceIndex++;
+  if (sendingPackets) {
     return;
   }
   if (playerActionBuffer.length === 0 && !InputHandler.flags.dirty) {
@@ -38,27 +72,27 @@ export function updateSelfState() {
   }
   requestDebounceIndex = 0;
   if (InputHandler.flags.dirty && MultiplayerHandler.flags.connected) {
-    // console.log('Sending player position');
     const { x, y, z } = InputHandler.position;
     const { yaw, pitch } = InputHandler.rotation;
-    const list = [x, y, z, yaw, pitch];
-    console.log(list);
-    playerActionBuffer.push({
-      type: "move",
-      pose: list,
-    });
+    movement = [
+      parseFloat(x.toFixed(5)),
+      parseFloat(y.toFixed(5)),
+      parseFloat(z.toFixed(5)),
+      parseFloat(yaw.toFixed(6)),
+      parseFloat(pitch.toFixed(6)),
+      0
+    ];
     InputHandler.flags.dirty = false;
-    localStorage.setItem("last-player-pose", list.join(","));
   }
-  sendingPosition = true;
+  sendingPackets = true;
   sendPlayerMadeActions().then(
-    () => (sendingPosition = false),
+    () => (sendingPackets = false),
     (err) => {
       console.error(err);
       if (!error) {
         error = err;
       }
-      sendingPosition = false;
+      sendingPackets = false;
     }
   );
 }

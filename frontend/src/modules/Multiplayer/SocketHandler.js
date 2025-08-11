@@ -1,5 +1,5 @@
 import {
-  getSelfLoginCode,
+  getStoredSelfLoginCode,
   getCookieId,
   processServerPacket,
   flags,
@@ -45,12 +45,12 @@ async function createSocket() {
   }
   lastBeginTime = new Date().getTime();
   let [selfLoginCode, cookieId] = await Promise.all([
-    getSelfLoginCode(),
+    getStoredSelfLoginCode(),
     getCookieId(),
   ]);
-  if (selfLoginCode.split("|").length > 3) {
+  if (selfLoginCode.split("|").length > 1) {
     debug && console.log("[D]", "Self login code is too long, limiting it");
-    selfLoginCode = selfLoginCode.split("|").slice(0, 3).join("|");
+    selfLoginCode = selfLoginCode.split("|").slice(0, 1).join("|");
   }
   return await new Promise((resolve, reject) => {
     const base = getWebsocketEndpoint();
