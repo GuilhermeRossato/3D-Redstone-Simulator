@@ -8,22 +8,19 @@ export const BlockDefinitions = {
       ],
       "hardness": 1.5,
       "blast_resistance": 6,
-      "loaded": 1753422969175
+      "loaded": 1754720358096
     },
     "key": "STONE",
     "id": 1
   },
   "2": {
-    "data": {
-      "loaded": 1753422969176
-    },
     "key": "COPPER_ORE",
     "id": 2
   },
   "3": {
     "data": {
       "texture": "water_still.png",
-      "loaded": 1753422969176
+      "loaded": 1754720358098
     },
     "key": "WATER",
     "id": 3
@@ -32,7 +29,7 @@ export const BlockDefinitions = {
     "data": {
       "key": "GRANITE",
       "texture": "granite.png",
-      "loaded": 1753422969177
+      "loaded": 1754720358099
     },
     "key": "GRANITE",
     "id": 4
@@ -56,7 +53,7 @@ export const BlockDefinitions = {
       "is_mineable_with_pickaxe": false,
       "is_mineable_with_axe": false,
       "is_mineable_with_hoe": false,
-      "loaded": 1753422969178
+      "loaded": 1754720358099
     },
     "key": "GRASS_BLOCK",
     "id": 5
@@ -64,7 +61,7 @@ export const BlockDefinitions = {
   "6": {
     "data": {
       "texture": "oak_log.png",
-      "loaded": 1753422969178
+      "loaded": 1754720358100
     },
     "key": "OAK_LOG",
     "id": 6
@@ -72,7 +69,7 @@ export const BlockDefinitions = {
   "7": {
     "data": {
       "texture": "unknown.png",
-      "loaded": 1753422969178
+      "loaded": 1754720358100
     },
     "key": "SHORT_GRASS",
     "id": 7
@@ -80,7 +77,7 @@ export const BlockDefinitions = {
   "8": {
     "data": {
       "texture": "oak_leaves.png",
-      "loaded": 1753422969179
+      "loaded": 1754720358100
     },
     "key": "OAK_LEAVES",
     "id": 8
@@ -89,13 +86,12 @@ export const BlockDefinitions = {
     "data": {
       "key": "BIRCH_LOG",
       "texture": "birch_log.png",
-      "loaded": 1753422969179
+      "loaded": 1754720358100
     },
     "key": "BIRCH_LOG",
     "id": 9
   },
   "10": {
-    "data": null,
     "key": "BIRCH_LEAVES",
     "id": 10
   },
@@ -103,7 +99,7 @@ export const BlockDefinitions = {
     "data": {
       "key": "DIRT",
       "texture": "dirt.png",
-      "loaded": 1753422969179
+      "loaded": 1754720358101
     },
     "key": "DIRT",
     "id": 11
@@ -112,7 +108,7 @@ export const BlockDefinitions = {
     "data": {
       "key": "ACACIA_LEAVES",
       "texture": "acacia_leaves.png",
-      "loaded": 1753422969180
+      "loaded": 1754720358101
     },
     "key": "ACACIA_LEAVES",
     "id": 12
@@ -121,18 +117,16 @@ export const BlockDefinitions = {
     "data": {
       "key": "ANDESITE",
       "texture": "andesite.png",
-      "loaded": 1753422969180
+      "loaded": 1754720358101
     },
     "key": "ANDESITE",
     "id": 13
   },
   "14": {
-    "data": null,
     "key": "GLOW_LICHEN",
     "id": 14
   },
   "15": {
-    "data": null,
     "key": "DIORITE",
     "id": 15
   },
@@ -140,7 +134,7 @@ export const BlockDefinitions = {
     "data": {
       "key": "GRAVEL",
       "texture": "gravel.png",
-      "loaded": 1753422969181
+      "loaded": 1754720358102
     },
     "key": "GRAVEL",
     "id": 16
@@ -149,7 +143,7 @@ export const BlockDefinitions = {
     "data": {
       "key": "JUNGLE_LEAVES",
       "texture": "jungle_leaves.png",
-      "loaded": 1753422969181
+      "loaded": 1754720358102
     },
     "key": "JUNGLE_LEAVES",
     "id": 17
@@ -158,13 +152,12 @@ export const BlockDefinitions = {
     "data": {
       "key": "VINE",
       "texture": "vine.png",
-      "loaded": 1753422969181
+      "loaded": 1754720358102
     },
     "key": "VINE",
     "id": 18
   },
   "19": {
-    "data": null,
     "key": "COAL_ORE",
     "id": 19
   },
@@ -193,7 +186,7 @@ export const BlockDefinitions = {
         ]
       },
       "light_emission": 0,
-      "loaded": 1753422969182
+      "loaded": 1754720358103
     },
     "key": "JUNGLE_LOG",
     "id": 20
@@ -201,7 +194,7 @@ export const BlockDefinitions = {
   "21": {
     "data": {
       "texture": "fern.png",
-      "loaded": 1753422969182
+      "loaded": 1754720358103
     },
     "key": "FERN",
     "id": 21
@@ -209,7 +202,7 @@ export const BlockDefinitions = {
   "22": {
     "data": {
       "texture": "iron_ore.png",
-      "loaded": 1753422969182
+      "loaded": 1754720358104
     },
     "key": "IRON_ORE",
     "id": 22
@@ -217,7 +210,7 @@ export const BlockDefinitions = {
   "23": {
     "data": {
       "texture": "dandelion.png",
-      "loaded": 1753422969183
+      "loaded": 1754720358105
     },
     "key": "DANDELION",
     "id": 23

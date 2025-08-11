@@ -10,7 +10,7 @@ import context from "./context.js";
 
 const record = {};
 
-const logPacketTypes = true;
+const logPacketTypes = false;
 const directMode = false;
 
 /**
@@ -25,7 +25,7 @@ export function index(packet, ctx, count, pings) {
   if (packet.type === "place" || packet.type === "remove") {
     packet.type = "block";
   }
-  logPacketTypes && packet.type !== 'move' && console.log('[Packet]', packet.type, "received");
+  logPacketTypes && packet.type !== "move" && console.log('[Packet]', packet.type, typeof packet.index==='number'? packet.index : '', "received");
   const relative = `${backendPath}/multiplayer/packets/${packet.type}.js`;
   if (typeof record[packet.type]?.handler === "function") {
     return record[packet.type].handler(packet, ctx, count, pings);

@@ -49,17 +49,21 @@ async function initialization() {
     await WorldHandler.load();
 
     setLoadingText("Initializing the Main Loop");
+    let lastSavePos = 0;
     GameLoopHandler.load(
-      async (frame) => {
+      (frame) => {
         InputHandler.update(frame);
         if (MultiplayerHandler.active) {
-          MultiplayerHandler.update();
-        } else if (InputHandler.flags.dirty) {
+          MultiplayerHandler.update(frame);
+        } else if (InputHandler.flags.dirty&&Math.abs(lastSavePos-frame)>60) {
+          lastSavePos = frame;
           console.log('Updating player position (local)');
           InputHandler.flags.dirty = false;
           const { x, y, z } = InputHandler.position;
           const { yaw, pitch } = InputHandler.rotation;
           localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
+          sessionStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
+
         }
         EntityHandler.update(frame);
       },

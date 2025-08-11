@@ -23,21 +23,26 @@ export async function sync(payload, ctx) {
   const server = Date.now();
   ctx.syncPairs.push([client, server]);
   const subs = payload.subjects || [];
+  if (subs.length) {
+    console.log(`Syncing subjects: ${subs.join(', ')}, client time: ${client}, server time: ${server}`);
+  }
   const results = [];
   for (const id of subs) {
     if (!id) continue;
-    if (id.startsWith('b')||id.startsWith('c')) {
+    if (id.startsWith("b") || id.startsWith("c")) {
+      //console.log(`Syncing chunk with id: ${id}`);
       const chunk = ServerChunk.from(id);
       if (!chunk) {
         throw new Error(`Invalid chunk identifier: ${id}`);
       }
-      if (!chunk.loaded){
+      if (!chunk.loaded) {
         await chunk.load();
       }
-      results.push({...chunk.state, id: chunk.id});
+      results.push({ ...chunk.state, id: chunk.id });
       continue;
     }
     if (id.startsWith('r')) {
+      //console.log(`Syncing region with id: ${id}`);
       const region = ServerRegion.from(id);
       if (!region) {
         throw new Error(`Invalid region identifier: ${id}`);

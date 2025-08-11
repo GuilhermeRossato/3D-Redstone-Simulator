@@ -1,7 +1,7 @@
 import { ServerEntityEventHandler } from "../../lib/entities/ServerEntityHandler.js";
 import { createServerEntity, loadServerEntity, removeEntity } from "../../lib/EntityStorage.js";
 import { GameEventEmitter } from "../../lib/GameEventEmitter.js";
-import { loadPlayer, savePlayer } from "../../lib/PlayerStorage.js";
+import { getNewPlayerSpawnPose, loadPlayer, savePlayer } from "../../lib/PlayerStorage.js";
 import { ServerChunk } from "../../lib/ServerChunk.js";
 import { connectedPlayers, ServerRegion } from "../../lib/ServerRegion.js";
 
@@ -11,78 +11,79 @@ export default async function spawn(payload, ctx) {
   }
   if (ctx.player.entity) {
     console.log(
-      "Received spawn entity event but entity already exists:",
-      ctx.player.entity
+      "Received spawn entity event with", payload, "but player entity already exists:", ctx.player.entity, "of player",
+      ctx.player
     );
   }
   if (!ctx.send) {
     throw new Error("Context does not have a send function");
   }
+  if (!ctx.player) {
+    throw new Error("Context does not have a player entry");
+  }
   if (payload.type !== "spawn") {
     throw new Error("Invalid spawn packet type");
   }
-  if (!payload||isNaN(payload.offset)) {
-    throw new Error("Invalid spawn packet offset");
+  const is_payload_with_offset = typeof payload.offset === 'number' && !isNaN(payload.offset);
+  if (is_payload_with_offset) {
+    ctx.offset = payload.offset;
+  } else if (typeof ctx.offset !== 'number' || isNaN(ctx.offset)) {
+    ctx.offset = 0;
   }
-  ctx.offset = payload.offset || 0;
-  ctx.player = await loadPlayer(ctx.player.id);
   const health = ctx.player.health;
   const life = ctx.player.maxHealth;
-  if (!ctx.entity || !ctx.entity.id) {
-    ctx.entity = {
-      id: ctx.entity?.id || ctx.player?.entity || Math.random().toString(36).substring(2, 8),
-      player: ctx.player.id,
-      name: ctx.player.name,
-      spawned: ctx.player.spawned || new Date().getTime(),
-      pose: [...ctx.player.pose],
-      health: typeof health !== "number" || isNaN(health) ? 20 : health,
-      maxHealth: typeof life !== "number" || isNaN(life) ? 20 : life,
-    }
+  let entityId = payload.entityId;
+  if (typeof entityId !== "string" || !entityId || entityId.length < 5 || !entityId.startsWith("e")) {
+    entityId = `e${Math.random().toString(36).substring(2, 10)}`;
   }
-  if (!ctx.entity.id.startsWith('e')) {
-    ctx.entity.id = `e${ctx.entity.id}`; // Ensure entity ID starts with 'e'
+  let pose = (payload.pose instanceof Array && payload.pose.length >= 3 && typeof payload.pose[0] == 'number' && !isNaN(payload.pose[0]) && typeof payload.pose[1] == 'number' && !isNaN(payload.pose[1]) && typeof payload.pose[2] == 'number' && !isNaN(payload.pose[2])) ? payload.pose : [...ctx.player.pose];
+  if (isNaN(pose[0]) || isNaN(pose[1]) || isNaN(pose[2])) {
+    pose = getNewPlayerSpawnPose(ctx.player.name);
   }
-  const region = ServerRegion.fromAbsolute(ctx.entity.pose);
-  ctx.region = region;
-  ctx.chunk = ServerChunk.fromAbsolute(ctx.entity.pose);
-  ctx.entity
-  ctx.player.region = region.id;
-  const name = ctx.player.name || ctx.entity.name;
-  const event = {
+  if (entityId && ctx.player.entities && ctx.player.entities instanceof Array && ctx.player.entities.length > 0 && ctx.player.entities.find(e => e.id === entityId)) {
+    pose = getNewPlayerSpawnPose(ctx.player.name);
+    entityId = `e${Math.random().toString(36).substring(2, 10)}`;
+  }
+  const region = ServerRegion.fromAbsolute(pose);
+  ctx.entity = await region.add({
     type: "spawn",
-    entity: ctx.entity,
+    id: entityId,
+    region: region.id,
     player: ctx.player.id,
-    name,
-    health: ctx.entity.health,
-    maxHealth: ctx.entity.maxHealth,
-    pose: ctx.entity.pose,
-  };
-  if (region.state.players[ctx.player.id]) {
-    console.log("Warning: Player connected on region", region.id, "before spawn event");
+    name: payload.name || ctx.player.name,
+    spawned: new Date().getTime(),
+    pose,
+    health: typeof health !== "number" || isNaN(health) ? 20 : health,
+    maxHealth: typeof life !== "number" || isNaN(life) ? 20 : life,
+  });
+  if (!ctx.entity || !ctx.entity.id) {
+    throw new Error("Failed to create entity for player spawn");
   }
-  const evt = await region.add(event);
-  if (region.state.players[ctx.player.id] !== ctx.entity.id) {
+  if (!region.state.entities[ctx.entity.id]) {
+    console.log("Warning: Entity", ctx.entity.id, "does not exists on region", region.id, "from player", ctx.player.id);
+  }
+  if (!region.state.players[ctx.player.id]) {
     console.log("Warning: Player not connected on region", region.id, "after spawn event");
   }
-
-  ctx.player.spawned = evt.time;
-  ctx.player.entity = ctx.entity.id;
-  await savePlayer(ctx.player);
-  const nearbyPlayers = new Set();
-  await Promise.all(ServerRegion.getSurroundingRegions(ctx.entity.pose, 64, true).map(async (region) => {
-    const players = await region.getPlayerIds();
-    players.forEach((id) => id !== ctx.player.id && connectedPlayers[id] && nearbyPlayers.add(id));
-  }));
-  if (connectedPlayers[ctx.player.id]) {
-    console.log("Warning: Player already connected on spawn", ctx.player.id);
+  ctx.region = region;
+  ctx.chunk = ServerChunk.fromAbsolute(ctx.entity.pose);
+  if (!ctx.player.entities || !(ctx.player.entities instanceof Array)) {
+    ctx.player.entities = [];
   }
-  connectedPlayers[ctx.player.id] = ctx;
-  const playerEntities = Array.from(nearbyPlayers).map(id => connectedPlayers[id]?.entity);
+  ctx.player.entities.push({ id: ctx.entity.id, region: region.id });
+  ctx.player.entity=ctx.entity.id;
+  await savePlayer(ctx.player);
+  const regionEntities = await Promise.all(ServerRegion.getSurroundingRegions(ctx.entity.pose, 64, true).map((region) => region.getEntities()));
+  const entities = regionEntities.flat().filter((e) => e && e.id && e.id !== ctx.entity.id);
+  if (connectedPlayers[ctx.entity.id]) {
+    console.log("Warning: Player entity already connected on spawn", ctx.player.id, ctx.entity.id);
+  }
+  connectedPlayers[ctx.entity.id] = ctx;
   return {
     success: true,
     chunk: ctx.chunk.id,
     player: ctx.player,
     entity: ctx.entity,
-    players: playerEntities,
+    entities,
   };
 }

@@ -79,7 +79,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
         pings
       ).catch((err) => console.log("Failed to process close event:", err));
     }
-    debug && console.log("Socket error event");
+    debug && console.log("Socket error event:", err);
     error(err);
   });
 
@@ -134,7 +134,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
       clearTimeout(watchDog);
       watchDog = null;
     }
-    socket.write(pingFrame);
+    // socket.write(pingFrame);
     watchDog = setTimeout(watchDogHandler, 8000);
     debug && console.log("Sending WebSocket data:", output);
     try {

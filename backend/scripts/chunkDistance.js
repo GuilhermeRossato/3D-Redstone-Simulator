@@ -8,9 +8,9 @@ const localCache = new Map();
 let cache;
 export async function getChunkOffsetCache(forceReset = false) {
   if (!cache || forceReset) {
-    const parent = getProjectFolderPath('backend', 'data', 'cache');
+    const parent = getProjectFolderPath("backend", "data", "cache");
     const files = await fs.promises.readdir(parent);
-    const list = files.filter(f => f.startsWith('chunkOffsets') && f.endsWith('.js')).map(f => ({
+    const list = files.filter(f => f.startsWith("chunkOffsets") && f.endsWith(".js")).map(f => ({
       path: `${parent}/${f}`,
       last: parseInt(f.match(/chunkOffsets(\d+)\.js/)[1], 10),
       distances: null,

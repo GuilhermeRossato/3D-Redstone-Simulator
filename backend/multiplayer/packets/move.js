@@ -1,5 +1,10 @@
 import { connectedPlayers, ServerRegion } from "../../lib/ServerRegion.js";
 
+// helper to check if an entity is present in the record by key
+const hasEntityInRegion = (entities, id) => {
+  return Boolean(entities[id] || entities['e' + id]);
+};
+
 export async function move(payload, ctx) {
   if (!ctx.player) {
     throw new Error("Invalid context player");
@@ -11,14 +16,14 @@ export async function move(payload, ctx) {
     throw new Error("Invalid context entity pose");
   }
   payload.pose.forEach((p, i) => {
-    if (typeof p !== "number" || isNaN(p)||i>6) {
+    if (typeof p !== "number" || isNaN(p) || i > 6) {
       throw new Error(`Invalid pose value at index ${i}: ${p}`);
     }
-    //ctx.entity.pose[i] = p;
   });
   const reg = ServerRegion.fromAbsolute(payload.pose);
   const evts = [];
   if (!ctx.region) {
+    console.log(`Entity ${ctx.entity.id} moving to region ${reg.id} at pose ${payload.pose.join(', ')}`);
     ctx.region = reg;
     evts.push(await ctx.region.add({
       type: "enter",
@@ -26,40 +31,47 @@ export async function move(payload, ctx) {
       player: ctx.player.id,
       pose: payload.pose,
     }));
-    if (ctx.region.state.entities.find(e => e.id === ctx.entity.id||e.id === 'e'+ctx.entity.id||'e'+e.id === ctx.entity.id)) {
+    if (hasEntityInRegion(ctx.region.state.entities, ctx.entity.id)) {
       console.warn(`Warning: Entity ${ctx.entity.id} still present in region ${ctx.region.id} after leave event`);
     }
   } else if (ctx.region.id !== reg.id) {
     console.log(`Region mismatch: current region ${ctx.region.id} will lose entity to ${reg.id}`);
-    if (!ctx.region.state.entities.find(e => e.id === ctx.entity.id||e.id === 'e'+ctx.entity.id||'e'+e.id === ctx.entity.id)) {
+    if (!ctx.region.loaded) {
+      await ctx.region.load();
+    }
+    if (!hasEntityInRegion(ctx.region.state.entities, ctx.entity.id)) {
       console.warn(`Warning: Entity ${ctx.entity.id} not present in region ${ctx.region.id} before leave event`);
     }
     evts.push(await ctx.region.add({
       type: "leave",
-      entity: ctx.entity.id,
+      id: ctx.entity.id,
       player: ctx.player.id,
       pose: payload.pose,
     }));
-    if (ctx.region.state.entities.find(e => e.id === ctx.entity.id||e.id === 'e'+ctx.entity.id||'e'+e.id === ctx.entity.id)) {
+    if (hasEntityInRegion(ctx.region.state.entities, ctx.entity.id)) {
       console.warn(`Warning: Entity ${ctx.entity.id} still present in region ${ctx.region.id} after leave event`);
     }
     ctx.region = reg;
-    if (ctx.region.state.entities.find(e => e.id === ctx.entity.id||e.id === 'e'+ctx.entity.id||'e'+e.id === ctx.entity.id)) {
+    if (!ctx.region.loaded) {
+      await ctx.region.load();
+    }
+    if (hasEntityInRegion(ctx.region.state.entities, ctx.entity.id)) {
       console.warn(`Warning: Entity ${ctx.entity.id} already present in target region ${ctx.region.id} before enter event`);
     }
     evts.push(await ctx.region.add({
       type: "enter",
-      entity: ctx.entity,
+      id: ctx.entity.id,
       player: ctx.player.id,
       pose: payload.pose,
     }));
-    if (!ctx.region.state.entities.find(e => e.id === ctx.entity.id||e.id === 'e'+ctx.entity.id||'e'+e.id === ctx.entity.id)) {
-      console.warn(`Warning: Entity ${ctx.entity.id} already present in target region ${ctx.region.id} before enter event`);
+    if (!hasEntityInRegion(ctx.region.state.entities, ctx.entity.id)) {
+      console.warn(`Warning: Entity ${ctx.entity.id} not present in target region ${ctx.region.id} after enter event`);
     }
   } else {
+    //console.log(`Entity ${ctx.entity.id} moving within the same region ${ctx.region.id} to pose ${payload.pose.join(', ')}`);
     evts.push(await ctx.region.add({
       type: "move",
-      entity: ctx.entity.id,
+      id: ctx.entity.id,
       player: ctx.player.id,
       pose: payload.pose,
     }));

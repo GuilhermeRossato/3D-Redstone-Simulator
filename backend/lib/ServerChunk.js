@@ -9,7 +9,9 @@ import {
   loadServerChunkState,
   writeServerChunkState,
 } from "./ServerChunkStore.js";
+import { connectedPlayers } from './ServerRegion.js';
 
+let unchanged_log = 64;
 const saved_event_limit = 64;
 const unsaved_event_limit = 128;
 const unsaved_time_limit = 500;
@@ -88,7 +90,7 @@ function applyServerChunkEvent(obj, event) {
 
 export class ServerChunk {
   constructor(cx = 0, cy = 0, cz = 0) {
-    this.id = `b${cy | 0}/${cx | 0}x${cz | 0}`;
+    this.id = `c${cy | 0}/${cx | 0}x${cz | 0}`;
     this.cx = cx | 0;
     this.cy = cy | 0;
     this.cz = cz | 0;
@@ -235,6 +237,17 @@ export class ServerChunk {
       console.log('Event did not change chunk state:', event.pose);
       return event;
     }
+    const others = Object.values(connectedPlayers).filter((ctx) => ctx?.entity?.id !== event.id);
+    if (others.length) {
+      // console.log('Broadcasting',event.player,'event to', others.length, 'connected players:', event);
+      for (const ctx of others) {
+        const distance = ctx.region.distance(this);
+        console.log(`Evaluating`, event.type, `broadcast to player ${ctx.player.id} from "${this.id}" in region "${ctx.region.id}" with distance ${distance}`);
+        if (distance <= 2) {
+          ctx.send(event);
+        }
+      }
+    }
     this.unsaved.push(event);
     if (event.persist === false) {
       return event;
@@ -348,9 +361,10 @@ export class ServerChunk {
     }
     for (const event of changes) {
       try {
-        if (event?.type==='move'||event?.type==='spawn') continue;
+        if (event?.type==="move"||event?.type==='spawn') continue;
+        //console.log('Applying event to chunk', this.id, ':', event.x, event.y, event.z, event.id, event.type);
         if (!applyServerChunkEvent(this.state, event)) {
-          console.log('Event did not change chunk state:', event);
+          ((unchanged_log--)>0)&&console.log('Event of type',event.type,'did not change chunk state:', event);
           continue;
         }
       } catch (err) {

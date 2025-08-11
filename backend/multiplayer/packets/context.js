@@ -14,12 +14,18 @@ async function getBlockDefinitions() {
   }
   const blocks = {};
   for (const obj of blockNamingList) {
+    if (!obj) continue;
     if (!obj.data || !obj.data.loaded || Date.now() - obj.data.loaded > 120_000) {
       obj.data = await loadBlockMetadata(obj.id, false);
     }
     blocks[obj.id] = { data: obj.data, key: obj.key, id: obj.id };
+    const keys = obj.data?Object.keys(obj.data).sort():[];
+    if (blocks[obj.id] && keys.length === 0 || ['id,data','data','loaded'].includes(keys.join(','))) {
+      delete blocks[obj.id].data;
+    }
   }
 
+  
   if (!blocks || Object.keys(blocks).length === 0) {
     console.warn("No block definitions found or loaded.");
   } else if (!updatedBlockDefinitions) {
@@ -77,17 +83,19 @@ export default async function context(payload, ctx) {
 
   return {
     player: ctx.player,
-    regions: regions.map((r) => ({
+    regions: regions.map((r, i) => ({
       id: r.id,
       rx: r.rx,
       ry: r.ry,
       rz: r.rz,
+      entities: i === 0 ? r.state.entities : undefined,
     })),
-    chunks: chunks.map((c) => ({
+    chunks: chunks.map((c, i) => ({
       id: c.id,
       cx: c.cx,
       cy: c.cy,
       cz: c.cz,
+      blocks: i === 0 ? c.state.blocks : undefined,
     })),
     blocks,
   };

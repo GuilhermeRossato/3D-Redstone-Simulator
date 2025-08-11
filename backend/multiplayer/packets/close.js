@@ -10,88 +10,60 @@ export default async function close(packet, ctx) {
   if (!ctx?.selfLoginCode) {
     return { type: "close", success: false, reason: "Player not found" };
   }
+  if (ctx.entity && ctx.entity.id) {
+    if (connectedPlayers[ctx.entity.id]) {
+      console.log("Player will be removed from connected record");
+      delete connectedPlayers[ctx.entity.id];
+    } else {
+      console.log("Player not found in connectedPlayers:", ctx.entity.id);
+    }
+  } else {
+    console.warn("No entity found in context, cannot remove from connectedPlayers");
+  }
   const selfLoginCode = ctx.selfLoginCode;
-  if (playerCache[selfLoginCode]) {
-    console.log("Player will be removed from selfLoginCode:", selfLoginCode);
-    delete playerCache[selfLoginCode];
+  const cached = playerCache[selfLoginCode] ? playerCache[selfLoginCode].findIndex((/** @type {any} */ c) => c === ctx) : -1;
+  if (cached !== -1) {
+    console.log("Player will be removed from player cache record at index", cached);
+    playerCache[selfLoginCode].splice(cached, 1);
   } else {
-    console.log("Player not found in selfLoginCode:", selfLoginCode);
+    console.log("Player not found in cache record");
   }
-  if (connectedPlayers[selfLoginCode]) {
-    console.log("Player will be removed from connectedPlayers:", selfLoginCode);
-    delete connectedPlayers[ctx.pid];
-  } else {
-    console.log("Player not found in connectedPlayers:", selfLoginCode);
+  if (!ctx.region&&ctx.entity?.region) {
+    const region = ServerRegion.from(ctx.entity.region);
+    if (region.existsSync()) {
+      ctx.region = region;
+    }
   }
-  const playerId = ctx?.entity?.player || ctx?.player?.id;
-  if (ctx?.entity?.id && playerId && (ctx?.entity?.pose || (typeof ctx?.entity?.health === 'number' && !isNaN(ctx?.entity?.health)) || (typeof ctx?.entity?.maxHealth === 'number' && !isNaN(ctx?.entity?.maxHealth)))) {
-    const player = await loadPlayer(playerId);
-    if (!player) {
-      console.error("Player not found in storage:", playerId);
-      return { type: "close", success: false, reason: "Player not found", id: playerId };
-    }
-    if (player.id !== playerId) {
-      console.error("Player ID mismatch:", player.id, "!==", playerId);
-      return { type: "close", success: false, reason: "Player ID mismatch", id: playerId };
-    }
-    if (playerCache[player.id]) {
-      console.log("Player found in cache, deleting player cache:", player.id);
-      delete playerCache[player.id];
-    }
-    const event = {
+  if (ctx.region&&ctx.entity?.id) {
+    console.log("Sending despawn event to region:", ctx.region.id);
+    await ctx.region.add({
       type: "despawn",
-      entity: ctx?.entity?.id ? ctx.entity.id : player.entity,
-      player: player.id,
-      pose: player.pose,
-    };
-    if (player && typeof ctx?.entity?.health === 'number' && !isNaN(ctx?.entity?.health)) {
-      player.health = ctx.entity.health;
+      id: ctx.entity?.id,
+      player: ctx.player?.id || selfLoginCode,
+      pose: ctx.entity?.pose || ctx.player?.pose || [],
+    });
+  }
+  const player = await loadPlayer(selfLoginCode);
+  if (!player || !player.id) {
+    return { type: "close", success: false, reason: "Player not found in database" };
+  }
+  if (player.entities?.length) {
+    for (const entId of player.entities) {
+      
+      const ent = await loadEntity(entId);
+      if (ent && ent.id) {
+        console.log("Removing entity from storage:", ent.id);
+        await removeEntity(ent.id);
+      }
     }
-    if (player && ctx?.entity?.maxHealth && typeof ctx?.entity?.maxHealth === 'number' && !isNaN(ctx?.entity?.maxHealth)) {
-      player.maxHealth = ctx.entity.maxHealth;
-    }
-    if (player && ctx.entity.pose && !ctx.entity.pose.some(a => typeof (a) !== 'number' || isNaN(a))) {
-      player.pose = ctx.entity.pose.map((a, i) => parseFloat(a.toFixed(i < 3 ? 2 : 5)));
-    }
-    if (player && ctx.entity.name) {
-      player.name = ctx.entity.name;
-    }
+    player.entities = [];
+  }
+  if (player.entity === ctx.entity?.id) {
+    player.entity = "";
+    player.region = "";
+    player.pose = ctx.entity?.pose || [];
     player.despawned = Date.now();
-    console.log('Saving player data before closing:', player);
-    delete player.chunk;
-    delete player.region;
-    delete player.entity;
     await savePlayer(player);
-    let region = ctx.region;
-    if (typeof region === 'string') {
-      try {
-        region = ServerRegion.from(region);
-      } catch (e) {
-        console.error("Error converting region from string:", e);
-        region = null;
-      }
-    }
-    if (!region) {
-      try {
-        region = ServerRegion.fromAbsolute(event.pose);
-      } catch (e) {
-        console.error("Error converting region from pose:", e);
-        region = null;
-      }
-    }
-    if (!region && ctx?.pose) {
-      region = ServerRegion.fromAbsolute(ctx.pose);
-      console.log("No region found, created region from pose:", ctx.pose);
-    }
-    if (region instanceof ServerRegion && region.id && region.state?.id) {
-      const evt = await region.add(event);
-      if (region.state?.players?.[player.id]) {
-        console.log("Warning: Player still present on region", region.id, "after despawn event");
-      }
-      if (region.state?.entities?.find(p => p.id === evt.entity||p.id === 'e'+evt.entity||'e'+p.id === evt.entity)) {
-        console.log("Warning: Entity still present on region", region.id, "after despawn event");
-      }
-    }
   }
   return {
     type: "close",

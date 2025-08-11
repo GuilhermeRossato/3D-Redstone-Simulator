@@ -8,7 +8,13 @@ import { appendStorageArray, clearStorageArray, clearStorageObject, loadStorageA
  * @returns {Promise<T>}
  */
 export async function loadServerRegionState(id = "", fallback = undefined) {
-  return await loadStorageObject("region", id, null, fallback);
+  const obj = await loadStorageObject("region", id, null, fallback);
+  for (const key of ["players", "entities"]) {
+    if (!obj[key]||typeof obj[key] !== "object"||Array.isArray(obj[key])) {
+      obj[key] = {};
+    }
+  }
+  return obj;
 }
 
 /**
