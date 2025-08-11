@@ -46,42 +46,108 @@ function createCubeMaterial(texture, uvMappings) {
   return materials;
 }
 
-function range(i,j,step=1) {
+function range(i, j, step = 1) {
   const arr = [];
-  for (let k = i; k < j; k+=step) {
+  for (let k = i; k < j; k += step) {
     arr.push(k);
   }
   return arr;
 }
 
-const list = range(-32, 32+1, 1).map(i=>0.1666*Math.PI*(i/32)).map(i=>Math.sin(i));
+const list = range(-32, 32 + 1, 1).map(i => 0.1666 * Math.PI * (i / 32)).map(i => Math.sin(i));
 
 export function applyLegMovement(group) {
-  const [leftLegPivot, rightLegPivot] = group.children.slice(group.children.length-2);
+  const [leftLegPivot, rightLegPivot] = group.children.slice(group.children.length - 2);
   if (!leftLegPivot || !rightLegPivot) {
     console.error("Leg pivots not found in group");
     return;
   }
-  const i = rightLegPivot.userData.lastRotation = ((rightLegPivot.userData.lastRotation || 0)+1)%list.length;
+  const i = rightLegPivot.userData.lastRotation = ((rightLegPivot.userData.lastRotation || 0) + 1) % list.length;
   rightLegPivot.rotation.x = list[i];
   leftLegPivot.rotation.x = -list[i];
 }
 
+export function applyPlayerPunch(group, elapsed) {
+  group.children
+}
+
 export function applyPlayerPose(group, player, x, y, z, yaw, pitch) {
-  if (!group?.parent||!group?.position) {
-    console.error("Invalid group or group position");
-    return;
+  try {
+    if (!group?.parent || !group?.position) {
+      console.error("Invalid group or group position");
+      return;
+    }
+    if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(yaw) || isNaN(pitch)) {
+      console.error("Invalid positions:", x, y, z, "or rotations:", yaw, pitch);
+      return;
+    }
+
+    group.position.set(x, y-22/16, z);
+
+    g("group", group);
+
+    if (typeof group.userData.yaw !== 'number') {
+      group.userData.yaw = yaw;
+      group.userData.head = 0;
+      group.rotation.set(0, group.userData.yaw, 0);
+    }
+    let yd = yaw - group.userData.yaw - group.userData.head;
+    if (Math.abs(yd) > 0.0001) {
+      group.userData.head += yd;
+      const d = Math.abs(group.userData.head) - 0.6;
+      if (d > 0) {
+        group.userData.head = 0.6 * Math.sign(group.userData.head);
+        group.userData.yaw += d * Math.sign(yd);
+        const nyd = yaw - group.userData.yaw - group.userData.head;
+        if (Math.abs(nyd) > Math.abs(yd)) {
+          throw new Error(`Invalid math: ${JSON.stringify({ yd, nyd, excess: d, userData: group.userData })}`);
+        }
+      }
+      const child = group.children[0];
+      child.rotation.set(0, group.userData.head - Math.PI * 2, 0);
+      child.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI + pitch / 2);
+      group.rotation.set(0, group.userData.yaw, 0);
+    }
+  } catch (err) {
+    console.error("Error applying player pose:", err);
+    console.error("Group userData:", group.userData);
+    console.error("Group position:", group.position);
+    console.error("Yaw and pitch:", yaw, pitch);
+    console.error("Player object:", player);
+    console.error(err);
   }
-  group.position.set(x, y, z);
-  group.rotation.set(0, yaw, 0);
-  group.children[0].rotateOnAxis(new THREE.Vector3(0, 1, 0), pitch);
+
+
+  if (Math.abs(1) > 0.005) {
+    /*  let head = group.userData.head + yd;
+      console.log("Yaw difference:", yd, "Head before adjustment:", group.children[0].rotation.y);
+      if (head > 0.4) {
+        const excess = head - 0.4;
+        head = 0.4;
+        group.userData.head += excess;
+        console.log(`./PlayerModel.js:${97}`, excess);
+      } else if (head < -0.4) {
+        const excess = head + 0.4;
+        head = -0.4;
+        group.userData.head += excess;
+        console.log(`./PlayerModel.js:${102}`, excess);
+      } else {
+        group.userData.head = yaw;
+        console.log(yaw);
+      }
+      group.userData.yaw = yaw;
+      group.children[0].rotation.set(0, group.userData.head - Math.PI, 0);
+      group.rotation.set(0, group.userData.yaw, 0);
+      console.log("Updated body rotation:", head, "Updated head rotation:", group.userData.head, "d", yaw - group.userData.yaw);
+  */
+  }
 }
 
 g('applyPlayerPose', applyPlayerPose);
 
 export async function createPlayerMesh(name) {
   const prefix = '/3D-Redstone-Simulator/frontend/assets/skins';
-  const isAuthor = name.toLowerCase().startsWith("gui") || name.toLowerCase().startsWith("gravy");
+  const isAuthor = name && (name.toLowerCase().startsWith("gui") || name.toLowerCase().startsWith("gravy"));
   const group = new THREE.Group();
   group.name = name;
   const playerTexture = await createPlayerTexture(`${prefix}/${isAuthor ? 'gravyness.png' : Math.random() > 0.5 ? 'a.png' : 'b.png'}`);
@@ -143,7 +209,7 @@ export async function createPlayerMesh(name) {
   const leftArmMaterials = createCubeMaterial(playerTexture, leftArmUV);
   const leftArm = new THREE.Mesh(leftArmGeometry, leftArmMaterials);
   leftArm.name = "LeftArm";
-  leftArm.position.set(6 / 16, 12 / 16, 0); // Position to right side (from player's perspective)
+  leftArm.position.set((6+0.5) / 16, 12 / 16, 0); // Position to right side (from player's perspective)
 
   // Right Leg (4x12x4 pixels)
   const rightLegGeometry = new THREE.BoxGeometry(4 / 16, 12 / 16, 4 / 16, 1, 1, 1);
@@ -158,7 +224,7 @@ export async function createPlayerMesh(name) {
   const rightLegMaterials = createCubeMaterial(playerTexture, rightLegUV);
   const rightLeg = new THREE.Mesh(rightLegGeometry, rightLegMaterials);
   rightLeg.name = "RightLeg";
-  rightLeg.position.set(0, -6 / 16, 0); // Position relative to pivot point
+  rightLeg.position.set(0, -(6+0.5) / 16, 0); // Position relative to pivot point
 
   // Create pivot group for right leg
   const rightLegPivot = new THREE.Group();
@@ -189,11 +255,27 @@ export async function createPlayerMesh(name) {
 
   group.add(head);
   group.add(body);
-  group.add(rightArm);
-  group.add(leftArm);
+  const rightArmGroup = new THREE.Group();
+  rightArmGroup.name = `${rightArm.name}Group`;
+  rightArmGroup.position.set(-6 / 16, (8+10) / 16, 0);
+  
+  window["myList"].push(rightArmGroup);
+  rightArm.position.set(0, -6 / 16, 0);
+  rightArmGroup.add(rightArm);
+  group.add(rightArmGroup);
+  const leftArmGroup = new THREE.Group();
+  leftArmGroup.name = `${leftArm.name}Group`;
+  leftArmGroup.position.set(6 / 16, (8+10) / 16, 0);
+  leftArm.position.set(0, -6 / 16, 0);
+  leftArmGroup.add(leftArm);
+  group.add(leftArmGroup);
   group.add(rightLegPivot);
   group.add(leftLegPivot);
 
   scene.add(group);
   return group;
 }
+export function initializePunchAnimation(target) {
+  throw new Error('Function not implemented.');
+}
+
