@@ -59,11 +59,17 @@ export async function load(canvas, gl) {
     camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.01, 255);
     window["camera"] = camera;
 
-    const lastPlayerPose = (localStorage.getItem('last-player-pose')||'0,5,3').split(',').map(i => parseFloat(i));
-    if (lastPlayerPose.length === 3) {
+    let lastPlayerPose = (sessionStorage.getItem('last-player-pose')||'0').split(',').map(i => parseFloat(i))
+    if (lastPlayerPose.length < 3||lastPlayerPose.slice(0, 6).some(num=>isNaN(num))) {
+      lastPlayerPose = (localStorage.getItem('last-player-pose')||'0').split(',').map(i => parseFloat(i));
+    }
+     if (lastPlayerPose.length < 3||lastPlayerPose.slice(0, 6).some(num=>isNaN(num))) {
+      lastPlayerPose = [];
+    }
+    if (lastPlayerPose.length >= 3) {
       camera.position.x = isNaN(lastPlayerPose[0]) ? 0 : lastPlayerPose[0];
-      camera.position.y = isNaN(lastPlayerPose[2]) ? 5 : lastPlayerPose[1];
-      camera.position.z = isNaN(lastPlayerPose[1]) ? 3 : lastPlayerPose[2];
+      camera.position.y = isNaN(lastPlayerPose[2]) ? 0 : lastPlayerPose[1];
+      camera.position.z = isNaN(lastPlayerPose[1]) ? 0 : lastPlayerPose[2];
       camera.lookAt(0, 1, 0);
     }
 

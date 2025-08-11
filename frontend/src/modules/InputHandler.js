@@ -418,27 +418,19 @@ export async function load(canvas, scene, receivedCamera) {
       requestPointerlock();
     }
   });
-
-  const lastPlayerPose = (localStorage.getItem("last-player-pose") || "")
-    .split(",")
-    .map((i) => parseFloat(i));
-  if (lastPlayerPose.length === 5 && lastPlayerPose.every((v) => !isNaN(v))) {
+  
+    let lastPlayerPose = (sessionStorage.getItem('last-player-pose')||'0').split(',').map(i => parseFloat(i))
+    if (lastPlayerPose.length < 3||lastPlayerPose.slice(0, 6).some(num=>isNaN(num))) {
+      lastPlayerPose = (localStorage.getItem('last-player-pose')||'0').split(',').map(i => parseFloat(i));
+    }
+     if (lastPlayerPose.length < 3||lastPlayerPose.slice(0, 6).some(num=>isNaN(num))) {
+      lastPlayerPose = [];
+    }
+  if (lastPlayerPose.length >= 3 && lastPlayerPose.slice(0, 5).every((v) => !isNaN(v))) {
+    console.log("Initializing last local player position.");
     setPlayerPosition(lastPlayerPose);
-  } else if (
-    lastPlayerPose.length === 6 &&
-    lastPlayerPose.every((v) => !isNaN(v))
-  ) {
-    pitchObject.rotation.set(
-      lastPlayerPose[3],
-      lastPlayerPose[4],
-      lastPlayerPose[5]
-    );
-    yawObject.position.set(
-      lastPlayerPose[0],
-      lastPlayerPose[1],
-      lastPlayerPose[2]
-    );
   } else {
+    console.log("No valid last player position found, using default");
     pitchObject.rotation.set(
       camera.rotation.x,
       camera.rotation.y,
