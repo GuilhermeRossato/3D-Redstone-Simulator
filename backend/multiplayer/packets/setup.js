@@ -57,20 +57,24 @@ export default async function setup(payload, ctx) {
   let player = await loadPlayer(id);
   if (!player) {
     console.log("Could not find a existing player");
-    if (ctx.cookieId) {
-      player = await loadPlayerByCookieId(ctx.cookieId);
-      if (player && player.id && player.id !== id) {
-        console.log('Warning:',
-          `Mismatching player id: ${JSON.stringify(
-            player.id
-          )} != ${JSON.stringify(id)}`
-        );
-        player = null;
-        ctx.cookieId = null; // Reset cookieId if player id does not match
+    try {
+      if (ctx.cookieId) {
+        player = await loadPlayerByCookieId(ctx.cookieId);
+        if (player && player.id && player.id !== id) {
+          console.log('Warning:',
+            `Mismatching player id: ${JSON.stringify(
+              player.id
+            )} != ${JSON.stringify(id)}`
+          );
+          player = null;
+          ctx.cookieId = null; // Reset cookieId if player id does not match
+        }
+        if (!player) {
+          console.log("Could not find a existing player by cookie id");
+        }
       }
-      if (!player) {
-        console.log("Could not find a existing player by cookie id");
-      }
+    } catch (err) {
+      console.error("Error loading player by cookie id:", err);
     }
   }
   if (!id.startsWith("p")) {

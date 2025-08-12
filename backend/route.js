@@ -43,7 +43,7 @@ const server = net.createServer(function (socket) {
   serviceSocket.on('data', (data) => {
     if (isFirstServiceData) {
       isFirstServiceData = false;
-      console.log(`Received`, data.byteLength, `bytes from remote server at ${REMOTE_HOST}:${REMOTE_PORT}`);
+      // console.log(`Received`, data.byteLength, `bytes from remote server at ${REMOTE_HOST}:${REMOTE_PORT}`);
     }
     saveRemoteDataFile && fs.appendFileSync(saveRemoteDataFile, data);
     if (state === 'connected-to-socket') {
@@ -68,7 +68,7 @@ const server = net.createServer(function (socket) {
   socket.on('data', (data) => {
     if (isFirstSocketData) {
       isFirstSocketData = false;
-      console.log(`Received`, data.byteLength, `bytes on local server at ${LOCAL_HOST}:${LOCAL_PORT}`);
+      console.log(`Received`, data.byteLength, `bytes on ${LOCAL_HOST}:${LOCAL_PORT}:`, JSON.stringify(data.toString('utf8').substring(0, 100).split('\n')[0].trim()));
     }
     saveLocalDataFile && fs.appendFileSync(saveLocalDataFile, data);
     if (state === 'connecting-to-socket') {
