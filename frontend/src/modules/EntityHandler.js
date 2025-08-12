@@ -1,9 +1,7 @@
-import * as THREE from '../libs/three.module.js';
 import * as PlayerModel from '../models/PlayerModel.js';
-import { b, ib, bv, thirdDegreeBezierVector } from '../utils/bezier.js';
+import { b } from '../utils/bezier.js';
 import { g } from '../utils/g.js';
 import { scene } from './GraphicsHandler.js';
-import { setPlayerPosition } from './InputHandler.js';
 
 /**
  * @typedef {{x: number, y: number, z: number; yaw?: number; pitch?: number}} PositionEntry
