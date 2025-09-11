@@ -1,4 +1,4 @@
-import BlockData from "../../data/BlockData.js";
+import BlockData from "../../data/LegacyBlockData.js";
 
 export default class WorldBlock {
     /**

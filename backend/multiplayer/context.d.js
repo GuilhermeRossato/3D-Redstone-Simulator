@@ -12,8 +12,7 @@
  * @property {ServerChunk} [chunk] - Current chunk instance
  * 
  * // Authentication and session data
- * @property {string} [selfLoginCode] - Player's primary login code
- * @property {string} [selfLoginCodes] - Pipe-separated list of all login codes
+ * @property {string} [playerId] - Player's primary login code
  * @property {string} [cookieId] - Browser cookie identifier for persistence
  * @property {string} [pid] - Player ID shorthand reference
  * 

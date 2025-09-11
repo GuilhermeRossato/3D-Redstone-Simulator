@@ -1,5 +1,5 @@
 import { loadBlockMetadata } from "../../lib/blocks/BlockMetadataStorage.js";
-import { getBlockTypeKeyDataFrom } from "../../lib/blocks/BlockNamingStorage.js";
+import { getBlockTypeKeyDataFrom } from "../../lib/blocks/BlockSharedStorage.js";
 
 export default async function define(payload, ctx) {
   const subject = payload.id || payload.key;

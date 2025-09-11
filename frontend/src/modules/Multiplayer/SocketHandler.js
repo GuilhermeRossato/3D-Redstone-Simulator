@@ -1,5 +1,5 @@
 import {
-  getStoredSelfLoginCode,
+  getStoredPlayerId,
   getCookieId,
   processServerPacket,
   flags,
@@ -44,17 +44,17 @@ async function createSocket() {
     await new Promise((resolve) => setTimeout(() => resolve, 1000));
   }
   lastBeginTime = new Date().getTime();
-  let [selfLoginCode, cookieId] = await Promise.all([
-    getStoredSelfLoginCode(),
+  let [playerId, cookieId] = await Promise.all([
+    getStoredPlayerId(),
     getCookieId(),
   ]);
-  if (selfLoginCode.split("|").length > 1) {
+  if (playerId.split("|").length > 1) {
     debug && console.log("[D]", "Self login code is too long, limiting it");
-    selfLoginCode = selfLoginCode.split("|").slice(0, 1).join("|");
+    playerId = playerId.split("|").slice(0, 1).join("|");
   }
   return await new Promise((resolve, reject) => {
     const base = getWebsocketEndpoint();
-    const url = `${base}/ws/${selfLoginCode}/${cookieId ? cookieId + "/" : ""}`;
+    const url = `${base}/ws/${playerId}/${cookieId ? cookieId + "/" : ""}`;
     debug && console.log("[D]", "Creating websocket to", url);
     ws = new WebSocket(url);
     ws.onerror = (err) => {
@@ -255,11 +255,16 @@ export async function initializeSocket() {
       );
     }
   }
+  if (!ws) {
+    console.log('[Warning] Socket is missing after creation:', socket);
+  }
   if (!socket) {
     isStartingSocket = true;
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    console.log("Retrying socket connection once...");
+    await new Promise((resolve) => setTimeout(resolve, 400));
     try {
       socket = await createSocket();
+      console.log("Socket retry succeeded");
       localStorage.setItem("has-socket-connected-on-the-past", "true");
       isStartingSocket = false;
     } catch (err) {
@@ -271,6 +276,7 @@ export async function initializeSocket() {
     throw new Error("Unexpectedly missing socket after creation");
   }
 }
+
 let isFirstLarge = true;
 // let lastSendTime = new Date().getTime();
 let replyId = 0;

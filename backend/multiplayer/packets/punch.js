@@ -1,5 +1,7 @@
 export default async function punch(payload, ctx) {
-  
+  if (!ctx.entity || !ctx.player) {
+    return;
+  }
   await ctx.region.add({
     type: 'punch',
     id: ctx.entity.id,
@@ -10,5 +12,5 @@ export default async function punch(payload, ctx) {
     position: payload.position,
     direction: payload.direction,
     time: Date.now(),
-  })
+  });
 }

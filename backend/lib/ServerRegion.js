@@ -1,5 +1,3 @@
-
-
 import fs from 'fs';
 import { getStorageObjectFilePath } from "./primitives/StorageObjectStore.js";
 import {
@@ -9,9 +7,9 @@ import {
   loadServerRegionState,
   writeServerRegionState,
 } from "./ServerRegionStore.js";
-import { sleep } from '../utils/sleep.js';
+import { createServerStore } from './ServerStore.js';
+import { ServerChunk } from './ServerChunk.js';
 
-const saved_event_limit = 64;
 const unsaved_event_limit = 128;
 const unsaved_time_limit = 3000;
 
@@ -20,10 +18,6 @@ export const connectedPlayers = {};
 export const serverRegionRecord = {};
 
 let sampleState = {
-  id: '',
-  rx: 0,
-  ry: 0,
-  rz: 0,
   fileSize: 0,
   entities: [],
 }
@@ -34,28 +28,67 @@ let sampleState = {
  * @returns {Boolean} Whether the event changed the object
  */
 function applyServerRegionEvent(obj, event) {
-  if (!obj?.id) {
-    throw new Error("Invalid unloaded server region on apply: Missing id");
-  }
   if (!obj.entities) {
     obj.entities = {};
   }
   if (!obj.players) {
     obj.players = {};
   }
-  if (typeof event.id !== 'string' || !event.id.startsWith('e') || event.id.length < 5) {
-    throw new Error("Invalid entity id in event object: " + JSON.stringify(event));
+  let entityId = '';
+  if (typeof event.id === 'string' && event.id.startsWith('e') && event.id.length >= 5) {
+    entityId = event.id;
+  } else if (typeof event.entity === 'string' && event.entity.length >= 5) {
+    entityId = event.entity.startsWith('e') ? event.entity : `e${event.entity}`;
+  } else if (typeof event.entityId === 'string' && event.entityId.startsWith('e') && event.entityId.length >= 5) {
+    entityId = event.entityId;
+  } else if (typeof event.entity === 'object' && event.entity && typeof event.entity.id === 'string' && event.entity.id.length >= 5) {
+    entityId = event.entity.id.startsWith('e') ? event.entity.id : `e${event.entity.id}`;
+  }
+  let playerId = '';
+  if (typeof event.id === 'string' && event.id.startsWith('p') && event.id.length >= 5) {
+    playerId = event.id;
+  } else if (typeof event.player === 'string' && event.player.length >= 5) {
+    playerId = event.player.startsWith('p') ? event.player : `p${event.player}`;
+  } else if (typeof event.playerId === 'string' && event.playerId.startsWith('p')) {
+    playerId = event.playerId;
+  } else if (typeof event.player === 'object' && event.player && typeof event.player.id === 'string' && event.player.id.length >= 5) {
+    playerId = event.player.id.startsWith('p') ? event.player.id : `p${event.player.id}`;
+  }
+  if (event.type === 'leave' || event.type === 'despawn' || event.type === 'exit') {
+    if (obj.entities[entityId]) {
+      if (typeof playerId === 'string' && obj.players[playerId]) {
+        console.log("Applying", event.type, "event: Entity and player", playerId, "removed in", obj.id);
+        delete obj.entities[entityId];
+        delete obj.players[playerId];
+        return true;
+      }
+      console.log("Applying", event.type, "event: Entity removed in", obj.id);
+      delete obj.entities[entityId];
+      console.warn("Warning: Despawn event without player:", event);
+      return true;
+    } else {
+      if (typeof playerId === 'string' && obj.players[playerId]) {
+        console.log("Applying", event.type, "event: Player", playerId, "removed in", obj.id);
+        delete obj.players[playerId];
+        return true;
+      }
+      console.log("Unnecessary", event.type, "event: Entity", entityId, "not found in region", obj.id);
+      return false;
+    }
+  }
+  if (typeof entityId !== 'string' || !entityId.startsWith('e') || entityId.length < 5) {
+    throw new Error(`Invalid entity id in event object: ${JSON.stringify(event)}`);
   }
   const pose = typeof event.pose === 'object' && event.pose && event.pose instanceof Array && event.pose.length >= 3 ? event.pose : event.entity === 'object' && Array.isArray(event.entity.pose) && event.entity.pose.length >= 3 ? event.entity.pose : typeof event.pose === 'object' && Array.isArray(event.pose) && event.pose.length >= 3 ? event.pose : undefined;
   if (!event.player || typeof event.player !== 'string' || !event.player.startsWith('p') || event.player.length < 5) {
     throw new Error("Invalid player in event object");
   }
-  const entity = obj.entities[event.id];
-  if (entity&&event.type==="punch") {
+  const entity = obj.entities[entityId];
+  if (entity && event.type === "punch") {
     return true;
   }
   if (['despawn', 'leave'].includes(event.type)) {
-    if (!event.id) {
+    if (!entityId) {
       throw new Error("Invalid despawn event: Missing or invalid entity id");
     }
     if (!entity) {
@@ -67,7 +100,7 @@ function applyServerRegionEvent(obj, event) {
       console.log("Unnecessary", event.type, "event: Entity not found in region", obj.id);
       return false;
     }
-    console.log("Applying", event.type, "event (removing", event.id, "entity) in region", obj.id);
+    console.log("Applying", event.type, "event (removing", entityId, "entity) in region", obj.id);
     event.exited = obj.id;
     if (obj.players?.[entity?.player]) {
       delete obj.players[event.player];
@@ -75,7 +108,7 @@ function applyServerRegionEvent(obj, event) {
     if (event.player && obj.players && obj.players[event.player]) {
       delete obj.players[event.player];
     }
-    delete obj.entities[event.id];
+    delete obj.entities[entityId];
     return true;
   }
   if ((event.type === "move" || event.type === 'enter' || event.type === 'spawn') && (!pose || !Array.isArray(pose) || pose.length < 3)) {
@@ -85,7 +118,7 @@ function applyServerRegionEvent(obj, event) {
     if (!pose || !Array.isArray(pose) || pose.length < 3) {
       throw new Error("Invalid spawn event: Missing or invalid entity / pose");
     }
-    if (!event.id.startsWith('e')) {
+    if (!entityId.startsWith('e')) {
       throw new Error("Invalid spawn event: Entity ID must start with 'e'");
     }
     if (!entity) {
@@ -93,17 +126,17 @@ function applyServerRegionEvent(obj, event) {
         if (!obj.players) {
           obj.players = {};
         }
-        obj.players[event.player] = event.id;
+        obj.players[event.player] = entityId;
       }
-      console.log('Applying entity adding event of', event.id, 'in region', obj.id);
+      console.log('Applying entity add event of', entityId, 'in region', obj.id, "with position", pose.slice(0, 3).map(a => parseFloat(a.toFixed(2))));
       event.entered = event.time || Date.now();
-      const regionEntity = { ...event.entity, player: event.entity?.player || event?.player?.id || event.player, id: event.id, pose: [...pose] };
+      const regionEntity = { ...event.entity, player: event.entity?.player || event?.player?.id || event.player, id: entityId, pose: [...pose] };
       delete regionEntity.type;
       regionEntity[event.type === 'spawn' ? 'spawned' : 'entered'] = event.time || Date.now();
       if (!regionEntity.pose || !regionEntity.id) {
         throw new Error("Invalid add event: Invalid entity");
       }
-      obj.entities[event.id] = regionEntity;
+      obj.entities[entityId] = regionEntity;
       return true;
     }
   }
@@ -112,7 +145,7 @@ function applyServerRegionEvent(obj, event) {
     if (perfectMatch) {
       if (event.player && obj.players && !obj.players[event.player]) {
         console.log("Incomplete", event.type, "event: Entity found but player did not exist in region", obj.id);
-        obj.players[event.player] = event.id;
+        obj.players[event.player] = entityId;
         return true;
       }
       console.log("Unecessary", event.type, "event: Entity present at exact location in region", obj.id);
@@ -120,14 +153,14 @@ function applyServerRegionEvent(obj, event) {
     }
     if (event.player && obj.players && !obj.players[event.player]) {
       console.log("Applying", event.type, "event: Entity and player", event.player, "set in", obj.id);
-      obj.players[event.player] = event.id;
+      obj.players[event.player] = entityId;
     }
     if (!entity) {
       if (event.type === "move") {
-        console.log('Ignoring move event of unitialized entity:', event.id, 'in region', obj.id);
+        console.log('Ignoring move event of unitialized entity:', entityId, 'in region', obj.id);
         return false;
       }
-      console.log("Applying", event.type, "event by adding entity", event.id, "in", obj.id);
+      console.log("Applying", event.type, "event by adding entity", entityId, "in", obj.id);
       if (!event.entity || typeof event.entity !== 'object' || !pose || !Array.isArray(pose) || pose.length < 3) {
         throw new Error("Invalid adding event: Missing or invalid entity / pose");
       }
@@ -136,11 +169,11 @@ function applyServerRegionEvent(obj, event) {
         if (!obj.players) {
           obj.players = {};
         }
-        obj.players[event.player] = event.id;
+        obj.players[event.player] = entityId;
       }
-      console.log('Applying addition of', event.id, 'in region', obj.id);
+      console.log('Applying addition of', entityId, 'in region', obj.id);
       event.entered = obj.id;
-      const regionEntity = { ...event.entity, player: event.entity?.player?.id || event?.player?.id || event.player, id: event.id };
+      const regionEntity = { ...event.entity, player: event.entity?.player?.id || event?.player?.id || event.player, id: entityId };
       regionEntity[event.type === 'spawn' ? 'spawned' : 'entered'] = event.time || Date.now()
       delete regionEntity.type;
       if (!regionEntity.pose) {
@@ -152,20 +185,42 @@ function applyServerRegionEvent(obj, event) {
       if (!regionEntity.id) {
         throw new Error("Invalid spawn event: Missing or invalid entity id");
       }
-      obj.entities[event.id] = regionEntity;
+      obj.entities[entityId] = regionEntity;
       return true;
     }
     // console.log("Applying", event.type, "event by updating pose in", obj.id);
-    if (entity?.id !== event.id) {
-      console.log(`Warning: Entity ID mismatch in ${event.type} event: expected ${entity?.id}, got ${event.id}`);
+    if (entity?.id !== entityId) {
+      console.log(`Warning: Entity ID mismatch in ${event.type} event: expected ${entity?.id}, got ${entityId}`);
     }
     for (let i = 0; i < 6; i++) {
       entity.pose[i] = i < pose.length ? pose[i] : 0;
     }
     return true;
   }
+  if (event.type === 'punch') {
+    return true;
+  }
   throw new Error(`Invalid event type "${event.type}" for server region: ${JSON.stringify(event)}`);
 }
+
+const regionStore = createServerStore({
+  typeName: 'region',
+  unsaved_event_limit,
+  unsaved_time_limit,
+  sampleState,
+  loadState: async (id, sample) => await loadServerRegionState(id, sample),
+  loadChanges: async (id) => await loadServerRegionChanges(id),
+  writeState: async (id, state) => await writeServerRegionState(id, state),
+  appendChanges: async (id, changes) => await appendServerRegionChanges(id, changes),
+  clearChanges: async (id) => await clearServerRegionChanges(id),
+  applyEvent: applyServerRegionEvent,
+  serializeState: (stateClone) => {
+    // remove coordinates before write
+    delete stateClone.rx;
+    delete stateClone.ry;
+    delete stateClone.rz;
+  },
+});
 
 export class ServerRegion {
   async getEntities() {
@@ -222,7 +277,6 @@ export class ServerRegion {
     this.rx = rx;
     this.ry = ry;
     this.rz = rz;
-    this.saveTimer = null;
     this.eventCount = 0;
     this.saved = 0;
     this.loaded = 0;
@@ -265,12 +319,6 @@ export class ServerRegion {
     return true;
   }
 
-  /**
-   * 
-   * @param {number} rx  The region x coordinate (divided by 64)
-   * @param {number} ry  The region y coordinate (divided by 64)
-   * @param {number} rz  The region z coordinate (divided by 64)
-   */
   static get(rx, ry, rz) {
     const id = ServerRegion.getIdFromRegionCoords(rx, ry, rz);
     if (!serverRegionRecord[id]) {
@@ -325,6 +373,110 @@ export class ServerRegion {
       console.error(`Failed to load region state for ${this.id}:`, err);
     }
     return false;
+  }
+
+  distance(other) {
+    if (other === this) return 0;
+    const pos = (
+      other && other instanceof ServerRegion ? [other.rx, other.ry, other.rz] :
+        other && other instanceof ServerChunk ? [other.cx * 16 / 64, other.cy * 16 / 64, other.cz * 16 / 64] :
+          other && typeof other === 'object' && other.pose instanceof Array && other.pose.length >= 3 ? other.pose : other && Array.isArray(other) && other.length >= 3 ? other.map(a => a / 64) :
+            null
+    )
+    if (!pos) {
+      throw new Error("Invalid argument: Must be a ServerRegion, ServerChunk, or an object/array with a 'pose' array of at least 3 numbers");
+    }
+    const [rx, ry, rz] = pos.map(a => Math.floor(a));
+    return Math.sqrt(
+      Math.pow(this.rx - rx, 2) +
+      Math.pow(this.ry - ry, 2) +
+      Math.pow(this.rz - rz, 2)
+    );
+  }
+
+  async add(event, immediate = false) {
+    if (!event.time) {
+      event.time = Date.now();
+    }
+    if (!this.loaded) {
+      await this.load();
+    }
+    if (!applyServerRegionEvent(this.state, event)) {
+      if (event.type !== "move") {
+        console.log('Event did not change region state:', event.pose);
+      }
+      return event;
+    }
+    if (!event.player) {
+      throw new Error('Currently only events with a player are supported');
+    }
+    const entityId = event.id && event.id.startsWith('e') ? event.id : event.entity && typeof event.entity === 'string' && event.entity.startsWith('e') ? event.entity : event.entity && typeof event.entity === 'object' && event.entity.id && event.entity.id.startsWith('e') ? event.entity.id : '';
+    const others = Object.values(connectedPlayers).filter((ctx) => ctx?.entity?.id !== entityId && ctx.send);
+    const promise = regionStore.add(this, event, immediate);
+    if (others.length) {
+      console.log('Broadcasting', event.player, 'event to', others.length, 'connected players:', event);
+      for (const ctx of others) {
+        const distance = ctx.region.distance(this);
+        //console.log(`Evaluating`, event.type, `broadcast to player ${ctx.player.id} from "${this.id}" in region "${ctx.region.id}" with distance ${distance}`);
+        if (distance <= 2) {
+          ctx.send(event);
+        }
+      }
+    } else {
+      // console.log('No other connected players to broadcast event:', event);
+    }
+    return await promise;
+  }
+
+  getTimeSinceLoad() {
+    return Date.now() - this.loaded;
+  }
+
+  static async flushAll() {
+    for (const region of Object.values(serverRegionRecord)) {
+      if (!region.loaded && !region.unsaved.length && !region.eventCount) {
+        continue;
+      }
+      await region.flush();
+    }
+  }
+
+  async flush() {
+    return await regionStore.flush(this);
+  }
+
+  async load(forceRefresh = false) {
+    console.log('Loading region', this.id);
+    return await regionStore.load(this, forceRefresh);
+  }
+
+  static fromAbsolute(x, y = undefined, z = undefined) {
+    if (
+      x &&
+      typeof x === 'object' &&
+      x.pose instanceof Array &&
+      x.pose.length >= 3 &&
+      y === undefined &&
+      z === undefined
+    ) {
+      z = x.pose[2];
+      y = x.pose[1];
+      x = x.pose[0];
+    }
+    if (
+      x instanceof Array &&
+      x.length >= 3 &&
+      y === undefined &&
+      z === undefined
+    ) {
+      z = x[2];
+      y = x[1];
+      x = x[0];
+    }
+    const rx = Math.floor(x / 64);
+    const ry = Math.floor(y / 64);
+    const rz = Math.floor(z / 64);
+    return ServerRegion.from(rx, ry, rz);
   }
 
   /**
@@ -388,233 +540,4 @@ export class ServerRegion {
     return ServerRegion.get(rx, ry, rz);
   }
 
-  distance(other) {
-    if (other === this) return 0;
-    return Math.sqrt(
-      Math.pow(this.rx - other.rx, 2) +
-      Math.pow(this.ry - other.ry, 2) +
-      Math.pow(this.rz - other.rz, 2)
-    );
-  }
-
-  async add(event, immediate = false) {
-    if (!this.loaded) {
-      await this.load();
-    }
-    if (!event.time) {
-      event.time = Date.now();
-    }
-    if (!applyServerRegionEvent(this.state, event)) {
-      if (event.type !== "move") {
-        console.log('Event did not change region state:', event.pose);
-      }
-      return event;
-    }
-    if (!event.player) {
-      throw new Error('Currently only events with a player are supported');
-    }
-    const others = Object.values(connectedPlayers).filter((ctx) => ctx?.entity?.id !== event.id);
-    if (others.length) {
-      // console.log('Broadcasting',event.player,'event to', others.length, 'connected players:', event);
-      for (const ctx of others) {
-        const distance = ctx.region.distance(this);
-        console.log(`Evaluating`, event.type, `broadcast to player ${ctx.player.id} from "${this.id}" in region "${ctx.region.id}" with distance ${distance}`);
-        if (distance <= 2) {
-          ctx.send(event);
-        }
-      }
-    }
-    this.unsaved.push(event);
-    if (event.persist === false) {
-      return event;
-    }
-    if (immediate || this.unsaved.length > unsaved_event_limit) {
-      await this.flush();
-    } else if (!this.saveTimer) {
-      this.saveTimer = setTimeout(this.flush, unsaved_time_limit);
-    }
-    return event;
-  }
-
-  static async flushAll() {
-    for (const region of Object.values(serverRegionRecord)) {
-      if (!region.loaded && !region.unsaved.length && !region.eventCount) {
-        continue;
-      }
-      await region.flush();
-    }
-  }
-
-  /**
-   * Write the changes to disk
-   */
-  async flush() {
-    if (this.flushing) {
-      console.log('Flush already in progress for region', this.id);
-      return this.flushPromise;
-    }
-    this.flushing = true;
-    this.flushPromise = (async () => {
-      try {
-        if (this.saveTimer) {
-          clearTimeout(this.saveTimer);
-          this.saveTimer = null;
-        }
-        if (Date.now() - this.started_flush < 1000) {
-          const end_time = this.finished_flush;
-          await sleep(500);
-          if (this.finished_flush !== end_time) {
-            console.log('Another flush finished while waiting for region', this.id);
-            return;
-          }
-        }
-        this.started_flush = Date.now();
-        if (!this.loaded) {
-          await this.load();
-        }
-        if ((this.state.fileSize === 0 && this.unsaved.length) || this.unsaved.length + this.eventCount > saved_event_limit) {
-          console.log(
-            "Saving full region state",
-            [this.id],
-            "with",
-            this.unsaved.length + this.eventCount,
-            "events"
-          );
-          this.state.rx = this.rx;
-          this.state.ry = this.ry;
-          this.state.rz = this.rz;
-          const size = this.unsaved.length;
-          this.state.fileSize = await writeServerRegionState(this.id, this.state);
-          await clearServerRegionChanges(this.id);
-          this.finished_flush = this.saved = Date.now();
-          this.unsaved.splice(0, size);
-          this.eventCount = 0;
-        } else if (this.unsaved.length) {
-          if (this.unsaved.length === 1) {
-            console.log("Appending region change to", [this.id], "with event:", this.unsaved[0]);
-          } else {
-            console.log("Appending region change to", [this.id], "with", this.unsaved.length, "events with types:", this.unsaved.slice(0,8).map(e=>e.type));
-          }
-          const size = this.unsaved.length;
-          await appendServerRegionChanges(this.id, this.unsaved);
-          this.finished_flush = this.appended = Date.now();
-          this.eventCount += size;
-          this.unsaved.splice(0, size);
-        } else {
-          console.log('No changes to flush for region', this.id);
-        }
-      } catch (err) {
-        console.log('Failed to flush region', this.id, 'with', this.unsaved.length, 'unsaved events');
-        throw err;
-      } finally {
-        this.flushing = false;
-        this.flushPromise = null;
-      }
-    }).call(this);
-
-    return this.flushPromise;
-  }
-
-  async load(forceRefresh = false) {
-    if (this.loaded && this.state && !forceRefresh) {
-      console.log('Region', this.id, 'already loaded, skipping load');
-      return this;
-    }
-    this.state = await loadServerRegionState(this.id, JSON.parse(JSON.stringify(sampleState)));
-    this.state.id = this.id;
-    this.state.rx = this.rx;
-    this.state.ry = this.ry;
-    this.state.rz = this.rz;
-    const unfiltered = await loadServerRegionChanges(this.id);
-    if (unfiltered.length) {
-      console.log(`Loaded region ${this.id} with ${unfiltered.length} changes.`);
-    }
-    const changes = unfiltered.filter((event, index, array) => {
-      if (event.type === 'spawn' && !event.id) {
-        return false;
-      }
-      if (typeof event.id !== 'string' || !event.id.startsWith('e')) {
-        return false;
-      }
-      return true;
-    });
-    for (const event of changes) {
-      try {
-        applyServerRegionEvent(this.state, event);
-      } catch (err) {
-        console.log(`Skipping failing event apply of type "${event.type}" for entity ${event.entity?.id || event.entity}:`, err.message);
-      }
-    }
-    const entityKeys = Object.keys(this.state?.entities || {});
-    console.log('Loaded region', this.id, 'with', changes.length, 'changes and', entityKeys.length, 'entities');
-    this.eventCount = changes.length;
-    this.loaded = Date.now();
-    if (entityKeys.length) {
-      const rx = this.rx;
-      const ry = this.ry;
-      const rz = this.rz;
-      for (const id of entityKeys) {
-        const e = this.state.entities[id];
-        if (
-          typeof e === 'object' &&
-          e.id &&
-          e.player &&
-          !connectedPlayers[e.player]
-        ) {
-          console.log('Skipping entity', e.id, 'from region', this.id, 'because player', e.player, 'is not connected');
-          delete this.state.entities[id];
-          continue;
-        }
-        if (
-          typeof e !== 'object' ||
-          typeof e.pose !== 'object' ||
-          !Array.isArray(e.pose) ||
-          e.pose.length < 3
-        ) {
-          console.log('Invalid entity pose in region', e.id, ':', e?.pose);
-          delete this.state.entities[id];
-          continue;
-        }
-        if (
-          typeof e === 'object' &&
-          (rx !== Math.floor(e.pose[0] / 64) ||
-            ry !== Math.floor(e.pose[1] / 64) ||
-            rz !== Math.floor(e.pose[2] / 64))
-        ) {
-          console.log('Invalid entity pose outside region', e.id, ':', e?.pose);
-          delete this.state.entities[id];
-          continue;
-        }
-      }
-    } return this;
-  }
-
-  static fromAbsolute(x, y = undefined, z = undefined) {
-    if (
-      x &&
-      typeof x === 'object' &&
-      x.pose instanceof Array &&
-      x.pose.length >= 3 &&
-      y === undefined &&
-      z === undefined
-    ) {
-      z = x.pose[2];
-      y = x.pose[1];
-      x = x.pose[0];
-    }
-    if (
-      x instanceof Array &&
-      x.length >= 3 &&
-      y === undefined &&
-      z === undefined
-    ) {
-      z = x[2];
-      y = x[1];
-      x = x[0];
-    }
-    const rx = Math.floor(x / 64);
-    const ry = Math.floor(y / 64);
-    const rz = Math.floor(z / 64);
-    return ServerRegion.from(rx, ry, rz);
-  }
 }

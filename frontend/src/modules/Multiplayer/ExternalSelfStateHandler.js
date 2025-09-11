@@ -12,7 +12,7 @@ export let movement = [];
 let previousMovementText = "";
 
 export async function sendPlayerActionToServerEventually(action) {
-  if (MultiplayerHandler.active) {
+  if (MultiplayerHandler.flags.active) {
     playerActionBuffer.push(action);
   }
 }
@@ -33,7 +33,8 @@ async function sendPlayerMadeActions() {
     }
     await MultiplayerHandler.sendClientAction(action);
   }
-  if (sendCount===0) {
+  if (sendCount === 0 && playerEntityId) {
+    sessionStorage.setItem("last-entity-id", playerEntityId);
     localStorage.setItem("last-entity-id", playerEntityId);
   }
   if (movement.length) {
@@ -45,8 +46,11 @@ async function sendPlayerMadeActions() {
         pose: movement.slice(0, 6),
         id: playerEntityId,
       });
-      localStorage.setItem("last-player-pose", movement.join(","));
-      sessionStorage.setItem("last-player-pose", movement.join(","));
+      console.log("Sent movement to server:", movement);
+      if (sendCount > 2 && sendCount % 2 === 0) {
+        localStorage.setItem("last-player-pose", movement.join(","));
+        sessionStorage.setItem("last-player-pose", movement.join(","));
+      }
     }
     movement.length = 0;
   }

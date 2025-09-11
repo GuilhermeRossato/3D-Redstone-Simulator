@@ -15,10 +15,24 @@ let playerIdList = undefined;
 
 export const playerCache = new Map();
 
-export async function getNewPlayerSpawnPose(player) {
+export function getNewPlayerSpawnPose(player) {
   return [0, 2, 0, 0, 0, 0].map((v, i) =>
     i < 3 ? Math.floor(i === 1 ? v : (Math.random() - 0.5) * 3 * v) : v
   );
+}
+
+export function getPlayerContextPose(payload, ctx) {
+  let pose = [payload.pose, ctx.pose, ctx.player.pose].find(p => (p instanceof Array && p.length >= 3 && typeof p[0] == 'number' && !isNaN(p[0]) && typeof p[1] == 'number' && !isNaN(p[1]) && typeof p[2] == 'number' && !isNaN(p[2])));
+  if (ctx.player?.entities?.length && (!pose || !pose.length || pose.length < 3 || isNaN(pose[0]) || isNaN(pose[1]) || isNaN(pose[2]))) {
+//    pose = ctx.player.entities[0]?.pose;
+  }
+  if (!pose || !pose.length || pose.length < 3 || isNaN(pose[0]) || isNaN(pose[1]) || isNaN(pose[2])) {
+    pose = getNewPlayerSpawnPose(ctx.player.name);
+  }
+  while (pose.length < 6) {
+    pose.push(0);
+  }
+  return pose;
 }
 
 export async function loadPlayerByCookieId(cookieId) {
@@ -57,13 +71,14 @@ export async function loadPlayer(obj_or_id) {
     !obj_or_id.startsWith("p") &&
     obj_or_id.length > 4
   ) {
-    if (!obj_or_id.substring(1).match(/^\d+$/)) {
-      throw new Error("Invalid player ID: must contain digits only");
-    }
     obj_or_id = `p${obj_or_id}`;
   }
   if (!playerIdList) {
     playerIdList = await getPlayerIdList(true);
+  }
+  if (!playerIdList.includes(obj_or_id)) {
+    console.log('Ignoring player load because player id is not in list:', obj_or_id);
+    return null;
   }
   const obj = await loadStorageObject(
     "players",
@@ -83,8 +98,8 @@ export async function createPlayer(obj) {
   if (!String(obj.id).startsWith("p")) {
     obj.id = `p${obj.id}`;
   }
-  if (obj.id.length <= 5 || !obj.id.substring(1).match(/^\d+$/)) {
-    throw new Error("Invalid player ID: must contain digits only");
+  if (obj.id.length <= 5 || obj.id > 10) {
+    throw new Error("Invalid player id");
   }
   if (!playerIdList) {
     playerIdList = await getPlayerIdList(true);
@@ -131,6 +146,14 @@ export async function savePlayer(obj) {
   }
   if (!playerIdList.includes(obj.id)) {
     throw new Error("Player does not exist yet");
+  }
+  if (obj.created_at && !obj.created) {
+    obj.created = obj.created_at;
+    delete obj.created_at;
+  }
+  if (obj.updated_at) {
+    obj.updated = obj.updated_at;
+    delete obj.updated_at;
   }
   await writeStorageObject("players", obj.id.charAt(1), obj.id, obj);
   if (obj["cookieId"] && cookieIdRecord[obj["cookieId"]] !== obj.id) {

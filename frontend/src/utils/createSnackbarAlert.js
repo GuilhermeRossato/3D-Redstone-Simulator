@@ -7,9 +7,9 @@ g("createSnackbarAlert", createSnackbarAlert);
  * @param {string | string[]} message The message to show
  * @param {'info' | 'error' | 'success' | 'warn' | 'warning'} variant  The style of the snackbar
  * @param {number} [visibleTime] Time in seconds to show the snackbar
- * @returns {Promise<(message?: string | string[]) => void>} A function to close or update the snackbar alert with a new message
+ * @returns {(message?: string | string[]) => void} A function to close or update the snackbar alert with a new message
  */
-export async function createSnackbarAlert(message, variant, visibleTime = 6) {
+export function createSnackbarAlert(message, variant, visibleTime = 6) {
   /** @type {HTMLElement} */
   let wrapper = document.querySelector(".standalone-snackbar-alert-wrapper");
   if (!wrapper) {

@@ -10,10 +10,18 @@ import { appendStorageArray, clearStorageArray, clearStorageObject, loadStorageA
 export async function loadServerRegionState(id = "", fallback = undefined) {
   const obj = await loadStorageObject("region", id, null, fallback);
   for (const key of ["players", "entities"]) {
-    if (!obj[key]||typeof obj[key] !== "object"||Array.isArray(obj[key])) {
+    if (!obj[key] || typeof obj[key] !== "object" || Array.isArray(obj[key])) {
       obj[key] = {};
     }
   }
+  /** @type {any} */
+  let any = obj;
+  if (any.id && any.id !== id) {
+    throw new Error(`Region id mismatch, file id ${JSON.stringify(any.id)} vs requested id ${JSON.stringify(id)}`);
+  }
+  delete any.rx;
+  delete any.ry;
+  delete any.rz;
   return obj;
 }
 
@@ -27,11 +35,16 @@ export async function loadServerRegionChanges(id = "") {
 
 /**
  * @param {string} id
- * @param {any} state
+ * @param {any} obj
  * @returns {Promise<number>} Total number of bytes written on file
  */
-export async function writeServerRegionState(id = "", state = {}) {
-  return await writeStorageObject("region", id, null, state);
+export async function writeServerRegionState(id = "", obj = {}) {
+  for (const key of ["players", "entities"]) {
+    if (!obj[key] || typeof obj[key] !== "object" || Array.isArray(obj[key])) {
+      obj[key] = {};
+    }
+  }
+  return await writeStorageObject("region", id, null, obj);
 }
 
 /**

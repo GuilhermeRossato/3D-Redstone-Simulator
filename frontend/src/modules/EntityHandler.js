@@ -1,6 +1,6 @@
 import * as THREE from '../libs/three.module.js';
 import * as PlayerModel from '../models/PlayerModel.js';
-import { b, ib, bv, thirdDegreeBezierVector } from '../utils/bezier.js';
+import { b } from '../utils/bezier.js';
 import { g } from '../utils/g.js';
 import { scene } from './GraphicsHandler.js';
 import { setPlayerPosition } from './InputHandler.js';
@@ -169,7 +169,7 @@ export function removeEntity(entityId) {
 }
 
 export function update(frame) {
-  if (!frame) frame = (new Date().getTime()/16)|0;
+  if (!frame) frame = (new Date().getTime() / 16) | 0;
   for (const id in entityRecord) {
     if (entityRecord[id].punching === true) {
       entityRecord[id].punching = frame;
@@ -185,7 +185,7 @@ export function update(frame) {
         [-0.2, 0.9, -1],
         [-0.0, 1.3, -0.7],
       ];
-      const varr = t < 0.33 ? vec.slice(0, 2) : t < 0.66 ? vec.slice(1, 3) :vec.slice(2, 4);
+      const varr = t < 0.33 ? vec.slice(0, 2) : t < 0.66 ? vec.slice(1, 3) : vec.slice(2, 4);
 
       element.rotation.set(
         b(varr[0][0], varr[1][0], t),
@@ -199,9 +199,9 @@ export function update(frame) {
       continue;
     }
     if (entityRecord[id].group) {
-      const m = Math.cos(2*Math.PI*((frame % 180)/180));
-      entityRecord[id].group.children[2].rotation.set(m*0.02, 0, (-1)*(0.06+ m*0.09));
-      entityRecord[id].group.children[3].rotation.set(m*0.02, 0, (1)*(0.06+ m*0.09));
+      const m = Math.cos(2 * Math.PI * ((frame % 180) / 180));
+      entityRecord[id].group.children[2].rotation.set(m * 0.02, 0, (-1) * (0.06 + m * 0.09));
+      entityRecord[id].group.children[3].rotation.set(m * 0.02, 0, (1) * (0.06 + m * 0.09));
     }
     if (!entityRecord[id].target || entityRecord[id].target.finished) {
       continue;

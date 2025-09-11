@@ -14,7 +14,8 @@ const detached = extractArgs([
 ]).length;
 
 const logFilePath = getProjectFolderPath('backend', detached ? 'detached.log' : 'server.log');
-replaceProcessOutput(logFilePath);
+
+// replaceProcessOutput(logFilePath);
 
 console.log('Writing logs to:', logFilePath);
 
@@ -48,8 +49,8 @@ import getDateTimeString from "./utils/getDateTimeString.js";
 
 const stopFileExtension = process.platform === "win32" ? ".bat" : "";
 const stopFilePath = `${getProjectFolderPath('..', `stop${stopFileExtension}`)}`;
-const stopFileContent = process.platform === "win32" 
-  ? `taskkill /PID ${process.pid} /F\n` 
+const stopFileContent = process.platform === "win32"
+  ? `taskkill /PID ${process.pid} /F\n`
   : `kill ${process.pid}\n`;
 
 fs.writeFileSync(stopFilePath, stopFileContent, "utf-8");
@@ -61,7 +62,7 @@ if (!host || !port) {
   process.exit(6);
 }
 
-console.log("Process", process.pid, "will listen to:", `http://${url}`, "...");
+console.log("Process", process.pid, "binding to:", `http://${url}`, "...");
 
 const mimeLookup = getMimeLookupRecord();
 
@@ -74,17 +75,17 @@ async function handleRequest(req, res) {
     ["/", "/index.html", "/index.php"].includes(url)
   ) {
     return {
-      path: "./index.html",
+      path: "index.html",
     };
   }
-  if (req.method === "GET" && url.startsWith("/favicon.")) {
+  if (req.method === "GET" && url.includes("/favicon.ico")) {
     return {
-      path: "./frontend/favicon.ico",
+      path: "frontend/favicon.ico",
     };
   }
-  if (req.method === "GET" && url.startsWith("/frontend/")) {
+  if (req.method === "GET" && (url.startsWith("/frontend/") || url.startsWith("/backend/data/"))) {
     return {
-      path: `.${url}`,
+      path: url.substring(1),
     };
   }
   if (req.method === "POST" && url === "/api/logs") {
@@ -171,42 +172,39 @@ const server = http.createServer((req, res) => {
             () => res.end("Error: Could not find file")
           );
         }
-        if (fs.statSync(target).isDirectory()) {
-          target = `${target}/index.html`;
-          if (!fs.existsSync(target)) {
-            console.log(
-              req.method,
-              req.url,
-              "Cannot serve file (not found):",
-              data.path
-            );
-            return execSafe(
-              () => res.writeHead(404, { "Content-Type": "text/plain" }),
-              () => res.end("Error: Could not find file")
-            );
+        const dot = target.lastIndexOf(".");
+        const type = mimeLookup[dot >= target.length - 6 ? target.substring(dot + 1) : ''] || "text/plain";
+        const stat = fs.statSync(target);
+        const modifiedTime = getDateTimeString(stat.mtimeMs);
+        const etag = `${modifiedTime}|${stat.size}`;
+        const ifNoneMatch = req.headers['if-none-match'];
+        const ifModifiedSince = req.headers['if-modified-since'];
+        const headers = {
+          'Content-Type': type,
+          'Last-Modified': String(modifiedTime),
+          'ETag': etag,
+          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=3600'
+        };
+        try {
+          const unmodified = ifNoneMatch === etag || (ifModifiedSince && Math.floor(new Date(ifModifiedSince).getTime() / 1000) >= Math.floor(stat.mtime.getTime() / 1000));
+          if (req.method == 'HEAD' || !unmodified) {
+            headers['Content-Length'] = String(stat.size);
           }
+          if (req.method === 'HEAD' || unmodified) {
+            console.log(unmodified ? 'Unmodified' : "HEAD", `response for file: ${JSON.stringify(target)}`);
+            res.writeHead(unmodified ? 304 : 200, headers);
+            return res.end();
+          }
+        } catch (error) {
+          console.log('Ignoring error in ETag or Last-Modified check:', error);
         }
         fs.promises
           .readFile(target)
           .then((buffer) => {
-            const dot = target.lastIndexOf(".");
-            const type = mimeLookup[target.substring(dot + 1)] || "text/plain";
-            // console.log(
-            //   req.method,
-            //   target.substring(target.startsWith(".") ? 1 : 0),
-            //   "(",
-            //   buffer.byteLength,
-            //   "bytes",
-            //   "of",
-            //   type,
-            //   ")"
-            // );
+            headers["Content-Length"] = String(buffer.byteLength);
             return execSafe(
               () =>
-                res.writeHead(200, {
-                  "Content-Type": type,
-                  "Content-Length": buffer.byteLength,
-                }),
+                res.writeHead(200, headers),
               () => res.end(buffer)
             );
           })
@@ -228,8 +226,7 @@ const server = http.createServer((req, res) => {
       }
       console.log(req.method, req.url, "Finished");
       console.log("Request handled successfully");
-    })
-    .catch((err) => {
+    }).catch((err) => {
       console.log(req.method, req.url, "Failed");
       console.error("Request handling failed:", err);
       execSafe(
@@ -242,21 +239,25 @@ const server = http.createServer((req, res) => {
 server.on("upgrade", function (request, socket, head) {
   /** @type {Parameters<typeof handleRequestUpgrade>[3]} */
   const onError = (err) => {
+    if (err === 'Socket from request ended') {
+      console.log("[Noop] Socket from request ended", socket.writable ? "(still writable)" : socket.readable ? "(still readable)" : "");
+      return;
+    }
     if (!err) {
       console.log("Empty error argument on upgrade request error handler");
       return;
     }
     const arr = err instanceof Array ? err : [err];
     if (
-      (arr.length === 1||arr.length === 5) &&
+      (arr.length === 1 || arr.length === 5) &&
       (arr[0] === "Socket closed for service" ||
         arr[0] === "Socket ended for service")
     ) {
-      console.log("Socket ended for service");
+      console.log("[Noop] Socket ended for service", socket.writable ? "(still writable)" : socket.readable ? "(still readable)" : "");
       return;
     }
     if (
-      (arr.length === 1||arr.length === 5) &&
+      (arr.length === 1 || arr.length === 5) &&
       arr[0] instanceof Error &&
       arr[0].message === 'write after end'
     ) {
@@ -275,12 +276,12 @@ server.on("upgrade", function (request, socket, head) {
             err instanceof Array
               ? JSON.stringify(err.map((v, i) => ({ i, v })))
               : err instanceof Error
-              ? err.stack
-              : err instanceof Event
-              ? `Error event of type ${err.type}`
-              : typeof err === "string"
-              ? `Error message: ${err.length === 0 ? "empty" : err}`
-              : JSON.stringify(err)
+                ? err.stack
+                : err instanceof Event
+                  ? `Error event of type ${err.type}`
+                  : typeof err === "string"
+                    ? `Error message: ${err.length === 0 ? "empty" : err}`
+                    : JSON.stringify(err)
           )
           .join(" ")}`,
       ].join("\r\n");

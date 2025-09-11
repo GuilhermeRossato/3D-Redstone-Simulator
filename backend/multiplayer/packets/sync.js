@@ -24,7 +24,7 @@ export async function sync(payload, ctx) {
   ctx.syncPairs.push([client, server]);
   const subs = payload.subjects || [];
   if (subs.length) {
-    console.log(`Syncing subjects: ${subs.join(', ')}, client time: ${client}, server time: ${server}`);
+    console.log(`Syncing subjects: ${subs.join(', ')}, client time: ${client}, server time: ${server}, offset: ${((server - client)/1000).toFixed(1)} s`);
   }
   const results = [];
   for (const id of subs) {

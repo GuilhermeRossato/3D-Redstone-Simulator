@@ -7,7 +7,10 @@ import * as ForegroundHandler from "./modules/ForegroundHandler.js";
 import * as InputHandler from "./modules/InputHandler.js";
 import * as EntityHandler from "./modules/EntityHandler.js";
 import * as MultiplayerHandler from "./modules/Multiplayer/MultiplayerHandler.js";
-import { sleep } from "./utils/sleep.js";
+
+export const flags = {
+  finished: false,
+}
 
 /**
  * @param {string} str
@@ -39,23 +42,23 @@ async function initialization() {
       throw new Error("WebGL Context could not be created");
     }
 
-    setLoadingText("Loading Textures");
-    await TextureHandler.load();
-
     setLoadingText("Initializing the Graphics Engine");
     const { scene, camera } = await GraphicsHandler.load(canvas, gl);
 
     setLoadingText("Initializing the World");
     await WorldHandler.load();
 
+    setLoadingText("Loading Textures");
+    await TextureHandler.load();
+
     setLoadingText("Initializing the Main Loop");
     let lastSavePos = 0;
     GameLoopHandler.load(
       (frame) => {
         InputHandler.update(frame);
-        if (MultiplayerHandler.active) {
+        if (MultiplayerHandler.flags.active) {
           MultiplayerHandler.update(frame);
-        } else if (InputHandler.flags.dirty&&Math.abs(lastSavePos-frame)>60) {
+        } else if (InputHandler.flags.dirty&&Math.abs(lastSavePos-frame)>100) {
           lastSavePos = frame;
           console.log('Updating player position (local)');
           InputHandler.flags.dirty = false;
@@ -63,7 +66,6 @@ async function initialization() {
           const { yaw, pitch } = InputHandler.rotation;
           localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
           sessionStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
-
         }
         EntityHandler.update(frame);
       },
@@ -78,7 +80,8 @@ async function initialization() {
 
     setLoadingText("Initializing Multiplayer");
     try {
-      if (!MultiplayerHandler.load()) {
+      const veredict = await MultiplayerHandler.load();
+      if (!veredict) {
         console.log("MultiplayerHandler returned false");
       }
     } catch (err) {
@@ -86,8 +89,9 @@ async function initialization() {
       console.error(err);
     }
 
-    if (!MultiplayerHandler.active) {
+    if (!MultiplayerHandler.flags.active) {
       WorldHandler.startLocalWorld();
+      
     }
 
     setLoadingText("Initializing the GUI");
@@ -97,6 +101,9 @@ async function initialization() {
 
     ForegroundHandler.start();
     GameLoopHandler.start();
+
+    console.log("Initialization complete");
+    flags.finished = true;
   } catch (err) {
     console.error(err);
     displayFatalError(err);

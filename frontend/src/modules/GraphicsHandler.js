@@ -2,13 +2,16 @@ import * as THREE from '../libs/three.module.js';
 import loadTextResource from '../utils/loadTextResource.js';
 import * as TextureHandler from '../modules/TextureHandler.js';
 import { g } from '../utils/g.js';
+import AssetLoader from '../classes/AssetLoader.js';
 
 let aaScale = 1;
 let fixedSize = false;
 
 let hasLoaded = false;
+
 /** @type {THREE.Scene} */
 export let scene;
+
 /** @type {THREE.PerspectiveCamera} */
 let camera;
 /** @type {THREE.WebGLRenderer} */
@@ -40,24 +43,45 @@ function onWindowResize() {
     }
 }
 
+export function createBlockMaterial() {
+  
+    const material = new THREE.ShaderMaterial({
+        uniforms: {
+            texture0: { value: TextureHandler.getMainTexture() },
+            texture1: { value: TextureHandler.getAoTexture() },
+            time: { value: 0 }
+        },
+        vertexShader,
+        fragmentShader,
+        transparent: true
+    });
+
+    // @ts-ignore
+    material.side = THREE.FrontSide;
+
+    return material;
+}
+
 /**
  * @param {HTMLCanvasElement} canvas 
  * @param {WebGLRenderingContext} gl 
  */
 export async function load(canvas, gl) {
     if (hasLoaded) {
-        throw new Error('Textures are already loaded');
+        throw new Error('Graphics are already loaded');
     }
+
+    g("THREE", THREE);
+    g("canvas", canvas);
+
     const wrapper = document.querySelector(".background-game-canvas");
     if (!wrapper) {
         throw new Error("Missing canvas object DOM element");
     }
     wrapper.appendChild(canvas);
 
-    window["THREE"] = THREE;
-
     camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.01, 255);
-    window["camera"] = camera;
+    g("camera", camera);
 
     let lastPlayerPose = (sessionStorage.getItem('last-player-pose')||'0').split(',').map(i => parseFloat(i))
     if (lastPlayerPose.length < 3||lastPlayerPose.slice(0, 6).some(num=>isNaN(num))) {
@@ -74,7 +98,7 @@ export async function load(canvas, gl) {
     }
 
     scene = new THREE.Scene();
-    window["scene"] = scene;
+    g("scene", scene);
 
     // Add light to the scene
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
@@ -97,26 +121,10 @@ export async function load(canvas, gl) {
     renderer.setSize(canvas.width, canvas.height);
 
     g("renderer", renderer);
-    g("canvas", canvas);
 
-    vertexShader = await loadTextResource("assets/vertex-shader.glsl");
-    fragmentShader = await loadTextResource("assets/fragment-shader.glsl");
-
-    blockMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            texture0: { value: TextureHandler.getMainTexture() },
-            texture1: { value: TextureHandler.getAoTexture() },
-            time: { value: 0 }
-        },
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
-        transparent: true
-    });
-
-    // Fix old bug
-    // @ts-ignore
-    blockMaterial.side = THREE.FrontSide;
-
+    vertexShader = await AssetLoader.loadText("assets/vertex-shader.glsl");
+    fragmentShader = await AssetLoader.loadText("assets/fragment-shader.glsl");
+    
     hasLoaded = true;
 
     window.addEventListener("resize", onWindowResize);
@@ -132,8 +140,19 @@ export function getMaterial() {
     if (!hasLoaded) {
         throw new Error("Graphics has not been loaded");
     }
-    blockMaterial.dispose = function() {
-        throw new Error('Do not dispose of block material!');
+    if (blockMaterial) {
+        return blockMaterial;
+    }
+    if (!vertexShader || !fragmentShader) {
+      throw new Error("Shaders have not been loaded");
+    }
+    if (!blockMaterial) {
+        blockMaterial = createBlockMaterial();
+    }
+    if (blockMaterial) {
+        blockMaterial.dispose = function() {
+            throw new Error('Do not dispose of block material!');
+        }
     }
     return blockMaterial;
 }
@@ -143,11 +162,3 @@ export function draw() {
     // console.log(renderer.info.render.calls);
     renderer.render(scene, camera);
 }
-
-const GraphicsEngine = {
-    load,
-    getMaterial,
-    draw
-};
-
-export default GraphicsEngine;

@@ -24,7 +24,8 @@ export async function getChunkOffsetCache(forceReset = false) {
 
 if (process.argv[1].endsWith('chunkDistance.js')) {
   //generateJsChunkOffsetCache().then(r=>(r !== undefined)&&console.log("test() return:", r)).catch(err => { console.log("test() failed:",err); process.exit(1); });
-  console.log(await getChunkOffsets(32, 10));
+  //console.log(await getChunkOffsets(32, 10));
+  console.log(await getChunkOffsets(3*3*3, 9));
 }
 
 export async function getChunkOffsets(maxCount = 64, maxDistance = 16) {

@@ -259,7 +259,7 @@ export async function createPlayerMesh(name) {
   rightArmGroup.name = `${rightArm.name}Group`;
   rightArmGroup.position.set(-6 / 16, (8+10) / 16, 0);
   
-  window["myList"].push(rightArmGroup);
+  window["myList"]&&window["myList"].push(rightArmGroup);
   rightArm.position.set(0, -6 / 16, 0);
   rightArmGroup.add(rightArm);
   group.add(rightArmGroup);

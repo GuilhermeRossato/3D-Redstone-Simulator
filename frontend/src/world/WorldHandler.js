@@ -1,9 +1,14 @@
+import AssetLoader from '../classes/AssetLoader.js';
 import Chunk from '../classes/world/Chunk.js';
-import { scene } from '../modules/GraphicsHandler.js';
 import { g } from '../utils/g.js';
 import { loadWorld } from './loadWorld.js';
+import { scene } from '../modules/GraphicsHandler.js';
+import * as BlockHandler from '../modules/BlockHandler.js';
 
-let isSavingTheWorldLocally = false;
+export const flags = {
+  locallySavedWorld: false,
+}
+
 /** @type {Record<number, Record<number, Record<number, Chunk>>>} */
 const chunks = [];
 
@@ -95,7 +100,7 @@ export function get(x, y, z) {
  * @param {number} id
  */
 export function set(x, y, z, id) {
-  if (isSavingTheWorldLocally) {
+  if (flags.locallySavedWorld) {
     updateLocalWorldData(x, y, z, id);
   }
   const cx = worldPositionToChunk(x);
@@ -170,7 +175,42 @@ export function set(x, y, z, id) {
   return result;
 }
 
+export async function loadBlockData() {
+  const p = window.location.pathname;
+  const prefix = `${p.substring(0, p.indexOf('/3D-Redstone-Simulator/'))}/3D-Redstone-Simulator/frontend/assets/blocks`;
+  const idsUrl = `${prefix}/ids.jsonl`;
+  const blockIds = AssetLoader.parseJSONL(await AssetLoader.loadText(idsUrl)).filter(b => b.id);
+
+  const texturesUrl = `${prefix}/textures.jsonl`;
+  const blockTextures = AssetLoader.parseJSONL(await AssetLoader.loadText(texturesUrl)).filter(b => b.id);
+  const invalids = blockTextures.flatMap((b, i) => b.id && b.textures && Array.isArray(b.textures) ? [] : [i]);
+  if (invalids.length) {
+    console.warn(`Found ${invalids.length} invalid block texture entries: ${invalids.join(',')}`)
+  }
+  for (const block of blockIds) {
+    const id = block.id;
+    if (!block.id) continue;
+    const data = blockTextures.find(b => b.id === id);
+    if (data) {
+      blockDefinitions[id] = {
+        ...block,
+        ...data,
+      };
+    } else {
+      blockDefinitions[id] = block;
+    }
+  }
+  console.log(`Loaded ${Object.keys(blockDefinitions).length} block definitions ( window.blockDefinitions )`);
+
+  g('blockDefinitions', blockDefinitions);
+
+  return await loadWorld();
+}
+
 export async function load() {
+  await loadBlockData();
+  g('Chunk', Chunk);
+  g('BlockHandler', BlockHandler);
   return await loadWorld();
 }
 
@@ -201,7 +241,7 @@ async function updateLocalWorldData(x, y, z, id) {
 }
 
 export async function startLocalWorld() {
-  isSavingTheWorldLocally = true;
+  flags.locallySavedWorld = true;
   let blockData = startingLocalWorldBlockData;
   try {
     const blockDataStr = localStorage.getItem('world-data');

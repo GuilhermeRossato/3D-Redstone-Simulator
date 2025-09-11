@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
+import { BlockList } from "net";
 
 const dataFolderPath = getProjectFolderPath('backend', 'data');
 
@@ -27,7 +28,6 @@ async function confirmPath(target) {
     }
   }
 }
-
 /**
  * @template T
  * @param {string} type
@@ -38,8 +38,10 @@ async function confirmPath(target) {
  */
 export async function loadStorageObject(type, name, id, fallback = undefined) {
   try {
+    const filePath = getStorageObjectFilePath(type, name, id, false);
+    // console.log({type, filePath});
     const buffer = await fs.promises.readFile(
-      getStorageObjectFilePath(type, name, id, false)
+      filePath
     );
     const text = buffer.toString("utf-8");
     const obj = JSON.parse(text || "{}");
@@ -77,7 +79,9 @@ export async function loadStorageArray(type, name, id, fallback = undefined) {
       "utf-8"
     );
     const list = JSON.parse(`[${text.substring(0, text.lastIndexOf(","))}]`);
-    countRecord[id] = list.length;
+    if (id || name) {
+      countRecord[id || name] = list.length;
+    }
     return list;
   } catch (err) {
     if (err.code !== "ENOENT") {
@@ -99,6 +103,7 @@ export async function writeStorageObject(type, name, id, state = {}) {
     const text = JSON.stringify(state, null, "  ");
     const buffer = Buffer.from(text, "utf-8");
     const target = getStorageObjectFilePath(type, name, id, false);
+    console.log({type, filePath: target, state});
     await confirmPath(target);
     await fs.promises.writeFile(target, buffer, "utf-8");
     return buffer.byteLength;
@@ -117,9 +122,10 @@ export async function writeStorageObject(type, name, id, state = {}) {
 export async function appendStorageArray(type, name, id, array = []) {
   try {
     if ((array instanceof Array && array.length === 0) || !array) {
-      return countRecord[id] || 0;
+      return countRecord[id || name] || 0;
     }
-    const text = (array instanceof Array ? array : [array])
+    const list = (array instanceof Array ? array : [array]);
+    const text = list
       .map((e) => `${JSON.stringify(e)},`)
       .join("\n");
     const target = getStorageObjectFilePath(type, name, id, true);
@@ -134,8 +140,14 @@ export async function appendStorageArray(type, name, id, array = []) {
         throw err;
       }
     }
-    return (countRecord[id] =
-      (countRecord[id] || 0) + (array instanceof Array ? array.length : 1));
+    if (id || name) {
+      if (!countRecord[id || name]) {
+        const text = await fs.promises.readFile(target, 'utf-8');
+        countRecord[id || name] = text.split('\n').filter(a => a.trim().length > 1).length
+      }
+      return (countRecord[id || name] = (countRecord[id || name] || 0) + list.length);
+    }
+    return list.length;
   } catch (err) {
     throw err;
   }
@@ -145,19 +157,22 @@ export async function appendStorageArray(type, name, id, array = []) {
  * @param {string} type
  * @param {string} [name]
  * @param {string} [id]
- * @param {any[]} array
+ * @param {any[]} list
  * @returns {Promise<number>} Total number of changes on file
  */
-export async function writeStorageArray(type, name, id, array = []) {
+export async function writeStorageArray(type, name, id, list = []) {
   try {
-    if (!(array instanceof Array)) {
+    if (!(list instanceof Array)) {
       throw new TypeError("Expected array");
     }
-    const text = array.map((e) => `${JSON.stringify(e)},`).join("\n");
+    const text = list.map((e) => `${JSON.stringify(e)},`).join("\n");
     const target = getStorageObjectFilePath(type, name, id, true);
     await confirmPath(target);
     await fs.promises.writeFile(target, text ? `${text}\n` : "", "utf-8");
-    return (countRecord[id] = array.length);
+    if (id || name) {
+      countRecord[id || name] = list.length;
+    }
+    return list.length;
   } catch (err) {
     throw err;
   }
@@ -190,6 +205,9 @@ export async function clearStorageObject(type, name, id) {
 export async function clearStorageArray(type, name, id) {
   try {
     await fs.promises.unlink(getStorageObjectFilePath(type, name, id, true));
+    if (id || name) {
+      countRecord[id || name] = 0;
+    }
     return true;
   } catch (err) {
     if (err.code === "ENOENT") {

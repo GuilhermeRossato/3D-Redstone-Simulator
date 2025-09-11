@@ -7,7 +7,7 @@ import BlockData, {
   getBlockName, 
   isBlockSolid,
   BlockDataLegacyProxy 
-} from './BlockData.js';
+} from './LegacyBlockData.js';
 
 // Migration function that automatically updates code patterns
 export function migrateCodeToNewFormat(code) {

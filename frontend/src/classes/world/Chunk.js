@@ -5,10 +5,12 @@ import * as BlockHandler from '../../modules/BlockHandler.js';
 import { getMaterial } from '../../modules/GraphicsHandler.js';
 import SIDE_DISPLACEMENT from '../../data/SideDisplacement.js';
 import * as TextureHandler from '../../modules/TextureHandler.js';
-import BlockData from '../../data/BlockData.js';
+import BlockData from '../../data/LegacyBlockData.js';
+import { g } from '../../utils/g.js';
+
+const loadedChunks = [];
 
 const primitive = new THREE.PlaneBufferGeometry(1, 1);
-window['geometry'] = primitive;
 
 /** @type {Record<number, {id: number, rot: number}>} */
 const redstoneTextureLookup = {
@@ -29,6 +31,8 @@ const redstoneTextureLookup = {
   14: { id: 2, rot: 846 },
   15: { id: 0, rot: 446 }
 };
+
+
 
 export default class Chunk {
 
@@ -70,7 +74,7 @@ export default class Chunk {
    */
   assignTo(scene) {
     if (!scene) {
-      throw new Error('Cannot assign chunk to falsy scene');
+      throw new Error('Cannot assign chunk to invalid scene');
     }
     this.scene = scene;
     if (this.blockList.length !== 0) {
@@ -146,24 +150,28 @@ export default class Chunk {
     } else {
       return 0;
     }
-
     // @ts-ignore
     return tl + t * 2 + tr * 4 + (r + (br + (b + (bl + l * 2) * 2) * 2) * 2) * 8;
   }
 
-  getFaces(useCached = false, skipAo = false, skipFaceOcclusion = false) {
+  getFaces(useCached = false, skipAo = false, skipFaceOcclusion = false, resetTextureFaces = false) {
     if (useCached && this._cachedFaces) {
       return this._cachedFaces;
     }
     /** @type {{ref: WorldBlock, x: number, y: number, z: number, rotationId: number, lightness: number, occlusionId: number, textureX: number, textureY: number, sideId: number}[]} */
     const faces = [];
     const get = WorldHandler.get;
+    const textureRec = {};
+
+    g("textureRec", textureRec);
+
     for (let i = this.blockList.length - 1; i >= 0; i--) {
       const block = this.blockList[i];
+      
       const gx = this.cx * 16 + block.x;
       const gy = this.cy * 16 + block.y;
       const gz = this.cz * 16 + block.z;
-
+      
       const sides = typeof block?.data?.faceCount === "number" ? block.data?.faceCount : 6;
 
       for (let j = 0; j < sides; j++) {
@@ -176,8 +184,13 @@ export default class Chunk {
             }
           }
         }
+        let faceTexture = textureRec[`${block.id}|${j}`];
 
-        let faceTexture = BlockHandler.getTextureFromBlock(block, j, gx, gy, gz);
+        if (!faceTexture || faceTexture === BlockHandler.FALLBACK_TEXTURE || resetTextureFaces) {
+          faceTexture = BlockHandler.getTextureFromBlock(block, j, gx, gy, gz);
+          textureRec[`${block.id}|${j}`] = faceTexture;
+        }
+        
         let rotationId;
         if (block.data?.isRedstone) {
           const rightBlock = get(gx + 1, gy, gz);
@@ -206,7 +219,7 @@ export default class Chunk {
           if (!redstoneTextureLookup[lookupId]) {
             faceTexture = BlockHandler.FALLBACK_TEXTURE;
             rotationId = 446;
-            console.warn("Unknown texture for " + lookupId + " at ", gx, gy, gz);
+            console.warn(`Unknown texture for ${lookupId} at`, gx, gy, gz);
           } else {
             faceTexture = block.data?.textureList[redstoneTextureLookup[lookupId].id];
             rotationId = redstoneTextureLookup[lookupId].rot;
@@ -277,7 +290,8 @@ export default class Chunk {
     instanced.attributes.uv = geometry.attributes.uv;
     instanced.index = geometry.index;
 
-    const faces = this.getFaces(false, false, false);
+    const faces = this.getFaces(false, false, false, TextureHandler.flags.resetTextures);
+    TextureHandler.flags.resetTextures = false;
     const faceCount = faces.length;
 
     if (faceCount === 0) {
@@ -313,11 +327,15 @@ export default class Chunk {
 
     /** @type {any} */ // @ts-ignore
     const mesh = new THREE.Mesh(instanced, material);
+    g("mesh", mesh);
     mesh.name = `${this.cx}x${this.cy}x${this.cz}`;
     mesh.position.set(this.cx * 16, this.cy * 16, this.cz * 16);
 
     this.instanced = instanced;
     this.mesh = mesh;
+    if (!loadedChunks.includes(this)) {
+      loadedChunks.push(this);
+    }
     return mesh;
   }
 
@@ -365,6 +383,8 @@ export default class Chunk {
     if ((typeof x === 'number'&&x >= 16) || (typeof y === 'number' && y >= 16) || (typeof z === 'number' && z >= 16)) {
       throw new Error(`Local chunk position for setting is outside (${x},${y},${z}) of the chunk buffer`);
     }
+    const r = (window["blockRec"]||(window["blockRec"]={}));
+    r[id] = (r[id]||0)+1;
     let changed = 0;
     if (id === 0) {
       this.clearBlock(x, y, z);
@@ -433,14 +453,27 @@ export default class Chunk {
    * @param {number|any} id 
    */
   addBlock(x, y, z, id) {
+    const def = WorldHandler.blockDefinitions?.[id];
     const blockObj = {
       id,
       data: WorldHandler.blockDefinitions[id],
       x: typeof x === 'number' ? x : parseInt(x),
       y: typeof y === 'number' ? y : parseInt(y),
       z: typeof z === 'number' ? z : parseInt(z),
-      texture: WorldHandler.blockDefinitions?.[id]?.texture||BlockData?.[id]?.texture || BlockHandler.FALLBACK_TEXTURE,
+      texture: null,
     };
+    if (def.textures instanceof Array && def.textures.length === 1) {
+      blockObj.texture = def.textures[0];
+    }
+    if (def.data && def.data.textures instanceof Array && def.data.textures.length === 1) {
+      blockObj.texture = def.data.textures[0];
+    }
+    if (def.data && def.data.texture && typeof def.data.texture === 'string') {
+      blockObj.texture = def.data.texture;
+    }
+    if (!blockObj.texture) {
+      blockObj.texture = BlockHandler.FALLBACK_TEXTURE;
+    }
     if (!this.blocks[z]) {
       this.blocks[z] = [];
     }

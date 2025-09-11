@@ -10,7 +10,7 @@ const addPid = false;
 
 // file path / file name
 const addSourceName = false;
-const addSourcePath = true;
+const addSourcePath = false;
 const addSourceRelative = true;
 const addSourceLine = true;
 const addSourceCol = 0;
@@ -96,15 +96,16 @@ function interpretErrorStack(lines = [""], addLineCode = false) {
   } else {
     placeOrigin = lines[errorLineIndex];
   }
+  const f = placeOrigin.indexOf("file:///");
   place = placeOrigin
     .substring(
-      placeOrigin.indexOf("///") + 3,
+      f === -1 ? placeOrigin.indexOf("///") + 3 : f + 7,
       placeOrigin.lastIndexOf(".js") + 3
     )
     .replace(/\\/g, "/");
   let [line, column] = (
     placeOrigin.substring(placeOrigin.lastIndexOf(".js:") + 4) + ":"
-  )
+  ).replace(')', '')
     .split(":")
     .map((v) => (v && v.length <= 5 && !v.match(/\D/g) ? parseInt(v) : NaN));
   const errorMarkerIndex = lines.findIndex(
@@ -123,9 +124,12 @@ function interpretErrorStack(lines = [""], addLineCode = false) {
     (l) => l.startsWith(" ") && l.trim().startsWith("at ")
   );
   const relativeSourcePath = place.replace(
-    process.cwd().replace(/\\/g, "/"),
+    cwd.join("/"),
     "."
   );
+  if (!relativeSourcePath.startsWith("./backend/")) {
+    throw new Error(`Something is wrong with the stack trace: ${JSON.stringify({ relativeSourcePath, cwd })}`);
+  }
   const sourceRec = {};
   if (addLineCode && place) {
     const sourceText = addLineCode
@@ -150,18 +154,16 @@ function interpretErrorStack(lines = [""], addLineCode = false) {
     })
     .filter((f) => f?.length)
     .map((line) => {
-      const raw = line
-        .substring(line.indexOf("at "))
-        .replace("at async ", "at ")
-        .replace("at ", "");
+      const raw = line.substring(line.indexOf("at ")).replace("at async ", "at ").replace("at ", "");
       const open = raw.indexOf(" (");
+      
+      const f = raw.indexOf("file:///");
       let place =
-        open === -1 && raw.startsWith("file:///")
-          ? raw
+        open === -1 && f === 0 ? raw.substring(f + 7)
           : open === -1
-          ? ""
-          : raw.substring(open + 2, raw.lastIndexOf(")"));
-      place = place.replace("file:///", "").replace(/\\/g, "/");
+            ? ""
+            : raw.substring(f === -1 ? open + 2 : f + 7, raw.lastIndexOf(")"));
+      place = place.replace(/\\/g, "/");
       if (!place.startsWith("node:internal") && place.startsWith(cwd[0])) {
         const parts = place.split("/");
 
@@ -180,8 +182,8 @@ function interpretErrorStack(lines = [""], addLineCode = false) {
           open === -1 && raw.startsWith("file:///")
             ? ""
             : open === -1
-            ? raw
-            : raw.substring(0, open),
+              ? raw
+              : raw.substring(0, open),
         place,
         line: NaN,
         column: NaN,
@@ -369,7 +371,6 @@ function appendTextPrefixRec(
         realStack ? realStack : (realStack = new Error("").stack),
         Boolean(addSourceCode)
       );
-
       let stack = interpreted?.stack;
 
       // Skip stacks related to this script
@@ -418,8 +419,8 @@ function appendTextPrefixRec(
             addSourceLine && line && addSourceCol && column
               ? `:${line}:${column}`
               : addSourceLine && line
-              ? `:${line}`
-              : "";
+                ? `:${line}`
+                : "";
           if (sufix && place) {
             cache[place] = Math.max(
               cache[place] ? cache[place] : 0,
@@ -433,14 +434,14 @@ function appendTextPrefixRec(
             src:
               addSourceRelative && !internal
                 ? (place.startsWith("./../") ? place.substring(2) : place) +
-                  sufix
+                sufix
                 : addSourcePath && !internal
-                ? path.resolve(place).replace(/\\/g, "/") + sufix
-                : addSourcePath
-                ? place + sufix
-                : addSourceName
-                ? place.split("/").pop() + sufix
-                : undefined,
+                  ? path.resolve(place).replace(/\\/g, "/") + sufix
+                  : addSourcePath
+                    ? place + sufix
+                    : addSourceName
+                      ? place.split("/").pop() + sufix
+                      : undefined,
             method: addMethodName && method ? `[${method}]` : undefined,
             code: addSourceCode ? code : undefined,
           };
@@ -506,7 +507,7 @@ function appendTextPrefixRec(
           j !== -1 &&
           typeof match.value === "string" &&
           match.value.substring(0, i + 3) ===
-            cache["lastSource"].substring(0, i + 3)
+          cache["lastSource"].substring(0, i + 3)
         ) {
           match.value = " ".repeat(i + 3) + match.value.substring(i + 3);
         } else {
@@ -528,8 +529,8 @@ function appendTextPrefixRec(
           typeof obj.value === "string"
             ? obj.value
             : obj
-            ? JSON.stringify(obj.value, null, "  ")
-            : "";
+              ? JSON.stringify(obj.value, null, "  ")
+              : "";
         if (obj.type === "stack") {
           const c1 = colorPrefixType?.["source"];
           const i = text.indexOf(".js");
@@ -606,8 +607,8 @@ export function replaceProcessOutput(outputFilePath = "") {
           result instanceof Buffer
             ? result.toString("utf-8")
             : typeof result === "string"
-            ? result
-            : "";
+              ? result
+              : "";
         if (outputFilePath && text) {
           try {
             fs.appendFileSync(outputFilePath, `${text}\n`, "utf-8");
@@ -622,21 +623,20 @@ export function replaceProcessOutput(outputFilePath = "") {
           stdout instanceof Buffer
             ? stdout.toString("utf-8")
             : typeof stdout === "string"
-            ? stdout
-            : "";
+              ? stdout
+              : "";
         let stderr = err?.stderr || err?.output[2];
         stderr =
           stderr instanceof Buffer
             ? stderr.toString("utf-8")
             : typeof stderr === "string"
-            ? stderr
-            : "";
+              ? stderr
+              : "";
         if (outputFilePath) {
           try {
             fs.appendFileSync(
               outputFilePath,
-              `Failed with exit code ${err?.status} and ${
-                stdout.length
+              `Failed with exit code ${err?.status} and ${stdout.length
               } bytes of output${stdout.length ? ":\n" + stdout : ""}\n`,
               "utf-8"
             );
@@ -652,23 +652,23 @@ export function replaceProcessOutput(outputFilePath = "") {
   const original = !outputFilePath
     ? _original
     : function (...args) {
-        // @ts-ignore
-        const fd = this.fd;
-        if (typeof args[0] !== "string" || typeof fd !== "number")
-          return _original.call(this, ...args);
-        const uncolored = args[0]
-          .replace(/\u001B\[\d+m/g, "")
-          .replace(/\x1b\[\d+m/g, "")
-          .replace(/\[\d+m/g, "");
-        if ((fd === 1 || fd === 2) && outputFilePath) {
-          try {
-            fs.appendFileSync(outputFilePath, uncolored, "utf-8");
-          } catch (err) {
-            outputFilePath = null;
-          }
-        }
+      // @ts-ignore
+      const fd = this.fd;
+      if (typeof args[0] !== "string" || typeof fd !== "number")
         return _original.call(this, ...args);
-      };
+      const uncolored = args[0]
+        .replace(/\u001B\[\d+m/g, "")
+        .replace(/\x1b\[\d+m/g, "")
+        .replace(/\[\d+m/g, "");
+      if ((fd === 1 || fd === 2) && outputFilePath) {
+        try {
+          fs.appendFileSync(outputFilePath, uncolored, "utf-8");
+        } catch (err) {
+          outputFilePath = null;
+        }
+      }
+      return _original.call(this, ...args);
+    };
   let inside = false;
   net.Socket.prototype.write = function (arg, ...args) {
     if (paused) {

@@ -5,7 +5,7 @@ import {
   ids,
   keys,
   blockStore,
-} from "./BlockNamingStorage.js";
+} from "./BlockSharedStorage.js";
 
 const saveDelay = 0;
 

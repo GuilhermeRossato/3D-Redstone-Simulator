@@ -7,11 +7,13 @@ import { createSnackbarAlert } from "../../utils/createSnackbarAlert.js";
 import { g } from "../../utils/g.js";
 import { sleep } from "../../utils/sleep.js";
 import { scene } from "../GraphicsHandler.js";
+import { createPlayerId, expectedPlayerIdLength} from "../../utils/createPlayerId.js";
 
-export let active = false;
+ 
 
 export const flags = {
   connected: false,
+  active: false,
 };
 
 const playerEntityRecord = {};
@@ -50,18 +52,20 @@ export function getPlayerEntityId() {
 
 export async function load() {
   try {
+    console.log("Initializing socket...");
     await initializeSocket();
     await performLogin();
-    active = true;
+    flags.active = true;
   } catch (err) {
-    active = false;
+    console.log('Multiplayer failed to start:', err.message);
+    flags.active = false;
     err.message = `Multiplayer failed to start: ${err.message}`;
     throw err;
   }
-  return active;
+  return flags.active;
 }
 
-async function processServerChunkResponse(responses, blockLookup) {
+async function processServerChunkResponse(responses, list = []) {
   const chunks = (responses instanceof Array) ? responses : [responses];
   if (!chunks || (Array.isArray(chunks) && chunks.length === 0)) {
     return;
@@ -75,12 +79,12 @@ async function processServerChunkResponse(responses, blockLookup) {
     for (const y in chunk.blocks) {
       for (const x in chunk.blocks[y]) {
         for (const z in chunk.blocks[y][x]) {
-          let id = chunk.blocks[y][x][z];
-
+          const id = chunk.blocks[y][x][z];
           if (id === 0 || id === null || id === undefined || id === false) {
             continue;
           }
           instance.set(x, y, z, id);
+          list&&list.push([id, chunk.cx * 16 + Number(x), Number(y), chunk.cz * 16 + Number(z)].join('  '));
         }
       }
     }
@@ -90,6 +94,7 @@ async function processServerChunkResponse(responses, blockLookup) {
       instance.requestMeshUpdate();
     }
   }
+  return list;
 }
 
 async function processServerRegionResponse(region) {
@@ -137,28 +142,34 @@ function initWorld(blockList) {
   }
 }
 
-export async function getStoredSelfLoginCode() {
-  let selfLoginCode = window.localStorage.getItem("self-login-code");
-  if (!selfLoginCode || selfLoginCode.length < 5 + 7) {
-    const yearDigit = new Date().getFullYear().toString().split('').pop(); // 1
-    const monthPair = (new Date().getMonth() + 1).toString().padStart(2, "0"); // 2
-    const datePair = new Date().getDate().toString().padStart(2, "0"); // 2
-    const randomStr = Math.floor(Math.random() * 8999999 + 1000000).toString(); // 7
-    selfLoginCode = [monthPair, yearDigit, randomStr, datePair].join('');
-    console.log("Generated new selfLoginCode with", selfLoginCode.length, "chars:", selfLoginCode);
-    window.localStorage.setItem("self-login-code", selfLoginCode);
-  } else {
-    console.log("Using existing selfLoginCode with", selfLoginCode.length, "chars");
+export async function getStoredPlayerId() {
+  let id = window.localStorage.getItem("self-login-code");
+  if (!id) {
+    id = createPlayerId();
+    console.log("Generated player id with", id.length, "chars:", id);
+    window.localStorage.setItem("self-login-code", id);
+  } 
+  if (id && id.length > expectedPlayerIdLength && id.split("|").length > 1) {
+    console.log("[D]", "Self login code is an array and will be limited to 1 item");
+    id = id.split("|").filter((entry) => entry.length === expectedPlayerIdLength).slice(0, 1).join("|");
   }
-  if (selfLoginCode.length > 5 + 7) {
-    console.log("Trimming selfLoginCode to 5+7 characters from", selfLoginCode.length, "chars");
-    selfLoginCode = selfLoginCode.substring(0, 5 + 7);
+  if (id && id.startsWith('p') && id.length === expectedPlayerIdLength + 1) {
+    id = id.substring(1);
   }
-  if (selfLoginCode.split("|").length > 1) {
-    debug && console.log("[D]", "Self login code is too long, limiting it");
-    selfLoginCode = selfLoginCode.split("|").slice(0, 1).join("|");
+  if (id && id.startsWith('e') && id.length > expectedPlayerIdLength) {
+    id = id.substring(1, 1 + expectedPlayerIdLength);
   }
-  return selfLoginCode;
+  if (id.length > expectedPlayerIdLength+4) {
+    console.log("Trimming Trimmed player id from", id.length, "chars");
+    id = id.substring(0, expectedPlayerIdLength+4);
+  }
+  if (id.length < expectedPlayerIdLength) {
+    console.log("Stored player id is too short (", id.length, "chars), regenerating");
+    id = createPlayerId();
+    console.log("Generated new player id with", id.length, "chars:", id);
+    window.localStorage.setItem("self-login-code", id);
+  }
+  return id;
 }
 
 export async function getCookieId() {
@@ -172,10 +183,26 @@ export async function getCookieId() {
   return "";
 }
 
+function loadLocalBlockTypeTimes() {
+  let blocksTimes = {};
+  try {
+    const blockTimesStr = localStorage.getItem('block-times');
+    if (blockTimesStr) {
+      blocksTimes = JSON.parse(blockTimesStr);
+    }
+    if (!blocksTimes || typeof blocksTimes !== 'object' || Array.isArray(blocksTimes) || Object.keys(blocksTimes).length === 0) {
+      blocksTimes = {};
+    }
+  } catch (err) {
+    console.error(err);
+  }
+  return blocksTimes || {};
+}
+
 async function performLogin() {
-  const snack = await createSnackbarAlert("Performing login...", "info");
+  //const snack = await createSnackbarAlert("Performing login...", "info");
   let cookieId = await getCookieId();
-  const sentId = await getStoredSelfLoginCode();
+  let sentId = await getStoredPlayerId();
   let startPose = (sessionStorage.getItem('last-player-pose') || '0').split(',').map(i => parseFloat(i))
   if (startPose.length < 3 || startPose.slice(0, 6).some(num => isNaN(num))) {
     startPose = (localStorage.getItem('last-player-pose') || '0').split(',').map(i => parseFloat(i));
@@ -183,92 +210,123 @@ async function performLogin() {
   if (startPose.length < 3 || startPose.slice(0, 6).some(num => isNaN(num))) {
     startPose = undefined;
   }
-  const initResponse = await sendEvent({
+  if (startPose.length < 4) {
+    startPose.push(0);
+  }
+  if (startPose.length < 5) {
+    startPose.push(0);
+  }
+  if (startPose.length < 6) {
+    startPose.push(0);
+  }
+  const pkt = await sendEvent({
     type: "setup",
-    selfLoginCode: sentId,
+    playerId: sentId,
     cookieId: cookieId || localStorage.getItem("last-cookie-id"),
-    session: sessionStorage.getItem("session-id") || "",
+    session: sessionStorage.getItem("last-session-id") || "",
     pose: startPose,
   }, true);
-  console.log("Setup response", initResponse);
-  if (initResponse?.code === 'already-logged-in') {
-    snack("You are already logged in...");
+
+  console.log("Setup response", pkt);
+
+  if (pkt?.code === 'already-logged-in') {
+    //snack("You are already logged in...");
     await sleep(2000);
   }
-  if (initResponse?.success !== true) {
-    snack();
+
+  if (!pkt || pkt.success !== true) {
+    //snack();
     createSnackbarAlert("The server did not return success", "error");
-    console.log("Invalid server object:", initResponse);
+    console.log("Invalid server object:", pkt);
     throw new Error("Server did not return success on connection setup packet");
   }
-  if (initResponse?.selfLoginCode && initResponse?.selfLoginCode !== sentId) {
-    console.warn("Server returned different selfLoginCode, updating local storage");
-    localStorage.setItem("self-login-code", initResponse.selfLoginCode);
+
+  if (pkt?.playerId && pkt?.playerId !== sentId && pkt?.playerId !== `p${sentId}`) {
+    console.warn("Server returned different playerId, updating local storage");
+    sentId = pkt.playerId.startsWith('p') ? pkt.playerId.substring(1) : pkt.playerId;
+    window.localStorage.setItem("self-login-code", sentId);
   }
+
   flags.connected = true;
+
   // Update cookie id
-  if (typeof initResponse.cookieId === "string" && initResponse.cookieId !== cookieId) {
-    localStorage.setItem("last-cookie-id", initResponse.cookieId);
+  if (typeof pkt.cookieId === "string" && pkt.cookieId !== cookieId) {
+    localStorage.setItem("last-cookie-id", pkt.cookieId);
     console.log("Updating cookieId");
-    document.cookie = `id=${initResponse.cookieId}; expires=${new Date(new Date().getTime() + 31_536_000_000).toUTCString()}`;
-    cookieId = initResponse.cookieId;
+    document.cookie = `id=${pkt.cookieId}; expires=${new Date(new Date().getTime() + 31_536_000_000).toUTCString()}`;
+    cookieId = pkt.cookieId;
   }
-  snack("Getting context...");
-  await sleep(200);
+
+  //snack("Getting context...");
+
+  const blockTypeTimes = loadLocalBlockTypeTimes();
+  
   const ctx = await sendEvent({
     type: "context",
-    variant: "spawn",
+    pose: startPose,
+    blockTypeTimes,
+    session: sessionStorage.getItem("last-session-id") || "",
     entityId: sessionStorage.getItem("last-entity-id") || "",
   }, true);
 
   console.log('Context response', ctx);
 
-  if (!ctx || !ctx.player || !ctx.chunks) {
-    snack();
+  if (!ctx || !ctx.player || !ctx.chunks || !ctx.regions) {
+    //snack();
     createSnackbarAlert("Context request failed", "error");
     throw new Error("Received invalid context packet");
   }
-  if (ctx?.entity?.id) {
-    sessionStorage.setItem("last-entity-id", ctx.entity.id);
+
+  if (ctx.blocks) {
+    WorldHandler.addBlockDefinitions(ctx.blocks);
   }
-  if (ctx.regions) {
-    for (const region of ctx.regions) {
-      if (!region || !region.id) {
-        console.warn("Invalid region received from server:", region);
-        continue;
-      }
-      if (!region.entities || !region.entities.length) {
-        continue;
-      }
+
+  const clist = [];
+  const pending = [];
+
+  for (const chunk of ctx.chunks) {
+    if (!chunk || !chunk.id) {
+      console.warn("Invalid Chunk received from server:", chunk);
+      continue;
+    }
+    if (!chunk.blocks) {
+      pending.push(chunk.id);
+      continue;
+    }
+    if (Object.keys(chunk.blocks).length) {
+      console.log("Processing chunk", chunk.id, "...");
+      await processServerChunkResponse(chunk, clist);
+    }
+  }
+  
+  for (const region of ctx.regions) {
+    if (!region || !region.id) {
+      console.warn("Invalid region received from server:", region);
+      continue;
+    }
+    if (!region.entities) {
+      pending.push(region.id);
+      continue;
+    }
+    if (region.entities.length) {
       console.log("Processing region", region.id, "with", region.entities.length, "entities");
       await processServerRegionResponse(region);
     }
   }
-  const blockLookup = ctx.blocks;
-  if (!blockLookup || typeof blockLookup !== "object" || Object.keys(blockLookup).length === 0) {
-    snack('No block definitions received from server');
-    throw new Error("Server did not return block definitions");
+
+  console.log("Pending chunks or regions to load:", pending.length);
+
+  if (!ctx.blocks || !Object.keys(ctx.blocks).length) {
+    throw new Error("No block definitions received from server");
   }
 
-  WorldHandler.addBlockDefinitions(blockLookup);
-
+  console.log("Applying window[\"player\"] for debugging");
   g("player", (player = ctx.player));
 
-  const list = [];
-  if (ctx.regions) {
-    for (const item of ctx.regions) {
-      list.push(item.id);
-    }
-  }
-  if (ctx.chunks) {
-    for (const item of ctx.chunks) {
-      list.push(item.id);
-    }
-  }
-  const groupSize = Math.ceil(list.length / 9);
-  const groups = list.length < 9 ? list.map(i => [i]) : Array.from({
+  const groupSize = Math.ceil(pending.length / 9);
+  const groups = pending.length < 9 ? pending.map(i => [i]) : Array.from({
     length: 9
-  }, (_, index) => list.slice(index * groupSize, index + 1 === 9 ? list.length : (index + 1) * groupSize));
+  }, (_, index) => pending.slice(index * groupSize, index + 1 === 9 ? pending.length : (index + 1) * groupSize));
   // Perform server time syncronization
   const syncPairs = [];
   let maxOffset = -Infinity;
@@ -281,7 +339,7 @@ async function performLogin() {
       client,
       subjects: groups[i],
     }, true);
-    i === 0 && console.log("Sync response:", response);
+    i <= 1 && console.log("Sync response:", response);
     const server = response?.server;
     if (!server || typeof server !== "number" || isNaN(server) || server <= 1000 || Math.abs(server - client) > 180_000) {
       throw new Error("Invalid or missing time values on sync: Server did not sent time or the client date does not match the server date");
@@ -299,7 +357,7 @@ async function performLogin() {
         if (state.id.startsWith("r")) {
           await processServerRegionResponse(state);
         } else {
-          await processServerChunkResponse(state, blockLookup);
+          await processServerChunkResponse(state, clist);
         }
       }
     }
@@ -347,7 +405,7 @@ async function performLogin() {
     throw new Error(`Server returned error on spawn: ${spawn.message}`);
   }
 
-  if (typeof spawn?.player?.pose !== "object") {
+  if (typeof spawn?.entity?.pose !== "object") {
     console.log("Invalid server object (Missing player pose)", spawn);
     throw new Error("First context request did not return current player position data");
   }
@@ -357,7 +415,7 @@ async function performLogin() {
   player.entity = spawn.entity.id;
 
   // Update player position
-  const pose = spawn?.player?.pose || ctx?.player?.pose;
+  const pose = spawn?.entity?.pose || ctx?.entity?.pose;
   if (pose instanceof Array && typeof pose[0] === "number" && !isNaN(pose[0]) && typeof pose[1] === "number" && !isNaN(pose[1]) && typeof pose[2] === "number" && !isNaN(pose[2])) {
     if (JSON.stringify(pose) === '[0,2,0,0,0,0]') {
       console.log("Ignored default position")
@@ -374,10 +432,12 @@ async function performLogin() {
       EntityHandler.addEntityToScene(entity);
     });
   }
+  g("clist", clist);
+  console.log('window.clist has', clist.length, 'blocks initialized from server');
 }
 
 export async function sendClientAction(action) {
-  if (!active) {
+  if (!flags.active) {
     return;
   }
   if (action.type === "move" && player) {
@@ -396,7 +456,7 @@ export async function sendClientAction(action) {
 }
 
 export function update(frame) {
-  if (active && player) {
+  if (flags.active && player) {
     updateSelfState(frame);
   }
 }

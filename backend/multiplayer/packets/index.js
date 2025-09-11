@@ -1,4 +1,4 @@
-const backendPath = './backend';
+
 import { sfs } from "../../utils/sfs.js";
 import path from "path";
 import setup from "./setup.js";
@@ -7,11 +7,15 @@ import spawn from "./spawn.js";
 import world from "./world.js";
 import block from "./block.js";
 import context from "./context.js";
+import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
+import { appendFileSync, writeFileSync } from "fs";
 
 const record = {};
 
 const logPacketTypes = false;
 const directMode = false;
+
+const backendFolderPath = getProjectFolderPath('backend');
 
 /**
  * Routes packets to their handlers.
@@ -26,7 +30,7 @@ export function index(packet, ctx, count, pings) {
     packet.type = "block";
   }
   logPacketTypes && packet.type !== "move" && console.log('[Packet]', packet.type, typeof packet.index==='number'? packet.index : '', "received");
-  const relative = `${backendPath}/multiplayer/packets/${packet.type}.js`;
+  const relative = `${backendFolderPath}/multiplayer/packets/${packet.type}.js`;
   if (typeof record[packet.type]?.handler === "function") {
     return record[packet.type].handler(packet, ctx, count, pings);
   }

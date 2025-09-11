@@ -1,7 +1,6 @@
-
 import fs from 'fs';
 import { getStorageObjectFilePath } from "./primitives/StorageObjectStore.js";
-import { getBlockNamingId, registerBlockNamingData } from "./blocks/BlockNamingStorage.js";
+import { getBlockNamingId, registerBlockNamingData } from "./blocks/BlockSharedStorage.js";
 import {
   appendServerChunkChanges,
   clearServerChunkChanges,
@@ -10,14 +9,14 @@ import {
   writeServerChunkState,
 } from "./ServerChunkStore.js";
 import { connectedPlayers } from './ServerRegion.js';
+import { createServerStore } from './ServerStore.js';
+import { convertBlockListToBlockRecord } from './convertBlockListToBlockRecord.js';
 
-let unchanged_log = 64;
-const saved_event_limit = 64;
 const unsaved_event_limit = 128;
 const unsaved_time_limit = 500;
 
 let sampleState = {
-  cx: 0, cy: 0, cz: 0,
+  id: '',
   blocks: {},
   fileSize: 0,
 };
@@ -26,10 +25,33 @@ export const serverChunkRecord = {};
 
 /**
  * @param {any} event
- * @returns {event is {type: string, x: number, y: number, z: number, id?: string | number}} Returns `true` if the input matches the expected type, otherwise `false`.
+ * @returns {event is {type: string, x: number, y: number, z: number, b?: string | number, id?: string | number}} Returns `true` if the input matches the expected type, otherwise `false`.
  */
 function isSetBlockEvent(event) {
   if (event && typeof event === 'object' && event.type === 'set' && typeof event.x === "number" && typeof event.y === "number" && typeof event.z === "number") {
+    if (typeof event.b !== "number" && typeof event.id === "number") {
+      event.b = event.id;
+    }
+    if (typeof event.b === "number") {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * @param {any} event
+ * @returns {event is {type: string, x: number, y: number, z: number, block?: undefined, id?: string | number, time?: number}} Returns `true` if the input matches the expected type, otherwise `false`.
+ */
+function isRemoveBlockEvent(event) {
+  if (
+    event &&
+    typeof event === 'object' &&
+    event.type === 'remove' &&
+    typeof event.x === 'number' &&
+    typeof event.y === 'number' &&
+    typeof event.z === 'number'
+  ) {
     return true;
   }
   return false;
@@ -37,6 +59,7 @@ function isSetBlockEvent(event) {
 
 const checkEvent = {
   isSetBlock: isSetBlockEvent,
+  isRemoveBlock: isRemoveBlockEvent,
 }
 
 /**
@@ -56,11 +79,11 @@ function applyServerChunkEvent(obj, event) {
       if (!obj.blocks[event.y][event.x]) {
         obj.blocks[event.y][event.x] = {};
       }
-      if (obj.blocks[event.y][event.x][event.z] === event.id) {
+      if (obj.blocks[event.y][event.x][event.z] === event.b) {
         return false;
       }
-      console.log('Set block', event.x, event.y, event.z, 'event:', event.id);
-      obj.blocks[event.y][event.x][event.z] = event.id;
+      console.log('Set block', event.x, event.y, event.z, 'event:', event.b);
+      obj.blocks[event.y][event.x][event.z] = event.b;
     } else {
       if (!obj.blocks) {
         return false;
@@ -85,8 +108,60 @@ function applyServerChunkEvent(obj, event) {
     }
     return true;
   }
+  if (checkEvent.isRemoveBlock(event)) {
+    console.log('Remove block event detected:', JSON.stringify(event).substring(0, 16), 'length:', JSON.stringify(event).length);
+
+    if (!obj.blocks) {
+      return false;
+    }
+    if (!obj.blocks[event.y]) {
+      return false;
+    }
+    if (!obj.blocks[event.y][event.x]) {
+      return false;
+    }
+    if (!obj.blocks[event.y][event.x][event.z]) {
+      return false;
+    }
+    console.log('Remove block', event.x, event.y, event.z, 'event');
+    delete obj.blocks[event.y][event.x][event.z];
+    if (Object.keys(obj.blocks[event.y][event.x]).length === 0) {
+      delete obj.blocks[event.y][event.x];
+      if (Object.keys(obj.blocks[event.y]).length === 0) {
+        delete obj.blocks[event.y];
+      }
+    }
+    return true;
+  }
   throw new Error(`Unhandled chunk event: ${JSON.stringify(event)}`);
 }
+
+const chunkStore = createServerStore({
+  typeName: 'chunk',
+  unsaved_event_limit,
+  unsaved_time_limit,
+  sampleState,
+  loadState: async (id, sample) => await loadServerChunkState(id, sample),
+  loadChanges: async (id) => await loadServerChunkChanges(id),
+  writeState: async (id, state) => await writeServerChunkState(id, state),
+  appendChanges: async (id, changes) => await appendServerChunkChanges(id, changes),
+  clearChanges: async (id) => await clearServerChunkChanges(id),
+  applyEvent: applyServerChunkEvent,
+  unserializeState: (state, instance) => {
+    //if (state.blockList && state.blockList instanceof Array) {
+    //  state.blocks = convertBlockListToBlockRecord(state.blockList);
+    //}
+    return state;
+  },
+  serializeState: (stateClone, instance) => {
+    // remove coordinates before write
+    stateClone.blockList = Object.entries(stateClone.blocks).map(([x, a]) => Object.entries(a).map(([y, b]) => Object.entries(b).map(([z, id]) => `x${x}y${y}z${z}i${id}`)).flat()).flat();
+    //delete stateClone.blocks;
+    delete stateClone.cx;
+    delete stateClone.cy;
+    delete stateClone.cz;
+  },
+});
 
 export class ServerChunk {
   constructor(cx = 0, cy = 0, cz = 0) {
@@ -94,7 +169,6 @@ export class ServerChunk {
     this.cx = cx | 0;
     this.cy = cy | 0;
     this.cz = cz | 0;
-    this.saveTimer = null;
     this.eventCount = 0;
     this.saved = 0;
     this.loaded = 0;
@@ -137,10 +211,7 @@ export class ServerChunk {
       return true;
     }
     try {
-      this.state = await loadServerChunkState(this.id, sampleState);
-      if (this.state.entities) {
-        delete this.state.entities;
-      }
+      this.state = await loadServerChunkState(this.id, { fileSize: 0 });
       if (this.state && this.state.fileSize > 0) {
         return true;
       }
@@ -148,6 +219,101 @@ export class ServerChunk {
       console.error(`Failed to load chunk state for ${this.id}:`, err);
     }
     return false;
+  }
+
+  async add(event, immediate = false) {
+    if (!event.time) {
+      event.time = Date.now();
+    }
+    if (!this.loaded) {
+      await this.load();
+    }
+    if (typeof event.x === 'number') { event.x -= (this.cx * 16); }
+    if (typeof event.y === 'number') { event.y -= (this.cy * 16); }
+    if (typeof event.z === 'number') { event.z -= (this.cz * 16); }
+    const b = event.b;
+    if (event.type === 'set' && typeof b === 'string' && b && !b.includes(':')) {
+      const id = await getBlockNamingId(b);
+      if (id) {
+        event.b = id;
+      } else {
+        const result = await registerBlockNamingData({ key: b });
+        if (!result?.id) {
+          throw new Error(`Failed to create new block type with key "${b}"`);
+        }
+        event.b = result.id;
+      }
+    }
+    if (!applyServerChunkEvent(this.state, event)) {
+      console.log('Event did not change chunk state:', event.pose);
+      return event;
+    }
+    const others = Object.values(connectedPlayers).filter((ctx) => ctx?.entity?.id !== b);
+    if (others.length) {
+      // console.log('Broadcasting',event.player,'event to', others.length, 'connected players:', event);
+      for (const ctx of others) {
+        const distance = ctx.region.distance(this);
+        console.log(`Evaluating`, event.type, `broadcast to player ${ctx.player.id} from "${this.id}" in region "${ctx.region.id}" with distance ${distance}`);
+        if (distance <= 2) {
+          ctx.send(event);
+        }
+      }
+    }
+    return await chunkStore.add(this, event, immediate);;
+  }
+
+  async set(x, y, z, id) {
+    return await this.add({ x, y, z, b: id, type: id ? "set" : "remove" });
+  }
+
+  getTimeSinceLoad() {
+    return Date.now() - this.loaded;
+  }
+
+  static async flushAll() {
+    for (const chunk of Object.values(serverChunkRecord)) {
+      if (!chunk.loaded && !chunk.unsaved.length && !chunk.eventCount) {
+        continue;
+      }
+      await chunk.flush();
+    }
+  }
+
+  async flush() {
+    return await chunkStore.flush(this);
+  }
+
+  async load(forceRefresh = false) {
+    return await chunkStore.load(this, forceRefresh);
+  }
+
+  static fromAbsolute(x, y = undefined, z = undefined) {
+    if (
+      x &&
+      typeof x === 'object' &&
+      x.pose instanceof Array &&
+      x.pose.length >= 3 &&
+      y === undefined &&
+      z === undefined
+    ) {
+      z = x.pose[2];
+      y = x.pose[1];
+      x = x.pose[0];
+    }
+    if (
+      x instanceof Array &&
+      x.length >= 3 &&
+      y === undefined &&
+      z === undefined
+    ) {
+      z = x[2];
+      y = x[1];
+      x = x[0];
+    }
+    const cx = Math.floor(x / 16);
+    const cy = Math.floor(y / 16);
+    const cz = Math.floor(z / 16);
+    return ServerChunk.from(cx, cy, cz);
   }
 
   /**
@@ -209,200 +375,5 @@ export class ServerChunk {
       throw new Error("Invalid arguments");
     }
     return ServerChunk.get(cx, cy, cz);
-  }
-
-  async add(event, immediate = false) {
-    if (!this.loaded) {
-      await this.load();
-    }
-    if (!event.time) {
-      event.time = Date.now();
-    }
-    if (typeof event.x === 'number') { event.x -= (this.cx * 16); }
-    if (typeof event.y === 'number') { event.y -= (this.cy * 16); }
-    if (typeof event.z === 'number') { event.z -= (this.cz * 16); }
-    if (event.type === 'set' && typeof event.id === 'string' && event.id && !event.id.includes(':')) {
-      const id = await getBlockNamingId(event.id);
-      if (id) {
-        event.id = id;
-      } else {
-        const result = await registerBlockNamingData({ key: event.id });
-        if (!result?.id) {
-          throw new Error(`Failed to create new block type with key "${event.id}"`);
-        }
-        event.id = result.id;
-      }
-    }
-    if (!applyServerChunkEvent(this.state, event)) {
-      console.log('Event did not change chunk state:', event.pose);
-      return event;
-    }
-    const others = Object.values(connectedPlayers).filter((ctx) => ctx?.entity?.id !== event.id);
-    if (others.length) {
-      // console.log('Broadcasting',event.player,'event to', others.length, 'connected players:', event);
-      for (const ctx of others) {
-        const distance = ctx.region.distance(this);
-        console.log(`Evaluating`, event.type, `broadcast to player ${ctx.player.id} from "${this.id}" in region "${ctx.region.id}" with distance ${distance}`);
-        if (distance <= 2) {
-          ctx.send(event);
-        }
-      }
-    }
-    this.unsaved.push(event);
-    if (event.persist === false) {
-      return event;
-    }
-    if (immediate || this.unsaved.length > unsaved_event_limit) {
-      await this.flush();
-    } else if (!this.saveTimer) {
-      this.saveTimer = setTimeout(this.flush, unsaved_time_limit);
-    }
-    return event;
-  }
-
-  async set(x, y, z, id) {
-    return await this.add({ x, y, z, id, type: id ? "set" : "remove" });
-  }
-
-  static async flushAll() {
-    for (const chunk of Object.values(serverChunkRecord)) {
-      if (!chunk.loaded && !chunk.unsaved.length && !chunk.eventCount) {
-        continue;
-      }
-      await chunk.flush();
-    }
-  }
-  /**
-   * Write the changes to disk
-   */
-  async flush() {
-    if (this.flushing) {
-      console.log('Flush already in progress for chunk', this.id);
-      return this.flushPromise;
-    }
-
-    this.flushing = true;
-    this.flushPromise = (async () => {
-      try {
-        if (this.saveTimer) {
-          clearTimeout(this.saveTimer);
-          this.saveTimer = null;
-        }
-        if (!this.loaded) {
-          await this.load();
-        }
-        if ((this.state.fileSize === 0 && this.unsaved.length) || this.unsaved.length + this.eventCount > saved_event_limit) {
-          console.log(
-            "Saving full chunk state",
-            [this.id],
-            "with",
-            this.unsaved.length + this.eventCount,
-            "events"
-          );
-          this.state.cx = this.cx;
-          this.state.cy = this.cy;
-          this.state.cz = this.cz;
-          this.state.fileSize = await writeServerChunkState(this.id, this.state);
-          await clearServerChunkChanges(this.id);
-          this.saved = Date.now();
-          this.unsaved = [];
-          this.eventCount = 0;
-        } else if (this.unsaved.length) {
-          console.log(
-            "Appending chunk changes",
-            [this.id],
-            "with",
-            this.unsaved.length,
-            "events"
-          );
-          await appendServerChunkChanges(this.id, this.unsaved);
-          this.appended = Date.now();
-          this.eventCount += this.unsaved.length;
-          this.unsaved = [];
-        } else {
-          console.log('No changes to flush for chunk', this.id);
-        }
-      } catch (err) {
-        console.log('Failed to flush chunk', this.id, 'with', this.unsaved.length, 'unsaved events');
-        throw err;
-      } finally {
-        this.flushing = false;
-        this.flushPromise = null;
-      }
-    })();
-
-    return this.flushPromise;
-  }
-
-  getTimeSinceLoad() {
-    return Date.now() - this.loaded;
-  }
-
-
-  async load(forceRefresh = false) {
-    if (this.loaded && this.state && !forceRefresh) {
-      console.log('Chunk', this.id, 'already loaded, skipping load');
-      return this;
-    }
-    this.state = await loadServerChunkState(this.id, sampleState);
-    if (this.state.entities) {
-      delete this.state.entities;
-    }
-    const isEmpty = this.state === sampleState;
-    if (isEmpty) {
-      this.state.cx = this.cx;
-      this.state.cy = this.cy;
-      this.state.cz = this.cz;
-      sampleState = JSON.parse(JSON.stringify(sampleState));
-    }
-    const changes = await loadServerChunkChanges(this.id);
-    if (isEmpty && changes.length) {
-      console.log(`Loaded chunk ${this.id} with ${changes.length} changes, but no state found.`);
-    }
-    for (const event of changes) {
-      try {
-        if (event?.type==="move"||event?.type==='spawn') continue;
-        //console.log('Applying event to chunk', this.id, ':', event.x, event.y, event.z, event.id, event.type);
-        if (!applyServerChunkEvent(this.state, event)) {
-          ((unchanged_log--)>0)&&console.log('Event of type',event.type,'did not change chunk state:', event);
-          continue;
-        }
-      } catch (err) {
-        console.error(`Error applying event to chunk ${this.id}:`, err, event);
-        continue;
-      }
-    }
-    this.eventCount = changes.length;
-    this.loaded = Date.now();
-    return this;
-  }
-
-  static fromAbsolute(x, y = undefined, z = undefined) {
-    if (
-      x &&
-      typeof x === 'object' &&
-      x.pose instanceof Array &&
-      x.pose.length >= 3 &&
-      y === undefined &&
-      z === undefined
-    ) {
-      z = x.pose[2];
-      y = x.pose[1];
-      x = x.pose[0];
-    }
-    if (
-      x instanceof Array &&
-      x.length >= 3 &&
-      y === undefined &&
-      z === undefined
-    ) {
-      z = x[2];
-      y = x[1];
-      x = x[0];
-    }
-    const cx = Math.floor(x / 16);
-    const cy = Math.floor(y / 16);
-    const cz = Math.floor(z / 16);
-    return ServerChunk.from(cx, cy, cz);
   }
 }

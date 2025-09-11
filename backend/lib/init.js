@@ -5,6 +5,7 @@ import { getProjectFolderPath } from "../utils/getProjectFolderPath.js";
 
 // Load environment variables from the .env file in the backend folder
 const envFilePath = getProjectFolderPath('backend', '.env');
+
 if (fs.existsSync(envFilePath)) {
   if (typeof process.loadEnvFile === "function") {
     console.log(
@@ -14,7 +15,7 @@ if (fs.existsSync(envFilePath)) {
     process.loadEnvFile(envFilePath);
   } else {
     console.log(
-      "Loading environment variables with loadEnvSync from:",
+      "Loading environment variables with custom loadEnvSync from:",
       envFilePath
     );
     const mod = await import("../utils/loadEnvSync.js");
@@ -27,7 +28,7 @@ if (fs.existsSync(envFilePath)) {
 }
 
 // Check if the URL environment variable is set
-let urlParam = process.env.URL||process.env.HOST||process.env.IP||process.env.ADDRESS;
+let urlParam = process.env.URL || process.env.HOST || process.env.IP || process.env.ADDRESS;
 
 if (!urlParam) {
   console.log(
