@@ -3,7 +3,7 @@ import { createServerEntity, loadServerEntity, removeEntity } from "../../lib/En
 import { GameEventEmitter } from "../../lib/GameEventEmitter.js";
 import { getPlayerContextPose, loadPlayer, playerCache, savePlayer } from "../../lib/PlayerStorage.js";
 import { ServerChunk } from "../../lib/ServerChunk.js";
-import { connectedPlayers, ServerRegion } from "../../lib/ServerRegion.js";
+import { connectedPlayerEntities, ServerRegion } from "../../lib/ServerRegion.js";
 
 export default async function spawn(payload, ctx) {
   if (!ctx.player || typeof ctx.player !== "object") {
@@ -71,6 +71,8 @@ export default async function spawn(payload, ctx) {
   }
   let health = ctx.health || ctx.player.health;
   let maxHealth = ctx.maxHealth || ctx.player.maxHealth;
+  health = typeof health !== "number" || isNaN(health) ? 20 : health;
+  maxHealth = typeof maxHealth !== "number" || isNaN(maxHealth) ? 20 : maxHealth;
   if (!entity && closest && distance !== undefined) {
     entity = closest;
     console.log("Using closest entity", entity.id, "for player", ctx.player.id, "at distance", distance.toFixed(2));
@@ -88,8 +90,9 @@ export default async function spawn(payload, ctx) {
     ctx.player.entities = entity ? [entity] : [];
   }
   if (typeof ctx.entityId !== "string" || !ctx.entityId || ctx.entityId.length < 5) {
+    // Find an unused entity id
     if (ctx.player.entities && ctx.player.entities instanceof Array && ctx.player.entities.length) {
-      entity = ctx.player.entities.find(e => e.id && !(e.region ? ServerRegion.from(e.region) : ServerRegion.fromAbsolute(e.pose))?.state?.entities?.[e.id]) || ctx.player.entities.find(e => e.id) || ctx.player.entities[0];
+      entity = ctx.player.entities.find(e => e.id && !connectedPlayerEntities[e.id]);
     }
     if (entity) {
       ctx.entityId = entity.id;
@@ -123,44 +126,16 @@ export default async function spawn(payload, ctx) {
   if (region?.state?.entities && ctx.entityId && region.state.entities[ctx.entityId]) {
     console.warn("Warning: Entity", ctx.entityId, "already exists on region", region.id, "for player", ctx.player.id, "when spawning.");
   }
-  // emit spawn event
-  ctx.entity = await region.add({
-    type: "spawn",
-    id: ctx.entityId,
-    region: region.id,
-    player: ctx.player.id,
-    name: payload.name || ctx.player.name,
-    spawned: new Date().getTime(),
-    pose: ctx.pose,
-    health: typeof health !== "number" || isNaN(health) ? 20 : health,
-    maxHealth: typeof maxHealth !== "number" || isNaN(maxHealth) ? 20 : maxHealth,
-  });
-  
-  if (!ctx.entity || !ctx.entity.id) {
-    throw new Error("Failed to create entity for player spawn");
-  }
-
-  ctx.health = ctx.entity.health;
-  ctx.maxHealth = ctx.entity.maxHealth;
-
-  if (!region.state.entities[ctx.entity.id]) {
-    console.log("Warning: Entity", ctx.entity.id, "does not exists on region", region.id, "from player", ctx.player.id);
-  }
-
-  if (!region.state.players[ctx.player.id]) {
-    console.log("Warning: Player not connected on region", region.id, "after spawn event");
-  }
-
   ctx.region = region;
-  ctx.chunk = ServerChunk.fromAbsolute(ctx.entity.pose);
+  ctx.chunk = ServerChunk.fromAbsolute(ctx.pose);
   if (!ctx.player.entities || !(ctx.player.entities instanceof Array)) {
     ctx.player.entities = [];
   }
   if (ctx.player.entities.length > 4) {
     ctx.player.entities = ctx.player.entities.slice(0, 4);
   }
-  const match = ctx.player.entities.find((e) => e && e.id === ctx.entity.id);
-  const entry = { id: ctx.entity.id, region: region.id, pose: ctx.entity.pose, health: ctx.entity.health, maxHealth: ctx.entity.maxHealth, spawned: Date.now() };
+  const match = ctx.player.entities.find((e) => e && e.id === ctx.entityId);
+  const entry = { id: ctx.entityId, region: region.id, pose: ctx.pose, health, maxHealth, spawned: Date.now() };
   if (match) {
     Object.assign(match, entry);
   } else {
@@ -170,24 +145,57 @@ export default async function spawn(payload, ctx) {
   
   await savePlayer(ctx.player);
   
-  ctx.entityId = ctx.entity.id;
-  const regionEntities = await Promise.all(ServerRegion.getSurroundingRegions(ctx.entity.pose, 64, true).map((region) => region.getEntities()));
+  const regionEntities = await Promise.all(ServerRegion.getSurroundingRegions(ctx.pose, 64, true).map((region) => region.getEntities()));
   const entities = regionEntities.flat().filter((e) => e && e.id && e.id !== ctx.entityId);
+  const connected = entities.filter((e) => e && e.id && connectedPlayerEntities[e.id]);
+
   console.log(`Found ${entities.length} nearby entities for player`, [ctx.player.name], "at region", region.id, "entity", ctx.entityId);
-  if (connectedPlayers[ctx.entityId]) {
-    console.log("Warning: Player entity already connected on spawn", ctx.player.id, ctx.entityId);
+  if (connectedPlayerEntities[ctx.entityId]) {
+    console.log("Note: Player entity already connected on spawn", ctx.player.id, ctx.entityId);
   }
-  connectedPlayers[ctx.entityId] = ctx;
+  connectedPlayerEntities[ctx.entityId] = ctx;
+  
+  // emit spawn event
+  ctx.entity = await region.add({
+    type: "spawn",
+    id: ctx.entityId,
+    region: region.id,
+    player: ctx.player.id,
+    name: payload.name || ctx.player.name,
+    spawned: new Date().getTime(),
+    pose: ctx.pose,
+    health,
+    maxHealth,
+  }, false);
+  
+  if (!ctx.entity || !ctx.entity.id) {
+    throw new Error("Failed to create entity for player spawn");
+  }
+
+  ctx.health = ctx.entity.health;
+  ctx.maxHealth = ctx.entity.maxHealth;
+
+  if (ctx.entityId !== ctx.entity.id) {
+    console.log("Warning: Entity", ctx.entity.id, "was not added on region", region.id, "from player", ctx.player.id);
+  }
+  if (!region.state.entities[ctx.entity.id]) {
+    console.log("Warning: Entity", ctx.entity.id, "was not added on region", region.id, "from player", ctx.player.id);
+  }
+
+  if (!region.state.players[ctx.player.id]) {
+    console.log("Warning: Player not connected on region", region.id, "after spawn event");
+  }
+
   return {
     success: true,
     chunk: ctx.chunk.id,
     player: ctx.player,
     playerId: ctx.player.id,
     entity: ctx.entity,
-    entityId: ctx.entity.id,
-    entities,
-  };
-
+    entityId: ctx.entityId,
+    entities: connected,
+    playerEntityList: Object.values(connectedPlayerEntities).filter(c => c && c.playerId && c.entityId).map(c => `${c.playerId} ${c.entityId}`),
+  }
 }
 
 

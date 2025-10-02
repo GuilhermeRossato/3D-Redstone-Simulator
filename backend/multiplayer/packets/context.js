@@ -5,7 +5,7 @@ import { ServerChunk } from "../../lib/ServerChunk.js";
 import { ServerRegion } from "../../lib/ServerRegion.js";
 import { getChunkOffsets } from "../../scripts/chunkDistance.js";
 import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
-import { getPlayerContextPose } from '../../lib/PlayerStorage.js';
+import { getPlayerContextPose, playerCache } from '../../lib/PlayerStorage.js';
 import { sleep } from "../../utils/sleep.js";
 
 
@@ -70,6 +70,12 @@ export default async function context(payload, ctx) {
 
   if (regions.length) {
     await regions[0].load();
+    if (playerCache.size === 0 && Object.keys(regions[0].state?.entities || {}).length) {
+      console.warn('Empty player cache but player cache from first region:', regions[0].id);
+      for (const e of regions[0].state.entities) {
+        console.log('Entity in region:', e);
+      }
+    }
   }
 
   if (payload.blockTypeTimes) {

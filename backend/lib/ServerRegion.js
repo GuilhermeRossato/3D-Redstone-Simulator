@@ -13,7 +13,7 @@ import { ServerChunk } from './ServerChunk.js';
 const unsaved_event_limit = 128;
 const unsaved_time_limit = 3000;
 
-export const connectedPlayers = {};
+export const connectedPlayerEntities = {};
 
 export const serverRegionRecord = {};
 
@@ -126,7 +126,16 @@ function applyServerRegionEvent(obj, event) {
         if (!obj.players) {
           obj.players = {};
         }
-        obj.players[event.player] = entityId;
+        if (!obj.players[event.player]) {
+          obj.players[event.player] = {};
+        }
+        if (!obj.players[event.player][entityId]) {
+          obj.players[event.player][entityId] = event.time || Date.now();
+        }
+      }
+      if (!connectedPlayerEntities[entityId]) {
+        console.log("Warning: Not spawning entity for player that is not connected:", event.player);
+        return false;
       }
       console.log('Applying entity add event of', entityId, 'in region', obj.id, "with position", pose.slice(0, 3).map(a => parseFloat(a.toFixed(2))));
       event.entered = event.time || Date.now();
@@ -295,27 +304,27 @@ export class ServerRegion {
     if (!player || !player.id) {
       throw new Error("Invalid player object");
     }
-    connectedPlayers[player.id] = ctx;
+    connectedPlayerEntities[player.id] = ctx;
   }
 
   static removeConnectedPlayer(ctx) {
     const player = ctx.player;
     if (!player || !player.id) {
-      const entries = Object.entries(connectedPlayers);
+      const entries = Object.entries(connectedPlayerEntities);
       const i = entries.findIndex(v => v[1] === ctx);
       if (i !== -1) {
         console.log('Removing player from connectedPlayers without player.id:', entries[i][0]);
-        delete connectedPlayers[entries[i][0]];
+        delete connectedPlayerEntities[entries[i][0]];
         return true;
       }
       console.log('Not removing player from connectedPlayers:', ctx);
       return false;
     }
-    if (player?.id && !connectedPlayers[player.id]) {
+    if (player?.id && !connectedPlayerEntities[player.id]) {
       console.log('Player not found in connectedPlayers:', player.id);
       return false;
     }
-    delete connectedPlayers[player.id];
+    delete connectedPlayerEntities[player.id];
     return true;
   }
 
@@ -341,13 +350,13 @@ export class ServerRegion {
   }
 
   static getPlayerContext(playerId, strict = false) {
-    if (!playerId || !connectedPlayers[playerId]) {
+    if (!playerId || !connectedPlayerEntities[playerId]) {
       if (!strict) {
         return null;
       }
       throw new Error(`Player with ID ${playerId} is not connected.`);
     }
-    return connectedPlayers[playerId];
+    return connectedPlayerEntities[playerId];
   }
 
   existsSync() {
@@ -403,7 +412,10 @@ export class ServerRegion {
     }
     if (!applyServerRegionEvent(this.state, event)) {
       if (event.type !== "move") {
-        console.log('Event did not change region state:', event.pose);
+        console.log('Event',event.type,'did not change region state:', event.pose);
+      }
+      if (event.type === "spawn") {
+        throw new Error("Spawn event did not change region state");
       }
       return event;
     }
@@ -411,15 +423,17 @@ export class ServerRegion {
       throw new Error('Currently only events with a player are supported');
     }
     const entityId = event.id && event.id.startsWith('e') ? event.id : event.entity && typeof event.entity === 'string' && event.entity.startsWith('e') ? event.entity : event.entity && typeof event.entity === 'object' && event.entity.id && event.entity.id.startsWith('e') ? event.entity.id : '';
-    const others = Object.values(connectedPlayers).filter((ctx) => ctx?.entity?.id !== entityId && ctx.send);
+    const others = Object.entries(connectedPlayerEntities).filter(
+      ([eid, ctx]) => eid !== entityId && ctx?.entity?.id !== entityId && ctx.send
+    );
     const promise = regionStore.add(this, event, immediate);
     if (others.length) {
       console.log('Broadcasting', event.player, 'event to', others.length, 'connected players:', event);
-      for (const ctx of others) {
+      for (const [eid, ctx] of others) {
         const distance = ctx.region.distance(this);
         //console.log(`Evaluating`, event.type, `broadcast to player ${ctx.player.id} from "${this.id}" in region "${ctx.region.id}" with distance ${distance}`);
         if (distance <= 2) {
-          ctx.send(event);
+          ctx.send({event, playerEntityList: Object.values(connectedPlayerEntities).filter(c => c && c.playerId && c.entityId).map(c => `${c.playerId} ${c.entityId}`)});
         }
       }
     } else {
@@ -446,7 +460,6 @@ export class ServerRegion {
   }
 
   async load(forceRefresh = false) {
-    console.log('Loading region', this.id);
     return await regionStore.load(this, forceRefresh);
   }
 

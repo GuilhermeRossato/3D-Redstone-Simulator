@@ -45,6 +45,9 @@ export function sendChatMessage(t, message) {
     return;
   }
   t.value = '';
+  window.localStorage.setItem('chat-draft', '');
+  const text = (window.localStorage.getItem('chat-history') || '').split('\n').filter(a=>a.trim()).map(a=>({date: a.substring(0, a.indexOf('Z')+1), text: a.substring(a.indexOf('Z')+2)})).filter((a,i,arr)=>a.text && arr[i+1] !== a).slice(-50).concat([{date: (new Date()).toISOString(), text: message}]).map(a=>`${a.date} ${a.text}`).join('\n');
+  window.localStorage.setItem('chat-history', text);
   CommandHandler.send(message);
 }
 
@@ -130,7 +133,7 @@ export function openChat() {
       //'letter-spacing: 16px'
       'letter-spacing: 1px'
     ].join('; '));
-    t.value = 'abc def';
+    t.value = window.localStorage.getItem('chat-draft') || '';
     let tmr = null;
 
     let lastText = '';
@@ -143,10 +146,44 @@ export function openChat() {
         }
         lastText = text;
         console.log('Chat input changed text:', text);
+        window.localStorage.setItem('chat-draft', text);
     }
     t.addEventListener('keyup', (e) => {
       tmr && clearTimeout(tmr);
       tmr = setTimeout(handleChangedText, 50);
+      
+      if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+        const history = (window.localStorage.getItem('chat-history') || '').split('\n').filter(a=>a.trim()).map(a=>({date: a.substring(0, a.indexOf('Z')+1), text: a.substring(a.indexOf('Z')+2)})).filter((a,i,arr)=>a.text && arr[i+1] !== a).slice(-50);
+        if (history.length === 0) {
+          return;
+        }
+        let currentIndex = history.findIndex(a => a.text === (t.value || t.textContent));
+        if (currentIndex === -1) {
+          currentIndex = history.length;
+        }
+        if (e.code === 'ArrowUp') {
+          currentIndex--;
+          if (currentIndex < 0) {
+            currentIndex = 0;
+          }
+        } else if (e.code === 'ArrowDown') {
+          currentIndex++;
+          if (currentIndex >= history.length) {
+            currentIndex = history.length;
+            t.value = '';
+            window.localStorage.setItem('chat-draft', '');
+            return;
+          }
+        }
+        const entry = history[currentIndex];
+        if (entry) {
+          t.value = entry.text;
+          window.localStorage.setItem('chat-draft', entry.text);
+          // Move cursor to end
+          t.selectionStart = t.selectionEnd = t.value.length;
+        }
+
+      }
     });
     t.addEventListener('keydown', (e) => {
       const isEnter = e["key"] === 'Enter' || e["key"] === 'Return' || e["code"] === 'Enter' || e["code"] === 'Return';

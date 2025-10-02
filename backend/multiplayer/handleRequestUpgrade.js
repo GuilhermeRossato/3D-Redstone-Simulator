@@ -9,8 +9,8 @@ import path from "node:path";
 import { getProjectFolderPath } from "../utils/getProjectFolderPath.js";
 
 const debug = false;
-
-fs.writeFileSync('packet.log', '', 'utf8');
+const writePacketLog = false;
+writePacketLog && fs.writeFileSync('packet.log', '', 'utf8');
 async function index(input, ctx, count, pings) {
   if (typeof input !== 'object' || input === null) {
     console.log("Invalid input to index:", input);
@@ -26,8 +26,8 @@ async function index(input, ctx, count, pings) {
     keys.unshift('type');
     return keys.map((k) => `${k}=${JSON.stringify(o[k])}`).join('\t');
   });
-  fs.appendFileSync('packet.log', count + ' < ' + a + '\n', 'utf8');
-  fs.appendFileSync('packet.log', count + ' > ' + b + '\n', 'utf8');
+  writePacketLog && fs.appendFileSync('packet.log', count + ' < ' + a + '\n', 'utf8');
+  writePacketLog && fs.appendFileSync('packet.log', count + ' > ' + b + '\n', 'utf8');
   return output;
 }
 
@@ -388,6 +388,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
     if (lastDebugObject === debugInput) {
       return
     }
+    return
     lastDebugObject = debugInput;
     if (typeof debugInput === 'string') {
       console.log("WebSocket", direction, "data:", debugInput.length);

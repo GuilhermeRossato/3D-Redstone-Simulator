@@ -8,7 +8,7 @@ import {
   loadServerChunkState,
   writeServerChunkState,
 } from "./ServerChunkStore.js";
-import { connectedPlayers } from './ServerRegion.js';
+import { connectedPlayerEntities } from './ServerRegion.js';
 import { createServerStore } from './ServerStore.js';
 import { convertBlockListToBlockRecord } from './convertBlockListToBlockRecord.js';
 
@@ -248,7 +248,7 @@ export class ServerChunk {
       console.log('Event did not change chunk state:', event.pose);
       return event;
     }
-    const others = Object.values(connectedPlayers).filter((ctx) => ctx?.entity?.id !== b);
+    const others = Object.values(connectedPlayerEntities).filter((ctx) => ctx?.entity?.id !== b);
     if (others.length) {
       // console.log('Broadcasting',event.player,'event to', others.length, 'connected players:', event);
       for (const ctx of others) {

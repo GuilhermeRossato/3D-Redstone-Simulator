@@ -1,5 +1,6 @@
+import { setDebugInfo } from "../../foreground/DebugInfo.js";
 import {
-  getStoredPlayerId,
+  storedPlayerId,
   getCookieId,
   processServerPacket,
   flags,
@@ -45,7 +46,7 @@ async function createSocket() {
   }
   lastBeginTime = new Date().getTime();
   let [playerId, cookieId] = await Promise.all([
-    getStoredPlayerId(),
+    storedPlayerId(),
     getCookieId(),
   ]);
   if (playerId.split("|").length > 1) {
@@ -54,6 +55,11 @@ async function createSocket() {
   }
   return await new Promise((resolve, reject) => {
     const base = getWebsocketEndpoint();
+    if (playerId.startsWith("/")) {
+      throw new Error("Cannot use player id for websocket");
+    }
+      debug && console.log("[D]", "Using player id:", playerId);
+    
     const url = `${base}/ws/${playerId}/${cookieId ? cookieId + "/" : ""}`;
     debug && console.log("[D]", "Creating websocket to", url);
     ws = new WebSocket(url);
@@ -125,6 +131,7 @@ async function createSocket() {
 
     ws.addEventListener("close", () => {
       console.log("Socket closed");
+      setDebugInfo("Multiplayer", "Disconnected");
       isSocketClosed = true;
       onSocketClose();
       clearTimeout(timeoutTimer);

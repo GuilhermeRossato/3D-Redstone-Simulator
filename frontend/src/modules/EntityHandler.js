@@ -15,13 +15,16 @@ import { scene } from './GraphicsHandler.js';
  * @type {Record<string, { punching?: any; group: any; id: string; type: string; target?: PositionTransitionEntry, pose: number[], player?: string, name?: string }>}
  */
 export const entityRecord = {};
-let entityList = [];
+g("entityRecord", entityRecord);
+let entities = [];
+g("entities", entities);
 
 export function removeAllEntities() {
-  for (let i = entityList.length - 1; i >= 0; i--) {
-    scene.remove(entityList[i]);
+  for (let i = entities.length - 1; i >= 0; i--) {
+    scene.remove(entities[i]);
   }
-  entityList = [];
+  entities = [];
+  g("entities", entities);
 }
 
 export function activatePunchAnimation(entityId, target) {
@@ -81,6 +84,7 @@ async function test() {
 //test().then(r => (r !== undefined) && console.log("test() return:", r)).catch(err => { console.log(err); });
 
 export async function addEntityToScene(input) {
+  // debugger;
   const {
     id, player, name, pose
   } = input;
@@ -93,6 +97,7 @@ export async function addEntityToScene(input) {
     return;
   }
   if (entityRecord[id]?.group) {
+    console.log('Removing existing entity group for', id);
     entityRecord[id].group.remove();
   }
   entityRecord[id] = {
@@ -105,7 +110,7 @@ export async function addEntityToScene(input) {
   group = await PlayerModel.createPlayerMesh(name);
   entityRecord[id].group = group;
   PlayerModel.applyPlayerPose(group, player, x, y, z, yaw, pitch);
-  entityList.push(group);
+  entities.push(group);
   return group;
 }
 
@@ -163,7 +168,8 @@ export function removeEntity(entityId) {
     entityRecord[entityId].group.remove();
   }
   delete entityRecord[entityId];
-  entityList = entityList.filter(entity => entity.id !== entityId);
+  entities = entities.filter(entity => entity.id !== entityId);
+  g("entities", entities);
 }
 
 export function update(frame) {
@@ -210,7 +216,9 @@ export function update(frame) {
       entityRecord[id].target.startAt = frame;
       entityRecord[id].target.endAt = frame + entityRecord[id].target.delay;
     }
-    const t = frame > entityRecord[id].target.endAt ? 1 : (frame - entityRecord[id].target.endAt) / (entityRecord[id].target.startAt - entityRecord[id].target.endAt);
+    const delta = entityRecord[id].target.endAt - entityRecord[id].target.startAt;
+    //const t = delta <= 0 ? 1 : frame > entityRecord[id].target.endAt ? 1 : (frame - entityRecord[id].target.endAt) / delta;
+    const t = 1;
     if (t >= 1) {
       entityRecord[id].target.finished = true;
     }

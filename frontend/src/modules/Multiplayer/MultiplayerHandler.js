@@ -7,9 +7,12 @@ import { createSnackbarAlert } from "../../utils/createSnackbarAlert.js";
 import { g } from "../../utils/g.js";
 import { sleep } from "../../utils/sleep.js";
 import { scene } from "../GraphicsHandler.js";
-import { createPlayerId, expectedPlayerIdLength} from "../../utils/createPlayerId.js";
+import { setDebugInfo } from "../../foreground/DebugInfo.js";
 
- 
+setDebugInfo("MultiplayerHandler");
+
+let clist = [];
+g("clist", clist);
 
 export const flags = {
   connected: false,
@@ -17,6 +20,16 @@ export const flags = {
 };
 
 const playerEntityRecord = {};
+
+let playerEntityList = [];
+
+const sd = () => setDebugInfo(
+  "MultiplayerHandler",
+  `${player.id} ${player.entity} (self)`,
+  `${playerEntityList?.length} others`,
+  playerEntityList?.join?.('\n')
+);
+
 
 /** @typedef {{
  *   id: number;
@@ -74,7 +87,8 @@ async function processServerChunkResponse(responses, list = []) {
     if (!chunk.blocks || Object.keys(chunk.blocks).length === 0) {
       continue;
     }
-    console.log('Initializing chunk at', chunk.cx, chunk.cy, chunk.cz, 'with', Object.keys(chunk.blocks).length, 'initial blocks');
+    const c = Object.entries(chunk.blocks).map(b => Object.entries(b).map(c => Object.entries(c).length).flat()).flat().length;
+    console.log('Initializing chunk at', chunk.cx, chunk.cy, chunk.cz, 'with', c, 'initial blocks');
     const instance = WorldHandler.getChunk(chunk.cx, chunk.cy, chunk.cz, true);
     for (const y in chunk.blocks) {
       for (const x in chunk.blocks[y]) {
@@ -84,7 +98,7 @@ async function processServerChunkResponse(responses, list = []) {
             continue;
           }
           instance.set(x, y, z, id);
-          list&&list.push([id, chunk.cx * 16 + Number(x), Number(y), chunk.cz * 16 + Number(z)].join('  '));
+          list && list.push([id, chunk.cx * 16 + Number(x), Number(y), chunk.cz * 16 + Number(z)].join('  '));
         }
       }
     }
@@ -109,6 +123,7 @@ async function processServerRegionResponse(region) {
   let list = entities instanceof Array ? entities : Object.values(entities);
   for (const entity of list) {
     console.log("Adding entity", entity.id, "to scene");
+
     EntityHandler.addEntityToScene(entity);
   }
 }
@@ -142,34 +157,11 @@ function initWorld(blockList) {
   }
 }
 
-export async function getStoredPlayerId() {
-  let id = window.localStorage.getItem("self-login-code");
-  if (!id) {
-    id = createPlayerId();
-    console.log("Generated player id with", id.length, "chars:", id);
-    window.localStorage.setItem("self-login-code", id);
-  } 
-  if (id && id.length > expectedPlayerIdLength && id.split("|").length > 1) {
-    console.log("[D]", "Self login code is an array and will be limited to 1 item");
-    id = id.split("|").filter((entry) => entry.length === expectedPlayerIdLength).slice(0, 1).join("|");
+export async function storedPlayerId(id) {
+  if (id) {
+    window.localStorage.setItem("self-login-code", id.startsWith('p') ? id : `p${id}`);
   }
-  if (id && id.startsWith('p') && id.length === expectedPlayerIdLength + 1) {
-    id = id.substring(1);
-  }
-  if (id && id.startsWith('e') && id.length > expectedPlayerIdLength) {
-    id = id.substring(1, 1 + expectedPlayerIdLength);
-  }
-  if (id.length > expectedPlayerIdLength+4) {
-    console.log("Trimming Trimmed player id from", id.length, "chars");
-    id = id.substring(0, expectedPlayerIdLength+4);
-  }
-  if (id.length < expectedPlayerIdLength) {
-    console.log("Stored player id is too short (", id.length, "chars), regenerating");
-    id = createPlayerId();
-    console.log("Generated new player id with", id.length, "chars:", id);
-    window.localStorage.setItem("self-login-code", id);
-  }
-  return id;
+  return window.localStorage.getItem("self-login-code") || "";
 }
 
 export async function getCookieId() {
@@ -202,7 +194,7 @@ function loadLocalBlockTypeTimes() {
 async function performLogin() {
   //const snack = await createSnackbarAlert("Performing login...", "info");
   let cookieId = await getCookieId();
-  let sentId = await getStoredPlayerId();
+  let sentId = await storedPlayerId();
   let startPose = (sessionStorage.getItem('last-player-pose') || '0').split(',').map(i => parseFloat(i))
   if (startPose.length < 3 || startPose.slice(0, 6).some(num => isNaN(num))) {
     startPose = (localStorage.getItem('last-player-pose') || '0').split(',').map(i => parseFloat(i));
@@ -243,8 +235,11 @@ async function performLogin() {
 
   if (pkt?.playerId && pkt?.playerId !== sentId && pkt?.playerId !== `p${sentId}`) {
     console.warn("Server returned different playerId, updating local storage");
-    sentId = pkt.playerId.startsWith('p') ? pkt.playerId.substring(1) : pkt.playerId;
-    window.localStorage.setItem("self-login-code", sentId);
+    await storedPlayerId(pkt.playerId);
+    sentId = await storedPlayerId();
+    if (sentId !== pkt.playerId) {
+      throw new Error("Failed to store player id");
+    }
   }
 
   flags.connected = true;
@@ -260,7 +255,7 @@ async function performLogin() {
   //snack("Getting context...");
 
   const blockTypeTimes = loadLocalBlockTypeTimes();
-  
+
   const ctx = await sendEvent({
     type: "context",
     pose: startPose,
@@ -281,7 +276,6 @@ async function performLogin() {
     WorldHandler.addBlockDefinitions(ctx.blocks);
   }
 
-  const clist = [];
   const pending = [];
 
   for (const chunk of ctx.chunks) {
@@ -293,12 +287,10 @@ async function performLogin() {
       pending.push(chunk.id);
       continue;
     }
-    if (Object.keys(chunk.blocks).length) {
-      console.log("Processing chunk", chunk.id, "...");
-      await processServerChunkResponse(chunk, clist);
-    }
+    console.log("Processing chunk", chunk.id, "...");
+    await processServerChunkResponse(chunk);
   }
-  
+
   for (const region of ctx.regions) {
     if (!region || !region.id) {
       console.warn("Invalid region received from server:", region);
@@ -355,9 +347,10 @@ async function performLogin() {
           continue;
         }
         if (state.id.startsWith("r")) {
+          console.log("Processing region", state.id, "from sync response entities", state.entities);
           await processServerRegionResponse(state);
         } else {
-          await processServerChunkResponse(state, clist);
+          await processServerChunkResponse(state);
         }
       }
     }
@@ -413,7 +406,8 @@ async function performLogin() {
   g("player", (player = spawn.player));
 
   player.entity = spawn.entity.id;
-
+  playerEntityList = spawn?.playerEntityList || [];
+  sd();
   // Update player position
   const pose = spawn?.entity?.pose || ctx?.entity?.pose;
   if (pose instanceof Array && typeof pose[0] === "number" && !isNaN(pose[0]) && typeof pose[1] === "number" && !isNaN(pose[1]) && typeof pose[2] === "number" && !isNaN(pose[2])) {
@@ -479,8 +473,8 @@ export async function processServerPacket(packet) {
     return EntityHandler.removeEntity(packet.id);
   }
 
-  if (packet.type === "block") {
-    return WorldHandler.set(packet.x, packet.y, packet.z, packet.id);
+  if (packet.type === "block" || packet.type === "set") {
+    return WorldHandler.set(packet.x, packet.y, packet.z, packet.b || packet.id);
   }
 
   if (Object.keys(packet).length === 1 && packet.success === true) {

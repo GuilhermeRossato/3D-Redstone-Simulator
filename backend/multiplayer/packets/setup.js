@@ -8,6 +8,7 @@ import {
 } from "../../lib/PlayerStorage.js";
 import { createPlayerId, expectedPlayerIdLength } from "../../utils/createPlayerId.js";
 
+let setupCount = 0;
 
 /**
  * Initializes a player.
@@ -33,18 +34,13 @@ function createCookieId(playerId) {
 }
 
 export default async function setup(payload, ctx) {
-  const playerId = payload.playerId || payload.selfLoginCode || ctx.selfLoginCodes || ctx.playerId;
   if (payload.type !== "setup") {
     throw new Error("Invalid setup packet type");
   }
-  ctx.playerId = playerId ? playerId : createPlayerId();
+  ctx.playerId = payload.playerId || payload.selfLoginCode || ctx.selfLoginCodes || ctx.playerId;
+  ctx.playerId = ctx.playerId ? ctx.playerId : createPlayerId();
   if (ctx.playerId && ctx.playerId.startsWith('p')) {
     ctx.playerId = ctx.playerId.substring(1);
-  }
-  if (ctx.playerId.length > expectedPlayerIdLength+4) {
-    console.log("Trimming id to 5+7 characters from", ctx.playerId.length, "chars.");
-    ctx.playerId = ctx.playerId.substring(0, expectedPlayerIdLength+4);
-    console.log("Trimmed id to", [ctx.playerId]);
   }
   if (payload.cookieId) {
     ctx.cookieId = payload.cookieId;
@@ -135,8 +131,8 @@ export default async function setup(payload, ctx) {
     ctx.cookieId = player.cookieId;
     updated = true;
   }
-  if (!playerCache[ctx.playerId]) playerCache[ctx.playerId] = [];
-  playerCache[ctx.playerId].push(ctx);
+  if (!playerCache.get(ctx.playerId)) playerCache.set(ctx.playerId, []);
+  playerCache.get(ctx.playerId).push(ctx);
   ctx.player = player;
   ctx.cookieId = player.cookieId;
   console.log("Finished setup for player", [player.name], "id", [player.id]);
@@ -155,6 +151,7 @@ export default async function setup(payload, ctx) {
   if (updated) {
     await savePlayer(player);
   }
+  setupCount++;
   return {
     success: true,
     playerId: ctx.playerId,

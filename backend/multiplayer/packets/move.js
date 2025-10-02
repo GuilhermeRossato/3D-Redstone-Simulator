@@ -1,4 +1,4 @@
-import { connectedPlayers, ServerRegion } from "../../lib/ServerRegion.js";
+import { connectedPlayerEntities, ServerRegion } from "../../lib/ServerRegion.js";
 
 // helper to check if an entity is present in the record by key
 const hasEntityInRegion = (entities, id) => {

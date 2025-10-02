@@ -103,7 +103,7 @@ export async function writeStorageObject(type, name, id, state = {}) {
     const text = JSON.stringify(state, null, "  ");
     const buffer = Buffer.from(text, "utf-8");
     const target = getStorageObjectFilePath(type, name, id, false);
-    console.log({type, filePath: target, state});
+    // console.log({type, filePath: target, state});
     await confirmPath(target);
     await fs.promises.writeFile(target, buffer, "utf-8");
     return buffer.byteLength;

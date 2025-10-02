@@ -1,6 +1,6 @@
 import { loadEntity, removeEntity } from "../../lib/EntityStorage.js";
 import { loadPlayer, playerCache, savePlayer } from "../../lib/PlayerStorage.js";
-import { connectedPlayers as connectedPlayerEntities, ServerRegion } from "../../lib/ServerRegion.js";
+import { connectedPlayerEntities, ServerRegion } from "../../lib/ServerRegion.js";
 
 export default async function close(packet, ctx) {
   const playerId = packet.playerId || ctx?.playerId || ctx?.player?.id;
@@ -32,7 +32,7 @@ export default async function close(packet, ctx) {
       console.log("Player not found in connectedPlayers:", entityId);
     }
   } else {
-    console.warn("No entity found in context, cannot remove from connectedPlayers");
+    console.warn("No entity found in context of", playerId,"(cannot remove from connectedPlayers)");
   }
 
   if (!ctx.region && ctx.pose) {
@@ -61,10 +61,11 @@ export default async function close(packet, ctx) {
     return { type: "close", success: false, reason: "Player not found" };
   }
   
-  const cached = playerCache[playerId] ? playerCache[playerId].findIndex((/** @type {any} */ c) => c === ctx) : -1;
+  const ctxList = playerCache.get(playerId);
+  const cached = ctxList ? ctxList.findIndex((c) => c === ctx) : -1;
   if (cached !== -1) {
     console.log("Player will be removed from player cache record at index", cached);
-    playerCache[playerId].splice(cached, 1);
+    ctxList.splice(cached, 1);
   } else {
     console.log("Player not found in cache record");
   }

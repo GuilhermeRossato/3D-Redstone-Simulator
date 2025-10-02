@@ -46,7 +46,7 @@ async function sendPlayerMadeActions() {
         pose: movement.slice(0, 6),
         id: playerEntityId,
       });
-      console.log("Sent movement to server:", movement);
+      // console.log("Sent movement to server:", movement);
       if (sendCount > 2 && sendCount % 2 === 0) {
         localStorage.setItem("last-player-pose", movement.join(","));
         sessionStorage.setItem("last-player-pose", movement.join(","));
