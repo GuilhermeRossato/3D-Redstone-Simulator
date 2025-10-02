@@ -26,13 +26,13 @@ export function createServerStore(options = {}) {
   return {
     async load(instance, forceRefresh = false) {
       if (instance.loaded && instance.state && !forceRefresh) {
-        console.log(`${typeName} ${instance.id} already loaded, skipping load`);
+        // console.log(`${typeName} ${instance.id} already loaded, skipping load`);
         return instance;
       }
       if (instance.loading) {
-        console.log(`${typeName} ${instance.id} is already loading, waiting`);
+        // console.log(`${typeName} ${instance.id} is already loading, waiting`);
         const result = await instance.loading[0];
-        console.log(`${typeName} ${instance.id} finished loading, returning`);
+        // console.log(`${typeName} ${instance.id} finished loading, returning`);
         return result;
       }
       const loading = [];
@@ -158,13 +158,13 @@ export function createServerStore(options = {}) {
             await clearChanges(instance.id);
             instance.saved = Date.now();
           } else if (instance.unsaved.length) {
-            console.log(
+            /*console.log(
               "Appending",
               [typeName, instance.id],
               "with",
               instance.unsaved.length,
               "events"
-            );
+            );*/
             await appendChanges(instance.id, instance.unsaved);
             instance.appended = Date.now();
             instance.eventCount += instance.unsaved.length;

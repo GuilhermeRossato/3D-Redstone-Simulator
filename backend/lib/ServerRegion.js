@@ -428,7 +428,7 @@ export class ServerRegion {
     );
     const promise = regionStore.add(this, event, immediate);
     if (others.length) {
-      console.log('Broadcasting', event.player, 'event to', others.length, 'connected players:', event);
+      // console.log('Broadcasting', event.player, 'event to', others.length, 'connected players:', event);
       for (const [eid, ctx] of others) {
         const distance = ctx.region.distance(this);
         //console.log(`Evaluating`, event.type, `broadcast to player ${ctx.player.id} from "${this.id}" in region "${ctx.region.id}" with distance ${distance}`);

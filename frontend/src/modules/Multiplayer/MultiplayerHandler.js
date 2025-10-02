@@ -78,7 +78,10 @@ export async function load() {
   return flags.active;
 }
 
+g("processServerChunkResponse", processServerChunkResponse);
+
 async function processServerChunkResponse(responses, list = []) {
+  console.log('Processing chunk response', responses);
   const chunks = (responses instanceof Array) ? responses : [responses];
   if (!chunks || (Array.isArray(chunks) && chunks.length === 0)) {
     return;
@@ -86,6 +89,14 @@ async function processServerChunkResponse(responses, list = []) {
   for (const chunk of chunks) {
     if (!chunk.blocks || Object.keys(chunk.blocks).length === 0) {
       continue;
+    }
+    if (chunk.id && (typeof chunk.cx !== "number" || typeof chunk.cy !== "number" || typeof chunk.cz !== "number")) {
+      const c = (chunk.id.match(/-?\d+/g) || []).map(i => parseInt(i));
+      if (c.length === 3 && c.every(i => !isNaN(i))) {
+        chunk.cx = c[0];
+        chunk.cy = c[1];
+        chunk.cz = c[2];
+      }
     }
     const c = Object.entries(chunk.blocks).map(b => Object.entries(b).map(c => Object.entries(c).length).flat()).flat().length;
     console.log('Initializing chunk at', chunk.cx, chunk.cy, chunk.cz, 'with', c, 'initial blocks');
@@ -97,6 +108,7 @@ async function processServerChunkResponse(responses, list = []) {
           if (id === 0 || id === null || id === undefined || id === false) {
             continue;
           }
+          //console.log('  Block', id, 'at', x, y, z, 'in chunk', chunk.id);
           instance.set(x, y, z, id);
           list && list.push([id, chunk.cx * 16 + Number(x), Number(y), chunk.cz * 16 + Number(z)].join('  '));
         }
@@ -112,7 +124,7 @@ async function processServerChunkResponse(responses, list = []) {
 }
 
 async function processServerRegionResponse(region) {
-  console.log('Processing region', region.id, 'with', (region.entities instanceof Array) ? region.entities.length : 0, 'entities');
+  //console.log('Processing region', region.id, 'with', (region.entities instanceof Array) ? region.entities.length : 0, 'entities');
   const entities = region.entities;
   if (!entities || (typeof entities === 'object' && Object.keys(entities).length === 0)) {
     return;
@@ -122,7 +134,7 @@ async function processServerRegionResponse(region) {
   }
   let list = entities instanceof Array ? entities : Object.values(entities);
   for (const entity of list) {
-    console.log("Adding entity", entity.id, "to scene");
+    //console.log("Adding entity", entity.id, "to scene");
 
     EntityHandler.addEntityToScene(entity);
   }
@@ -283,12 +295,7 @@ async function performLogin() {
       console.warn("Invalid Chunk received from server:", chunk);
       continue;
     }
-    if (!chunk.blocks) {
-      pending.push(chunk.id);
-      continue;
-    }
-    console.log("Processing chunk", chunk.id, "...");
-    await processServerChunkResponse(chunk);
+    pending.push(chunk.id);
   }
 
   for (const region of ctx.regions) {
@@ -296,14 +303,7 @@ async function performLogin() {
       console.warn("Invalid region received from server:", region);
       continue;
     }
-    if (!region.entities) {
-      pending.push(region.id);
-      continue;
-    }
-    if (region.entities.length) {
-      console.log("Processing region", region.id, "with", region.entities.length, "entities");
-      await processServerRegionResponse(region);
-    }
+    pending.push(region.id);
   }
 
   console.log("Pending chunks or regions to load:", pending.length);
@@ -347,9 +347,11 @@ async function performLogin() {
           continue;
         }
         if (state.id.startsWith("r")) {
-          console.log("Processing region", state.id, "from sync response entities", state.entities);
+          //console.log("Processing region", state.id, "from sync response entities", state.entities);
           await processServerRegionResponse(state);
         } else {
+          console.log("Processing chunk", state.id, "from sync response entities", state);
+
           await processServerChunkResponse(state);
         }
       }
@@ -408,6 +410,7 @@ async function performLogin() {
   player.entity = spawn.entity.id;
   playerEntityList = spawn?.playerEntityList || [];
   sd();
+  /*
   // Update player position
   const pose = spawn?.entity?.pose || ctx?.entity?.pose;
   if (pose instanceof Array && typeof pose[0] === "number" && !isNaN(pose[0]) && typeof pose[1] === "number" && !isNaN(pose[1]) && typeof pose[2] === "number" && !isNaN(pose[2])) {
@@ -418,11 +421,12 @@ async function performLogin() {
       setPlayerPosition(pose);
     }
   }
+    */
 
   if (spawn.entities?.length) {
-    console.log("Initializing", spawn.entities?.length, "entities:");
+    // console.log("Initializing", spawn.entities?.length, "entities:");
     spawn.entities.forEach(entity => {
-      console.log("Adding spawned entity", entity.id);
+      // console.log("Adding spawned entity", entity.id);
       EntityHandler.addEntityToScene(entity);
     });
   }
@@ -445,6 +449,9 @@ export async function sendClientAction(action) {
       action.y = Math.floor(action.y);
       action.z = Math.floor(action.z);
     }
+  }
+  if (action.type === "set") {
+    console.log(action);
   }
   await sendEvent(action);
 }

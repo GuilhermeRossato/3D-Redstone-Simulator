@@ -91,7 +91,7 @@ export async function addEntityToScene(input) {
 
   const [x, y, z, yaw, pitch] = pose;
   let group;
-  console.log('Adding entity', id, 'with pose', pose);
+  // console.log('Adding entity', id, 'with pose', pose);
   if (!player) {
     console.warn('Unknown entity type or missing player', player);
     return;

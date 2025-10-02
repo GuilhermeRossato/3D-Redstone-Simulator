@@ -107,7 +107,7 @@ export async function getBlockDefinitions(resetCache = false) {
     lastTextureWriteTime = now;
     {
       const target = getProjectFolderPath('frontend', 'assets', 'blocks', 'textures.jsonl');
-      console.log(`Writing block textures to ${JSON.stringify(target.substring(process.cwd().length))}`);
+      // console.log(`Writing block textures to ${JSON.stringify(target.substring(process.cwd().length))}`);
       const entries = Object.values(blocks).map(b => ({ id: b.id, key: b.key, textures: b.textures }));
       // @ts-ignore
       entries.unshift({ file: "textures.jsonl", date: new Date().toISOString(), generator: "backend/lib/blocks/BlockSharedStorage.js", })
@@ -115,7 +115,7 @@ export async function getBlockDefinitions(resetCache = false) {
     }
     {
       const target = getProjectFolderPath('frontend', 'assets', 'blocks', 'ids.jsonl');
-      console.log(`Writing id data to ${JSON.stringify(target.substring(process.cwd().length))}`);
+      // console.log(`Writing id data to ${JSON.stringify(target.substring(process.cwd().length))}`);
       const entries = Object.values(blocks).map(b => ({ id: b.id, key: b.key }));
       // @ts-ignore
       entries.unshift({ file: "ids.jsonl", date: new Date().toISOString(), generator: "backend/lib/blocks/BlockSharedStorage.js", })

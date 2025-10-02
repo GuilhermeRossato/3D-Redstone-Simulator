@@ -744,11 +744,13 @@ let nextUpdateAction = null;
 function issueBlockCreationRequest(x, y, z, id) {
   nextUpdateAction = { type: "create", x, y, z, id };
 }
+g("issueBlockCreationRequest", issueBlockCreationRequest);
 
 function issueBlockDestructionRequest(x, y, z) {
   nextUpdateAction = { type: "delete", x, y, z };
   selectionBox.visible = false;
 }
+g("issueBlockDestructionRequest", issueBlockDestructionRequest);
 
 const angleByMovementId = {
   1: Math.PI * 0.5,
@@ -782,15 +784,6 @@ export function update(frame) {
     moveVertically(-1);
   }
   if (nextUpdateAction) {
-    if (
-      nextUpdateAction.y === 0 &&
-      (nextUpdateAction.x === 0 || nextUpdateAction.x === 1) &&
-      (nextUpdateAction.z === 0 || nextUpdateAction.z === 1)
-    ) {
-      // Do not change the four fundamental blocks
-      nextUpdateAction = null;
-      return;
-    }
     if (nextUpdateAction.type === "create") {
       set(
         nextUpdateAction.x,
@@ -856,10 +849,17 @@ export function update(frame) {
  * @param {{ x: number; y: number; z: number; yaw?: number; pitch?: number; } | number[]} [direction]
  */
 export function setPlayerPosition(position, direction) {
-  console.log("Setting player position", position);
-  const x = !isNaN(position["x"]) ? position["x"] : !isNaN(position[0]) ? position[0] : 0;
-  const y = !isNaN(position["y"]) ? position["y"] : !isNaN(position[1]) ? position[1] : 0;
-  const z = !isNaN(position["z"]) ? position["z"] : !isNaN(position[2]) ? position[2] : 0;
+  let x = yawObject.position.x;
+  let y = yawObject.position.y;
+  let z = yawObject.position.z;
+  let yaw = yawObject.rotation.y;
+  let pitch = pitchObject.rotation.x;
+  console.log("Moving player position from", x, y, z, "yaw:", yaw, "pitch:", pitch);
+
+  // console.log("Setting player position", position);
+  x = !isNaN(position["x"]) ? position["x"] : !isNaN(position[0]) ? position[0] : 0;
+  y = !isNaN(position["y"]) ? position["y"] : !isNaN(position[1]) ? position[1] : 0;
+  z = !isNaN(position["z"]) ? position["z"] : !isNaN(position[2]) ? position[2] : 0;
   yawObject.position.set(x, y, z);
   if (
     !direction &&
@@ -875,16 +875,15 @@ export function setPlayerPosition(position, direction) {
   ) {
     // Look at the direction
   }
-  const yaw =
-    position["yaw"] || position[3] || direction?.["yaw"] || direction?.[0];
-  const pitch =
-    position["pitch"] || position[4] || direction?.["pitch"] || direction?.[1];
+  yaw = position["yaw"] || position[3] || direction?.["yaw"] || direction?.[0];
+  pitch = position["pitch"] || position[4] || direction?.["pitch"] || direction?.[1];
   if (typeof yaw === "number" && !isNaN(yaw)) {
     yawObject.rotation.y = yaw;
   }
   if (typeof pitch === "number" && !isNaN(pitch)) {
     pitchObject.rotation.x = pitch;
   }
+  console.log("Set player position to", x, y, z, "yaw:", yaw, "pitch:", pitch);
 }
 
-g("m", setPlayerPosition)
+g("setPlayerPosition", setPlayerPosition)

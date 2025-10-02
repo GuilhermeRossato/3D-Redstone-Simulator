@@ -1,3 +1,4 @@
+import { g } from "../../utils/g.js";
 import * as InputHandler from "../InputHandler.js";
 import * as MultiplayerHandler from "./MultiplayerHandler.js";
 import { getPlayerEntityId } from "./MultiplayerHandler.js";
@@ -11,11 +12,13 @@ export let movement = [];
 // Variable to store the last sent movement JSON string
 let previousMovementText = "";
 
+g('sendPlayerActionToServerEventually', sendPlayerActionToServerEventually);
 export async function sendPlayerActionToServerEventually(action) {
   if (MultiplayerHandler.flags.active) {
     playerActionBuffer.push(action);
   }
 }
+g('playerActionBuffer',playerActionBuffer);
 
 async function sendPlayerMadeActions() {
   if (playerActionBuffer.length > 1) {
@@ -26,7 +29,12 @@ async function sendPlayerMadeActions() {
     console.warn("No player entity ID found, cannot send actions");
     return;
   }
+  let sendCountThisCall = 0;
   while (playerActionBuffer.length) {
+    sendCountThisCall++;
+    if (sendCountThisCall > 10) {
+      break; // Limit to sending 5 actions per call to avoid flooding
+    }
     const action = playerActionBuffer.shift();
     if (action.id !== playerEntityId) {
       action.id = playerEntityId;

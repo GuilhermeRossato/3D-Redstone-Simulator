@@ -24,7 +24,7 @@ export async function sync(payload, ctx) {
   ctx.syncPairs.push([client, server]);
   const subs = payload.subjects || [];
   if (subs.length) {
-    console.log(`Syncing subjects: ${subs.join(', ')}, client time: ${client}, server time: ${server}, offset: ${((server - client)/1000).toFixed(1)} s`);
+    //console.log(`Syncing subjects: ${subs.join(', ')}, client time: ${client}, server time: ${server}, offset: ${((server - client)/1000).toFixed(1)} s`);
   }
   const results = [];
   for (const id of subs) {
@@ -38,7 +38,7 @@ export async function sync(payload, ctx) {
       if (!chunk.loaded) {
         await chunk.load();
       }
-      results.push({ ...chunk.state, id: chunk.id });
+      results.push({ ...chunk.state, id: `c${chunk.id.substring(1)}` });
       continue;
     }
     if (id.startsWith('r')) {

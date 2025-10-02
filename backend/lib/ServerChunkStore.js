@@ -15,7 +15,7 @@ export async function loadServerChunkState(id = "", fallback = undefined) {
   }
   /** @type {any} */
   const record = await loadStorageObject("chunks", id, null, fallback);
-  if (record.blockList && (typeof record.blockList === "string" || (typeof record.blockList === "object" && Array.isArray(record.blockList)))) {
+  if (!record.blocks||Object.keys(record.blocks).length===0&&(record.blockList && (typeof record.blockList === "string" || (typeof record.blockList === "object" && Array.isArray(record.blockList))))) {
     record.blocks = convertBlockListToBlockRecord(record.blockList);
   }
   // @ts-ignore

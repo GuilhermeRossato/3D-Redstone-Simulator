@@ -1,26 +1,26 @@
 import { loadEntity, removeEntity } from "../../lib/EntityStorage.js";
 import { loadPlayer, playerCache, savePlayer } from "../../lib/PlayerStorage.js";
 import { connectedPlayerEntities, ServerRegion } from "../../lib/ServerRegion.js";
-
+const debug = false;
 export default async function close(packet, ctx) {
   const playerId = packet.playerId || ctx?.playerId || ctx?.player?.id;
   const entityId = packet.entityId || ctx?.entityId || ctx?.entity?.id;
   
-  console.log("Received close packet:", {playerId, entityId}, packet, ctx);
+  debug && console.log("Received close packet:", {playerId, entityId}, packet, ctx);
   
   if (entityId && connectedPlayerEntities[entityId]) {
-    console.log("Found connected player entity:", entityId, connectedPlayerEntities[entityId]);
+    debug && console.log("Found connected player entity:", entityId, connectedPlayerEntities[entityId]);
     if (connectedPlayerEntities[entityId].pose instanceof Array && connectedPlayerEntities[entityId].pose.length > 3) {
-      console.log("Connected player entity pose:", connectedPlayerEntities[entityId].pose);
+      debug && console.log("Connected player entity pose:", connectedPlayerEntities[entityId].pose);
       const region = ServerRegion.fromAbsolute(connectedPlayerEntities[entityId].pose);
       if (region && region.loaded && region.state?.entities) {
         ctx.region = region;
-        console.log("Connected player entity region found and loaded:", region.id);
+        debug && console.log("Connected player entity region found and loaded:", region.id);
       } else {
-        console.log("Connected player entity region is not loaded or not found for pose:", connectedPlayerEntities[entityId].pose);
+        debug && console.log("Connected player entity region is not loaded or not found for pose:", connectedPlayerEntities[entityId].pose);
       }
     } else {
-      console.log("Connected player entity pose is not an array:", connectedPlayerEntities[entityId].pose);
+      debug && console.log("Connected player entity pose is not an array:", connectedPlayerEntities[entityId].pose);
     }
   }
 

@@ -209,7 +209,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
     debug && console.log("Socket end event");
     contextList = contextList.filter(c => c !== context);
     if (hasProcessedClose === false) {
-      console.log("[Socket] Sending close packet at 204");
+      //console.log("[Socket] Sending close packet");
       hasProcessedClose = true;
       const result = index(
         { type: "close", variant: "end", playerId: context.playerId, entityId: context.entityId },

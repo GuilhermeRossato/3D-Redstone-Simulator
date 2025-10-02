@@ -95,17 +95,9 @@ export default async function context(payload, ctx) {
     player: ctx.player,
     regions: regions.map((r, i) => ({
       id: r.id,
-      // rx: r.rx,
-      // ry: r.ry,
-      // rz: r.rz,
-      entities: i === 0 ? r.state.entities : undefined,
     })),
     chunks: chunks.map((c, i) => ({
       id: c.id,
-      // cx: c.cx,
-      // cy: c.cy,
-      // cz: c.cz,
-      blocks: i === 0 ? c.state.blocks : undefined,
     })),
     blocks,
   };

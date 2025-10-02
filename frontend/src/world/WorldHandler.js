@@ -10,7 +10,9 @@ export const flags = {
 }
 
 /** @type {Record<number, Record<number, Record<number, Chunk>>>} */
-const chunks = [];
+const chunks = {};
+
+g('chunks', chunks);
 
 export const blockDefinitions = g("blockDefinitions", {});
 
@@ -51,11 +53,21 @@ export function getChunkAtWorldPosition(x, y, z) {
  * @param {boolean} [createOnMissing]
  */
 export function getChunk(cx, cy, cz, createOnMissing = true) {
+  if (isNaN(cx) || isNaN(cy) || isNaN(cz)) {
+    console.warn("Invalid chunk coordinates:", cx, cy, cz);
+    return null;
+  }
   if (!chunks[cz]) {
-    chunks[cz] = [];
+    if (!createOnMissing) {
+      return null;
+    }
+    chunks[cz] = {};
   }
   if (!chunks[cz][cx]) {
-    chunks[cz][cx] = [];
+    if (!createOnMissing) {
+      return null;
+    }
+    chunks[cz][cx] = {};
   }
   let chunk = chunks[cz][cx][cy];
   if (!chunk && createOnMissing) {

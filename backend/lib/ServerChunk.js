@@ -68,41 +68,60 @@ const checkEvent = {
  * @returns {Boolean} Whether the event changed the object
  */
 function applyServerChunkEvent(obj, event) {
+  if (typeof obj.cx !== "number" || typeof obj.cy !== "number" || typeof obj.cz !== "number") {
+    if (obj.id) {
+      const c = (obj.id.match(/-?\d+/g) || []).map(i => parseInt(i));
+      if (c.length === 3 && c.every(i => !isNaN(i))) {
+        obj.cx = c[0];
+        obj.cy = c[1];
+        obj.cz = c[2];
+      }
+    } else {
+      throw new Error("Chunk coordinates are not set. Cannot apply event.");
+    }
+  }
+  const rx = event.x - (obj.cx * 16);
+  const ry = event.y - (obj.cy * 16);
+  const rz = event.z - (obj.cz * 16);
+  if (rx < 0 || rx >= 16 || ry < 0 || ry >= 16 || rz < 0 || rz >= 16) {
+    throw new Error(`Event coordinates are out of bounds for this chunk. Event at (${event.x},${event.y},${event.z}) but chunk is at (${obj.cx},${obj.cy},${obj.cz})`);
+  }
+
   if (checkEvent.isSetBlock(event)) {
     if (event.id) {
       if (!obj.blocks) {
         obj.blocks = {};
       }
-      if (!obj.blocks[event.y]) {
-        obj.blocks[event.y] = {};
+      if (!obj.blocks[ry]) {
+        obj.blocks[ry] = {};
       }
-      if (!obj.blocks[event.y][event.x]) {
-        obj.blocks[event.y][event.x] = {};
+      if (!obj.blocks[ry][rx]) {
+        obj.blocks[ry][rx] = {};
       }
-      if (obj.blocks[event.y][event.x][event.z] === event.b) {
+      if (obj.blocks[ry][rx][rz] === event.b) {
         return false;
       }
-      console.log('Set block', event.x, event.y, event.z, 'event:', event.b);
-      obj.blocks[event.y][event.x][event.z] = event.b;
+      console.log('Set block', rx, ry, rz, 'event:', event.b);
+      obj.blocks[ry][rx][rz] = event.b;
     } else {
       if (!obj.blocks) {
         return false;
       }
-      if (!obj.blocks[event.y]) {
+      if (!obj.blocks[ry]) {
         return false;
       }
-      if (!obj.blocks[event.y][event.x]) {
+      if (!obj.blocks[ry][rx]) {
         return false;
       }
-      if (!obj.blocks[event.y][event.x][event.z]) {
+      if (!obj.blocks[ry][rx][rz]) {
         return false;
       }
-      console.log('Remove block', event.x, event.y, event.z, 'event');
-      delete obj.blocks[event.y][event.x][event.z];
-      if (Object.keys(obj.blocks[event.y][event.x]).length === 0) {
-        delete obj.blocks[event.y][event.x];
-        if (Object.keys(obj.blocks[event.y]).length === 0) {
-          delete obj.blocks[event.y];
+      console.log('Remove block', rx, ry, rz, 'event');
+      delete obj.blocks[ry][rx][rz];
+      if (Object.keys(obj.blocks[ry][rx]).length === 0) {
+        delete obj.blocks[ry][rx];
+        if (Object.keys(obj.blocks[ry]).length === 0) {
+          delete obj.blocks[ry];
         }
       }
     }
@@ -114,21 +133,21 @@ function applyServerChunkEvent(obj, event) {
     if (!obj.blocks) {
       return false;
     }
-    if (!obj.blocks[event.y]) {
+    if (!obj.blocks[ry]) {
       return false;
     }
-    if (!obj.blocks[event.y][event.x]) {
+    if (!obj.blocks[ry][rx]) {
       return false;
     }
-    if (!obj.blocks[event.y][event.x][event.z]) {
+    if (!obj.blocks[ry][rx][rz]) {
       return false;
     }
-    console.log('Remove block', event.x, event.y, event.z, 'event');
-    delete obj.blocks[event.y][event.x][event.z];
-    if (Object.keys(obj.blocks[event.y][event.x]).length === 0) {
-      delete obj.blocks[event.y][event.x];
-      if (Object.keys(obj.blocks[event.y]).length === 0) {
-        delete obj.blocks[event.y];
+    console.log('Remove block', rx, ry, rz, 'event');
+    delete obj.blocks[ry][rx][rz];
+    if (Object.keys(obj.blocks[ry][rx]).length === 0) {
+      delete obj.blocks[ry][rx];
+      if (Object.keys(obj.blocks[ry]).length === 0) {
+        delete obj.blocks[ry];
       }
     }
     return true;
@@ -228,9 +247,6 @@ export class ServerChunk {
     if (!this.loaded) {
       await this.load();
     }
-    if (typeof event.x === 'number') { event.x -= (this.cx * 16); }
-    if (typeof event.y === 'number') { event.y -= (this.cy * 16); }
-    if (typeof event.z === 'number') { event.z -= (this.cz * 16); }
     const b = event.b;
     if (event.type === 'set' && typeof b === 'string' && b && !b.includes(':')) {
       const id = await getBlockNamingId(b);
@@ -284,7 +300,12 @@ export class ServerChunk {
   }
 
   async load(forceRefresh = false) {
-    return await chunkStore.load(this, forceRefresh);
+    console.log('Loading chunk', this.id);
+    const loaded = await chunkStore.load(this, forceRefresh);
+    if (this.cx === 0 && this.cy === 0 && this.cz === 0) {
+      console.log('Loaded chunk', this.id, 'with', Object.keys(this.state.blocks || {}).length, 'columns of blocks');
+    }
+    return loaded;
   }
 
   static fromAbsolute(x, y = undefined, z = undefined) {

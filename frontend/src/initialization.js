@@ -62,8 +62,11 @@ async function initialization() {
           lastSavePos = frame;
           console.log('Updating player position (local)');
           InputHandler.flags.dirty = false;
-          const { x, y, z } = InputHandler.position;
-          const { yaw, pitch } = InputHandler.rotation;
+          const x = InputHandler.yawObject.position.x;
+          const y = InputHandler.yawObject.position.y;
+          const z = InputHandler.yawObject.position.z;
+          const yaw = InputHandler.yawObject.rotation.y;
+          const pitch = InputHandler.pitchObject.rotation.x;
           localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
           sessionStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
         }

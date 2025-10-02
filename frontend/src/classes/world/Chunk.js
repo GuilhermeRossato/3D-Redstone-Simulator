@@ -52,7 +52,7 @@ export default class Chunk {
      * Note2: Each key is a relative position in the chunk, minimum is 0 and maximum is 15.
      * @type {{ [z: number]: { [x: number]: { [y: number]: WorldHandler.blockDefinitions } } }}
      */
-    this.blocks = [];
+    this.blocks = {};
 
     /** @type {WorldBlock[]} */
     this.blockList = [];
@@ -65,7 +65,7 @@ export default class Chunk {
      * @type {any[]}
      */
     this.definitions = null;
-    
+
     this.rebuildMesh = this.rebuildMesh.bind(this);
   }
 
@@ -167,11 +167,11 @@ export default class Chunk {
 
     for (let i = this.blockList.length - 1; i >= 0; i--) {
       const block = this.blockList[i];
-      
+
       const gx = this.cx * 16 + block.x;
       const gy = this.cy * 16 + block.y;
       const gz = this.cz * 16 + block.z;
-      
+
       const sides = typeof block?.data?.faceCount === "number" ? block.data?.faceCount : 6;
 
       for (let j = 0; j < sides; j++) {
@@ -190,7 +190,7 @@ export default class Chunk {
           faceTexture = BlockHandler.getTextureFromBlock(block, j, gx, gy, gz);
           textureRec[`${block.id}|${j}`] = faceTexture;
         }
-        
+
         let rotationId;
         if (block.data?.isRedstone) {
           const rightBlock = get(gx + 1, gy, gz);
@@ -346,7 +346,7 @@ export default class Chunk {
     }
     if (!this.willRebuildMesh) {
       this.willRebuildMesh = true;
-      this.updateMeshTimer = setTimeout(this.rebuildMesh, WorldHandler.blockDefinitions?Math.floor(1+Math.random()*30):100+Math.floor(Math.random()*300));
+      this.updateMeshTimer = setTimeout(this.rebuildMesh, WorldHandler.blockDefinitions ? Math.floor(1 + Math.random() * 30) : 100 + Math.floor(Math.random() * 300));
       // debug instant rebuild mesh on request - this.rebuildMesh();
     }
     // debug auto update mesh - setTimeout(() => this.requestMeshUpdate(), 500);
@@ -377,27 +377,33 @@ export default class Chunk {
    * @param {number} id
    */
   set(x, y, z, id) {
-    if ((typeof x === 'number'&&x < 0) || (typeof y === 'number' && y < 0) || (typeof z === 'number' && z < 0)) {
+    if ((typeof x === 'number' && x < 0) || (typeof y === 'number' && y < 0) || (typeof z === 'number' && z < 0)) {
       throw new Error(`Local chunk position for setting is outside (${x},${y},${z}) of the chunk buffer`);
     }
-    if ((typeof x === 'number'&&x >= 16) || (typeof y === 'number' && y >= 16) || (typeof z === 'number' && z >= 16)) {
+    if ((typeof x === 'number' && x >= 16) || (typeof y === 'number' && y >= 16) || (typeof z === 'number' && z >= 16)) {
       throw new Error(`Local chunk position for setting is outside (${x},${y},${z}) of the chunk buffer`);
     }
-    const r = (window["blockRec"]||(window["blockRec"]={}));
-    r[id] = (r[id]||0)+1;
+    const r = (window["blockRec"] || (window["blockRec"] = {}));
+    r[id] = (r[id] || 0) + 1;
     let changed = 0;
     if (id === 0) {
       this.clearBlock(x, y, z);
       changed = 1;
-    } else if (this.blocks[z] && this.blocks[z][x] && this.blocks[z][x][y]) {
+    } else if (this.blocks[y] && this.blocks[y][x] && this.blocks[y][x][z]) {
       if (Object.keys(WorldHandler.blockDefinitions).length && !WorldHandler.blockDefinitions[id]) {
         throw new Error(`Block id ${id} does not exist on WorldHandler.blockDefinitions`);
       }
       this.replaceBlock(x, y, z, id);
       changed = 1;
     } else {
+
+
       if (Object.keys(WorldHandler.blockDefinitions).length && !WorldHandler.blockDefinitions[id]) {
-        throw new Error(`Block id ${id} does not exist on WorldHandler.blockDefinitions`);
+        const m = typeof id === 'string' ? Object.values(WorldHandler.blockDefinitions).find(a => a.key === id) : null;
+        if (!m) {
+          throw new Error(`Block id ${id} does not exist on WorldHandler.blockDefinitions`);
+        }
+        id = m.id;
       }
       this.addBlock(x, y, z, id);
       changed = 1;
@@ -412,7 +418,7 @@ export default class Chunk {
    * @param {number} z
    */
   get(x, y, z) {
-    return this.blocks[z] && this.blocks[z][x] ? this.blocks[z][x][y] : null;
+    return this.blocks[y] && this.blocks[y][x] ? this.blocks[y][x][z] : null;
   }
 
   /**
@@ -421,17 +427,17 @@ export default class Chunk {
    * @param {number | string} z
    */
   clearBlock(x, y, z) {
-    if (!this.blocks[z] || !this.blocks[z][x] || !this.blocks[z][x][y]) {
+    if (!this.blocks[y] || !this.blocks[y][x] || !this.blocks[y][x][z]) {
       return;
     }
-    const index = this.blockList.indexOf(this.blocks[z][x][y]);
+    const index = this.blockList.indexOf(this.blocks[y][x][z]);
     if (index === -1) {
       console.warn("Can't clear block because it wasn't found in the chunk block list, but is at the block tree");
       return;
     }
 
     this.blockList.splice(index, 1);
-    this.blocks[z][x][y] = null;
+    this.blocks[y][x][z] = undefined;
   }
 
   /**
@@ -441,9 +447,9 @@ export default class Chunk {
    * @param {number} id 
    */
   replaceBlock(x, y, z, id) {
-    this.blocks[z][x][y].id = id;
-    this.blocks[z][x][y].data = WorldHandler.blockDefinitions[id];
-    this.blocks[z][x][y].texture = WorldHandler.blockDefinitions[id].texture;
+    this.blocks[y][x][z].id = id;
+    this.blocks[y][x][z].data = WorldHandler.blockDefinitions[id];
+    this.blocks[y][x][z].texture = WorldHandler.blockDefinitions[id].texture;
   }
 
   /**
@@ -474,16 +480,16 @@ export default class Chunk {
     if (!blockObj.texture) {
       blockObj.texture = BlockHandler.FALLBACK_TEXTURE;
     }
-    if (!this.blocks[z]) {
-      this.blocks[z] = [];
+    if (!this.blocks[y]) {
+      this.blocks[y] = {};
     }
-    if (!this.blocks[z][x]) {
-      this.blocks[z][x] = [];
+    if (!this.blocks[y][x]) {
+      this.blocks[y][x] = {};
     }
-    this.blocks[z][x][y] = blockObj;
+    this.blocks[y][x][z] = blockObj;
     this.blockList.push(blockObj);
   }
-  
+
   /**
    * @unused
    * Extracts a packet position (16 bits) into a global position plus some metadata
@@ -533,12 +539,12 @@ export default class Chunk {
       throw new Error(`Global position (${gx}, ${gy}, ${gz}) is out of bounds for this chunk.`);
     }
     return (x << 8) |
-    (y << 4) |
-    z |
-    (isSolid ? 0x1000 : 0) |
-    (isCollidable ? 0x2000 : 0) |
-    (isCustom ? 0x4000 : 0) |
-    (isProtected ? 0x8000 : 0);
+      (y << 4) |
+      z |
+      (isSolid ? 0x1000 : 0) |
+      (isCollidable ? 0x2000 : 0) |
+      (isCustom ? 0x4000 : 0) |
+      (isProtected ? 0x8000 : 0);
   }
 
 
