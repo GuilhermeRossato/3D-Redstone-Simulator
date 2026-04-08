@@ -100,7 +100,7 @@ export async function loadStorageArray(type, name, id, fallback = undefined) {
  */
 export async function writeStorageObject(type, name, id, state = {}) {
   try {
-    const text = JSON.stringify(state, null, "  ");
+    const text = typeof state === 'string' ? state : JSON.stringify(state, null, "  ");
     const buffer = Buffer.from(text, "utf-8");
     const target = getStorageObjectFilePath(type, name, id, false);
     // console.log({type, filePath: target, state});

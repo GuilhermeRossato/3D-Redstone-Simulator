@@ -99,7 +99,7 @@ function interpretErrorStack(lines = [""], addLineCode = false) {
   const f = placeOrigin.indexOf("file:///");
   place = placeOrigin
     .substring(
-      f === -1 ? placeOrigin.indexOf("///") + 3 : f + 7,
+      f === -1 ? placeOrigin.indexOf("///") + 3 : f + 2,
       placeOrigin.lastIndexOf(".js") + 3
     )
     .replace(/\\/g, "/");
