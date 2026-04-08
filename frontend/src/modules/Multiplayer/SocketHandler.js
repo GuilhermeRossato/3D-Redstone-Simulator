@@ -297,34 +297,28 @@ export async function initializeSocket() {
     );
   }
   isStartingSocket = true;
-  try {
-    ws = await createSocket();
-    isStartingSocket = false;
-  } catch (err) {
-    isStartingSocket = false;
-    console.log("Failed while starting socket for the first time:");
-    console.log(err);
-  }
-  if (!ws) {
-    console.log('[Warning] Socket is missing after creation:', ws);
-  }
-  if (!ws) {
-    isStartingSocket = true;
-    console.log("Retrying socket connection once...");
-    await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const attemptSocketCreation = async (retry = false) => {
     try {
       ws = await createSocket();
-      if (ws) {
-        console.log("Socket retry succeeded");
-      }
-    } catch (err) {
+      console.log(retry ? "Socket retry succeeded" : "Socket initialized successfully");
       isStartingSocket = false;
-      throw err;
+    } catch (err) {
+      console.log(retry ? "Socket retry failed:" : "Failed while starting socket:");
+      console.log(err);
+      isStartingSocket = false;
+      if (!retry) throw err;
     }
+  };
+
+  try {
+    await attemptSocketCreation();
+  } catch {
+    console.log("Retrying socket connection once...");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await attemptSocketCreation(true);
   }
-  if (ws) {
-    isStartingSocket = false;
-  }
+
   if (!ws) {
     throw new Error("Unexpectedly missing socket after creation");
   }

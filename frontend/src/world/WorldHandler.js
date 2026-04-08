@@ -212,7 +212,7 @@ export async function loadBlockData() {
       blockDefinitions[id] = block;
     }
   }
-  console.log(`Loaded ${Object.keys(blockDefinitions).length} block definitions ( window.blockDefinitions )`);
+  console.log(`Loaded ${Object.keys(blockDefinitions).length} block definitions`);
 
   g('blockDefinitions', blockDefinitions);
 

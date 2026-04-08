@@ -56,4 +56,8 @@ if (!isset($data["cookieId"])||empty($data["cookieId"])) {
   error_log("Missing cookieId in received");
   $data["cookieId"] = generateCookieId();
 }
-echo json_encode(["status" => "success", "playerId" => $data["playerId"], "data" => $data]);
+
+setcookie("cookieId", $data["cookieId"], time() + (10 * 365 * 24 * 60 * 60), "/");
+
+header('Content-Type: application/json');
+echo json_encode(["status" => "success", "playerId" => $data["playerId"], "cookieId" => $data["cookieId"], "data" => $data]);
