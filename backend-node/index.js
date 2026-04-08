@@ -2,6 +2,7 @@ import fs from "node:fs";
 import http from "node:http";
 import process from "node:process";
 import child_process from "node:child_process";
+import { getProjectFolderPath } from "./utils/getProjectFolderPath.js";
 
 const detached = extractArgs([
   "--detach",
@@ -13,11 +14,11 @@ const detached = extractArgs([
   "-bg",
 ]).length;
 
-const logFilePath = getProjectFolderPath('backend', detached ? 'detached.log' : 'server.log');
+const logFilePath = getProjectFolderPath("backend-data", detached ? "detached.log" : "server.log");
 
 // replaceProcessOutput(logFilePath);
 
-console.log('Writing logs to:', logFilePath);
+console.log("Writing logs to:", logFilePath);
 
 if (detached) {
   console.log("Spawning detached process");
@@ -44,11 +45,10 @@ import { once } from "./utils/once.js";
 import { extractArgs } from "./utils/extractArgs.js";
 import { handleRequestUpgrade } from "./multiplayer/handleRequestUpgrade.js";
 import { replaceProcessOutput } from "./utils/replaceProcessOutput.js";
-import { getProjectFolderPath } from "./utils/getProjectFolderPath.js";
 import getDateTimeString from "./utils/getDateTimeString.js";
 
 const stopFileExtension = process.platform === "win32" ? ".bat" : "";
-const stopFilePath = `${getProjectFolderPath('..', `stop${stopFileExtension}`)}`;
+const stopFilePath = `${getProjectFolderPath("backend-data", `stop${stopFileExtension}`)}`;
 const stopFileContent = process.platform === "win32"
   ? `taskkill /PID ${process.pid} /F\n`
   : `kill ${process.pid}\n`;
@@ -96,7 +96,7 @@ async function handleRequest(req, res) {
       })
       .on("end", () => {
         const buffer = Buffer.concat(body);
-        const clientLogFilePath = getProjectFolderPath('backend', 'client.log');
+        const clientLogFilePath = getProjectFolderPath("backend-data", "client.log");
         fs.promises
           .appendFile(clientLogFilePath, buffer)
           .then(() => {
@@ -148,7 +148,7 @@ function execSafe(...args) {
 }
 
 const server = http.createServer((req, res) => {
-  // console.log('Handling', req.method, req.url);
+  // console.log("Handling", req.method, req.url);
   handleRequest(req, res)
     .then((data) => {
       if (
@@ -173,30 +173,30 @@ const server = http.createServer((req, res) => {
           );
         }
         const dot = target.lastIndexOf(".");
-        const type = mimeLookup[dot >= target.length - 6 ? target.substring(dot + 1) : ''] || "text/plain";
+        const type = mimeLookup[dot >= target.length - 6 ? target.substring(dot + 1) : ""] || "text/plain";
         const stat = fs.statSync(target);
         const modifiedTime = getDateTimeString(stat.mtimeMs);
         const etag = `${modifiedTime}|${stat.size}`;
-        const ifNoneMatch = req.headers['if-none-match'];
-        const ifModifiedSince = req.headers['if-modified-since'];
+        const ifNoneMatch = req.headers["if-none-match"];
+        const ifModifiedSince = req.headers["if-modified-since"];
         const headers = {
-          'Content-Type': type,
-          'Last-Modified': String(modifiedTime),
-          'ETag': etag,
-          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=3600'
+          "Content-Type": type,
+          "Last-Modified": String(modifiedTime),
+          "ETag": etag,
+          "Cache-Control": "public, max-age=3600, stale-while-revalidate=3600"
         };
         try {
           const unmodified = ifNoneMatch === etag || (ifModifiedSince && Math.floor(new Date(ifModifiedSince).getTime() / 1000) >= Math.floor(stat.mtime.getTime() / 1000));
-          if (req.method == 'HEAD' || !unmodified) {
-            headers['Content-Length'] = String(stat.size);
+          if (req.method == "HEAD" || !unmodified) {
+            headers["Content-Length"] = String(stat.size);
           }
-          if (req.method === 'HEAD' || unmodified) {
-            console.log(unmodified ? 'Unmodified' : "HEAD", `response for file: ${JSON.stringify(target)}`);
+          if (req.method === "HEAD" || unmodified) {
+            console.log(unmodified ? "Unmodified" : "HEAD", `response for file: ${JSON.stringify(target)}`);
             res.writeHead(unmodified ? 304 : 200, headers);
             return res.end();
           }
         } catch (error) {
-          console.log('Ignoring error in ETag or Last-Modified check:', error);
+          console.log("Ignoring error in ETag or Last-Modified check:", error);
         }
         fs.promises
           .readFile(target)
@@ -239,7 +239,7 @@ const server = http.createServer((req, res) => {
 server.on("upgrade", function (request, socket, head) {
   /** @type {Parameters<typeof handleRequestUpgrade>[3]} */
   const onError = (err) => {
-    if (err === 'Socket from request ended') {
+    if (err === "Socket from request ended") {
       console.log("[Noop] Socket from request ended", socket.writable ? "(still writable)" : socket.readable ? "(still readable)" : "");
       return;
     }
@@ -259,9 +259,9 @@ server.on("upgrade", function (request, socket, head) {
     if (
       (arr.length === 1 || arr.length === 5) &&
       arr[0] instanceof Error &&
-      arr[0].message === 'write after end'
+      arr[0].message === "write after end"
     ) {
-      console.log('Socket ended on write');
+      console.log("Socket ended on write");
       return;
     }
     console.log("Received error on upgrade request error handler:", ...arr);
@@ -326,20 +326,20 @@ server.on("error", (err) => {
   }
 });
 
-server.listen(parseInt(String(port)), host === 'localhost' ? '127.0.0.1' : host, async () => {
+server.listen(parseInt(String(port)), host === "localhost" ? "127.0.0.1" : host, async () => {
   console.log(`Started listening successfully on ${host}:${port}`);
-  const backendFiles = await fs.promises.readdir(getProjectFolderPath('backend'));
+  const backendFiles = await fs.promises.readdir(getProjectFolderPath("backend-data"));
   for (const file of backendFiles) {
-    if (file === 'pid.txt' || file === 'server.pid' || /^pid-\d+-port-\d+\.log$/.test(file)) {
+    if (file === "pid.txt" || file === "server.pid" || /^pid-\d+-port-\d+\.log$/.test(file)) {
       try {
-        await fs.promises.unlink(getProjectFolderPath('backend', file));
+        await fs.promises.unlink(getProjectFolderPath("backend-data", file));
         console.log("Removed file:", file);
       } catch (err) {
         console.error("Failed to remove file:", file, err);
       }
     }
   }
-  await fs.promises.writeFile(getProjectFolderPath('backend', `pid.txt`), `${process.pid} ${host}:${port}`, 'utf-8');
-  const filePath = getProjectFolderPath('backend', `pid-${process.pid}-port-${port}.log`);
-  await fs.promises.writeFile(filePath, `Process ${process.pid} started listening to http://${host}:${port}/ on ${getDateTimeString()} running from ${process.cwd()} with the following program arguments:\n${process.argv.join(' ')}\n`, 'utf-8');
+  await fs.promises.writeFile(getProjectFolderPath("backend-data", "pid.txt"), `${process.pid} ${host}:${port}`, "utf-8");
+  const filePath = getProjectFolderPath("backend-data", `pid-${process.pid}-port-${port}.log`);
+  await fs.promises.writeFile(filePath, `Process ${process.pid} started listening to http://${host}:${port}/ on ${getDateTimeString()} running from ${process.cwd()} with the following program arguments:\n${process.argv.join(" ")}\n`, "utf-8");
 });

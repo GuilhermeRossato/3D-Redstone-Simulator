@@ -1,8 +1,9 @@
 
+
 import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
 import { sfs } from "../../utils/sfs.js";
 
-const dataFolderPath = getProjectFolderPath('backend', 'data');
+const dataFolderPath = getProjectFolderPath("backend-data");
 
 /**
  * @param {string} type

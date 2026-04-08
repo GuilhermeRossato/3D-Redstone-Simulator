@@ -8,7 +8,7 @@ const localCache = new Map();
 let cache;
 export async function getChunkOffsetCache(forceReset = false) {
   if (!cache || forceReset) {
-    const parent = getProjectFolderPath("backend", "data", "cache");
+    const parent = getProjectFolderPath("backend-data", "cache");
     const files = await fs.promises.readdir(parent);
     const list = files.filter(f => f.startsWith("chunkOffsets") && f.endsWith(".js")).map(f => ({
       path: `${parent}/${f}`,
@@ -67,7 +67,7 @@ export async function getChunkOffsets(maxCount = 64, maxDistance = 16) {
 }
 
 async function generateJsChunkOffsetCache() {
-  const parent = getProjectFolderPath('backend', 'data', 'cache');
+  const parent = getProjectFolderPath("backend-data", 'cache');
   await fs.promises.mkdir(parent, { recursive: true });
   console.log('Generating distance sequence...');
   const list = generateChunkDistanceSequence(48);
@@ -106,7 +106,7 @@ async function generateJsChunkOffsetCache() {
 
 
 async function generateCsvChunkOffsetCache() {
-  const parent = getProjectFolderPath('backend', 'data', 'cache');
+  const parent = getProjectFolderPath("backend-data", 'cache');
   await fs.promises.mkdir(parent, { recursive: true });
   console.log('Generating distance sequence...');
   const list = generateChunkDistanceSequence(48);

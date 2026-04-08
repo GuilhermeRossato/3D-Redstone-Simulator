@@ -1,7 +1,5 @@
 # Application specific
-backend/data/
-
-backend/pid.txt
+backend-data/
 
 # Logs
 logs

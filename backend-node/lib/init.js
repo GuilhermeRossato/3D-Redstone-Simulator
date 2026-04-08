@@ -4,7 +4,7 @@ import process from "node:process";
 import { getProjectFolderPath } from "../utils/getProjectFolderPath.js";
 
 // Load environment variables from the .env file in the backend folder
-const envFilePath = getProjectFolderPath('backend', '.env');
+const envFilePath = getProjectFolderPath("backend", '.env');
 
 if (fs.existsSync(envFilePath)) {
   if (typeof process.loadEnvFile === "function") {

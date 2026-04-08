@@ -1,6 +1,5 @@
 
 import fs from 'fs';
-import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
 import { getStorageObjectFilePath, loadStorageObject, writeStorageObject } from "../primitives/StorageObjectStore.js";
 import { blockNamingRecord, getBlockNamingKey, loadBlockNameData } from "./BlockSharedStorage.js";
 

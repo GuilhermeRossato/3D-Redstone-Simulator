@@ -380,7 +380,7 @@ export async function handleRequestUpgrade(req, socket, head, error) {
   }
 
   const dataid = "aa"; // Math.floor(Math.random() * 0xFFFFFFFF).toString(16).padStart(8, '0').substring(3, 3 + 4);
-  const dataWsFolder = getProjectFolderPath("backend", "data", `ws-${dataid}`);
+  const dataWsFolder = getProjectFolderPath("backend-data", `ws-${dataid}`);
   fs.mkdirSync(dataWsFolder, { recursive: true });
 
   let lastDebugObject;

@@ -1,10 +1,8 @@
 
-import { loadBlockMetadata } from "../../lib/blocks/BlockMetadataStorage.js";
-import { blockNamingList, getBlockDefinitions, loadBlockNameData } from "../../lib/blocks/BlockSharedStorage.js";
+
+import { getBlockDefinitions, loadBlockNameData } from "../../lib/blocks/BlockSharedStorage.js";
 import { ServerChunk } from "../../lib/ServerChunk.js";
 import { ServerRegion } from "../../lib/ServerRegion.js";
-import { getChunkOffsets } from "../../scripts/chunkDistance.js";
-import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
 import { getPlayerContextPose, playerCache } from '../../lib/PlayerStorage.js';
 import { sleep } from "../../utils/sleep.js";
 

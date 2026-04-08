@@ -45,6 +45,9 @@ export function isValidProjectPath(folder) {
  * Get this project's root folder path.
  */
 export function getProjectFolderPath(...extraPaths) {
+  if (extraPaths.length <= 0 || typeof extraPaths[0] !== "string" || (extraPaths[0] !== "backend-data")) {
+    throw new Error("Invalid project folder path: The first argument must be 'backend'");
+  }
   if (!selfProjectPath) {
     const script = path.resolve(process.cwd(), process.argv[1]);
     let folder = fs.statSync(script).isFile()

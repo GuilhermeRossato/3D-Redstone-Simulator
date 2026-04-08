@@ -1,9 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { getProjectFolderPath } from "../../utils/getProjectFolderPath.js";
-import { BlockList } from "net";
 
-const dataFolderPath = getProjectFolderPath('backend', 'data');
+const dataFolderPath = getProjectFolderPath("backend-data");
 
 /** @type {Record<string, number>} */
 const countRecord = {};
