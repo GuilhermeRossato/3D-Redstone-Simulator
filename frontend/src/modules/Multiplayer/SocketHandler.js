@@ -1,4 +1,5 @@
 import { setDebugInfo } from "../../foreground/DebugInfo.js";
+import { set } from "../../world/WorldHandler.js";
 import {
   storedPlayerId,
   getCookieId,
@@ -13,7 +14,7 @@ function onSocketClose() {
   flags.connected = false;
 }
 
-/** @type {undefined | WebSocket} */
+/** @type {undefined | (WebSocket&{setCookieId?: (cookieId: string) => void, setPlayerId?: (playerId: string) => void})} */
 let ws;
 
 let closeReason = null;
@@ -41,15 +42,31 @@ async function usePhpSocket(playerId, cookieId, updateUsePhpTime = true) {
   }
   await new Promise((resolve) => setTimeout(resolve, 100));
   const obj = {
-    type: "php-socket",
-    playerId,
-    cookieId, 
+    type: "php",
+    setCookieId: (newCookieId) => {
+      if (cookieId !== newCookieId) {
+        console.log("Updated cookieId for PHP socket:", newCookieId);
+      }
+      cookieId = newCookieId;
+    },
+    setPlayerId: (newPlayerId) => {
+      if (playerId !== newPlayerId) {
+        console.log("Updated playerId for PHP socket:", newPlayerId);
+      }
+      playerId = newPlayerId;
+    },
     send: async (data, callback) => {
       if (typeof data === "object") {
         data = JSON.stringify(data);
       }
       console.log("Sending data through PHP socket:", data);
-      const r = await fetch("/3D-Redstone-Simulator/backend-php/api/socket/send.php", {
+      const full = "/3D-Redstone-Simulator/backend-php/api/socket/send.php";
+      const params = [
+        [`playerId`, playerId],
+        [`cookieId`, cookieId],
+      ].filter(param => param[1]).map(param => `${encodeURIComponent(param[0])}=${encodeURIComponent(param[1])}`);
+      const extra = params.length ? `?${params.join("&")}` : "";
+      const r = await fetch(full+extra, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -69,222 +86,216 @@ async function usePhpSocket(playerId, cookieId, updateUsePhpTime = true) {
       return obj;
     },
   };
+  obj.send = obj.send.bind(obj);
   return obj;
 }
 
 async function createSocket() {
-  if (lastBeginTime && new Date().getTime() - lastBeginTime < 1000) {
-    debug && console.log("[D]", "Previous start time was recent:");
-    debug &&
-      console.log(
-        "[D]",
-        "Last begin was",
-        new Date().getTime() - lastBeginTime,
-        "ms before and 1000 ms of artificial delay will be added before connection"
-      );
-    await new Promise((resolve) => setTimeout(() => resolve, 1000));
-  }
-  lastBeginTime = new Date().getTime();
-  let [playerId, cookieId] = await Promise.all([
-    storedPlayerId(),
-    getCookieId(),
-  ]);
-  if (playerId.split("|").length > 1) {
-    debug && console.log("[D]", "Self login code is too long, limiting it");
-    playerId = playerId.split("|").slice(0, 1).join("|");
-  }
-  const lastPhpSocketTime = localStorage.getItem("use-php-socket-time");
-  if (lastPhpSocketTime) {
-    const lastPhpSocketTimeNum = parseInt(lastPhpSocketTime);
-    if (!isNaN(lastPhpSocketTimeNum)) {
-      const now = new Date().getTime();
-      debug && console.log("[D]", "Last PHP socket time was", now - lastPhpSocketTimeNum, "ms ago");
-      if (now - lastPhpSocketTimeNum < 60_000) {
-        debug && console.log("[D]", "Last PHP socket time was recent, using PHP socket");
-        return await usePhpSocket(playerId, cookieId, false);
-      }
+  const lastSocketType = localStorage.getItem("last-successful-socket-type");
+  let primarySocket = lastSocketType === "php" ? "php" : "websocket";
+
+  const attemptPhpSocket = async () => {
+    try {
+      const [playerId, cookieId] = await Promise.all([storedPlayerId(), getCookieId()]);
+      const phpSocket = await usePhpSocket(playerId, cookieId, false);
+      localStorage.setItem("last-successful-socket-type", "php");
+      console.log("PHP socket initialized successfully");
+      return phpSocket;
+    } catch (err) {
+      console.log("PHP socket initialization failed:", err);
+      throw err;
     }
-  }
-  return await new Promise((resolve, reject) => {
-    const base = getWebsocketEndpoint();
-    if (playerId.startsWith("/")) {
-      throw new Error("Cannot use player id for websocket");
-    }
-    debug && console.log("[D]", "Using player id:", playerId);
+  };
 
-    const url = `${base}/ws/${playerId}/${cookieId ? cookieId + "/" : ""}`;
-    debug && console.log("[D]", "Creating websocket to", url);
-    ws = new WebSocket(url);
-    ws.onerror = (err) => {
-      isSocketClosed = true;
-      console.log("Websocket error:", err);
-      const lastTime = localStorage.getItem("last-websocket-error-time");
-      const lastTimeNum = lastTime ? parseInt(lastTime) : NaN;
-      if (isNaN(lastTimeNum) || new Date().getTime() - lastTimeNum > 30_000) {
-        console.log("Websocket error occurred over", new Date().getTime() - lastTimeNum, "ms after last error");
-        localStorage.setItem("last-websocket-error-time", new Date().getTime().toString());
-        location.reload();
-        return;
-      }
-      console.log("Websocket error occurred shortly after last error, not reloading");
-      usePhpSocket(playerId, cookieId, true).then((obj) => resolve(obj)).catch((err) => reject(err));
-      return;
-    }
-
-    // @ts-ignore
-    window["socket"] = window["ws"] = ws;
-    window["messages"] = [];
-
-    let resolved = false;
-    const timeoutTimer = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        const message = "Timeout while waiting for socket to initialize";
-        debug && console.log("[D]", message);
-        closeReason = new Error(message);
-        reject(closeReason);
-      }
-    }, 7000);
-    ws.addEventListener("timeout", (evt) => {
-      isSocketClosed = true;
-      onSocketClose();
-      clearTimeout(timeoutTimer);
-      const message = `Timeout event emitted for websocket ${evt && typeof evt["message"] === "string"
-        ? evt["message"]
-        : "without message"
-        } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
-        })`;
-      debug && console.log("[D]", message);
-      if (!resolved) {
-        resolved = true;
-        closeReason = new Error(message);
-        reject(closeReason);
-      }
-    });
-
-    ws.addEventListener("error", (evt) => {
-      if (evt?.eventPhase === 2) {
-        console.log(
-          "Websocket was received by the listener but the communication failed"
-        );
+  const attemptWebSocket = async () => {
+    try {
+      const socket = await new Promise((resolve, reject) => {
         // @ts-ignore
-        console.log("Event", ...([evt?.reason, evt?.cause, evt?.message].filter(Boolean)), evt);
-      } else {
-        console.log("Websocket error event:", evt);
-      }
-      isSocketClosed = true;
-      onSocketClose();
-      clearTimeout(timeoutTimer);
-      const now = new Date().getTime();
-      const message = `Error event emitted for websocket ${evt && typeof evt["message"] === "string"
-        ? evt["message"]
-        : "without message"
-        } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
-        }),  ${now - lastBeginTime} ms since begining connection and ${now - lastErrorTime
-        } ms since last error event`;
-      lastErrorTime = new Date().getTime();
-      debug && console.log("[D]", message);
-      debug && console.log("[D]", "Error event object:", evt);
+        window["socket"] = window["ws"] = ws;
+        window["messages"] = [];
 
-      if (!resolved) {
-        resolved = true;
-        closeReason = new Error(message);
-        reject(closeReason);
-      }
-    });
-
-    ws.addEventListener("close", () => {
-      console.log("Socket closed");
-      setDebugInfo("Multiplayer", "Disconnected");
-      isSocketClosed = true;
-      onSocketClose();
-      clearTimeout(timeoutTimer);
-      const now = new Date().getTime();
-      const message = `Socket close event emitted ${now - lastBeginTime
-        } ms since begining connection, ${now - lastStartTime
-        } ms since last connection start, ${now - lastCloseTime
-        } ms since last connection close`;
-      debug && console.log("[D]", message);
-      closeReason = new Error(message);
-      lastCloseTime = now;
-      if (!resolved && reject) {
-        debug && console.log("[D]", "Resolving socket close event");
-        resolved = true;
-        reject(closeReason);
-      }
-    });
-
-    ws.addEventListener("open", () => {
-      debug && console.log("Web socket opened");
-      clearTimeout(timeoutTimer);
-      if (resolved) {
-        debug &&
-          console.log(
-            "[D]",
-            "Socket open event emitted but socket function has resolved already. Attempting to close socket."
-          );
-        try {
-          isSocketClosed = true;
-          onSocketClose && onSocketClose();
-          ws.close();
-        } catch (err) {
-          // Ignore
-        }
-        return;
-      }
-      isSocketClosed = false;
-      // Delay to confirm nothing will fail
-      setTimeout(() => {
-        if (resolved) {
-          debug &&
-            console.log(
-              "[D]",
-              "Socket open timeout after open event emitted but socket function has resolved already. Attempting to close socket."
-            );
-          try {
-            isSocketClosed = true;
-            onSocketClose();
-            ws.close();
-          } catch (err) {
-            // Ignore
+        let resolved = false;
+        const timeoutTimer = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            const message = "Timeout while waiting for socket to initialize";
+            debug && console.log("[D]", message);
+            closeReason = new Error(message);
+            reject(closeReason);
           }
-          return;
-        }
-        resolved = true;
-        resolve(ws);
-      }, 250);
-    });
+        }, 7000);
+        ws.addEventListener("timeout", (evt) => {
+          isSocketClosed = true;
+          onSocketClose();
+          clearTimeout(timeoutTimer);
+          const message = `Timeout event emitted for websocket ${evt && typeof evt["message"] === "string"
+            ? evt["message"]
+            : "without message"
+            } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
+            })`;
+          debug && console.log("[D]", message);
+          if (!resolved) {
+            resolved = true;
+            closeReason = new Error(message);
+            reject(closeReason);
+          }
+        });
 
-    ws.addEventListener("message", (event) => {
-      let obj;
-      try {
-        obj =
-          typeof event.data === "string" && event.data[0] === "{"
-            ? JSON.parse(event.data)
-            : event.data;
-      } catch (err) {
-        debug &&
-          console.log("[D]", "Failed to parse data from socket:", err.message);
-        debug && console.log("[D]", "Event data:", { data: event.data });
-        ws.close();
-        return;
+        ws.addEventListener("error", (evt) => {
+          if (evt?.eventPhase === 2) {
+            console.log(
+              "Websocket was received by the listener but the communication failed"
+            );
+            // @ts-ignore
+            console.log("Event", ...([evt?.reason, evt?.cause, evt?.message].filter(Boolean)), evt);
+          } else {
+            console.log("Websocket error event:", evt);
+          }
+          isSocketClosed = true;
+          onSocketClose();
+          clearTimeout(timeoutTimer);
+          const now = new Date().getTime();
+          const message = `Error event emitted for websocket ${evt && typeof evt["message"] === "string"
+            ? evt["message"]
+            : "without message"
+            } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
+            }),  ${now - lastBeginTime} ms since begining connection and ${now - lastErrorTime
+            } ms since last error event`;
+          lastErrorTime = new Date().getTime();
+          debug && console.log("[D]", message);
+          debug && console.log("[D]", "Error event object:", evt);
+
+          if (!resolved) {
+            resolved = true;
+            closeReason = new Error(message);
+            reject(closeReason);
+          }
+        });
+
+        ws.addEventListener("close", () => {
+          console.log("Socket closed");
+          setDebugInfo("Multiplayer", "Disconnected");
+          isSocketClosed = true;
+          onSocketClose();
+          clearTimeout(timeoutTimer);
+          const now = new Date().getTime();
+          const message = `Socket close event emitted ${now - lastBeginTime
+            } ms since begining connection, ${now - lastStartTime
+            } ms since last connection start, ${now - lastCloseTime
+            } ms since last connection close`;
+          debug && console.log("[D]", message);
+          closeReason = new Error(message);
+          lastCloseTime = now;
+          if (!resolved && reject) {
+            debug && console.log("[D]", "Resolving socket close event");
+            resolved = true;
+            reject(closeReason);
+          }
+        });
+
+        ws.addEventListener("open", () => {
+          debug && console.log("Web socket opened");
+          clearTimeout(timeoutTimer);
+          if (resolved) {
+            debug &&
+              console.log(
+                "[D]",
+                "Socket open event emitted but socket function has resolved already. Attempting to close socket."
+              );
+            try {
+              isSocketClosed = true;
+              onSocketClose && onSocketClose();
+              ws.close();
+            } catch (err) {
+              // Ignore
+            }
+            return;
+          }
+          isSocketClosed = false;
+          // Delay to confirm nothing will fail
+          setTimeout(() => {
+            if (resolved) {
+              debug &&
+                console.log(
+                  "[D]",
+                  "Socket open timeout after open event emitted but socket function has resolved already. Attempting to close socket."
+                );
+              try {
+                isSocketClosed = true;
+                onSocketClose();
+                ws.close();
+              } catch (err) {
+                // Ignore
+              }
+              return;
+            }
+            resolved = true;
+            resolve(ws);
+          }, 250);
+        });
+
+        ws.addEventListener("message", (event) => {
+          let obj;
+          try {
+            obj =
+              typeof event.data === "string" && event.data[0] === "{"
+                ? JSON.parse(event.data)
+                : event.data;
+          } catch (err) {
+            debug &&
+              console.log("[D]", "Failed to parse data from socket:", err.message);
+            debug && console.log("[D]", "Event data:", { data: event.data });
+            ws.close();
+            return;
+          }
+          window["messages"].push(obj);
+          if (window["messages"].length > 32) {
+            window["messages"].shift();
+          }
+          verbose && console.log("[V]", "Received message:", obj);
+          if (responseResolveRecord[obj.responseId]) {
+            verbose && console.log("[D]", "Routed server packet to response");
+            responseResolveRecord[obj.responseId].resolve(obj);
+            delete responseResolveRecord[obj.responseId];
+            return;
+          }
+          verbose &&
+            console.log("[D]", "Routed server packet to process server event");
+          processServerPacket(obj);
+        });
+      });
+      localStorage.setItem("last-successful-socket-type", "websocket");
+      console.log("WebSocket initialized successfully");
+      return socket;
+    } catch (err) {
+      console.log("WebSocket initialization failed:", err);
+      throw err;
+    }
+  };
+
+  try {
+    if (primarySocket === "php") {
+      return await attemptPhpSocket();
+    } else {
+      return await attemptWebSocket();
+    }
+  } catch (err) {
+    console.log("Primary socket attempt failed, switching to alternate socket...");
+    try {
+      if (primarySocket === "php") {
+        const socket = await attemptWebSocket();
+        location.reload();
+        return socket;
+      } else {
+        const socket = await attemptPhpSocket();
+        location.reload();
+        return socket;
       }
-      window["messages"].push(obj);
-      if (window["messages"].length > 32) {
-        window["messages"].shift();
-      }
-      verbose && console.log("[V]", "Received message:", obj);
-      if (responseResolveRecord[obj.responseId]) {
-        verbose && console.log("[D]", "Routed server packet to response");
-        responseResolveRecord[obj.responseId].resolve(obj);
-        delete responseResolveRecord[obj.responseId];
-        return;
-      }
-      verbose &&
-        console.log("[D]", "Routed server packet to process server event");
-      processServerPacket(obj);
-    });
-  });
+    } catch (finalErr) {
+      console.log("Both socket attempts failed:", finalErr);
+      throw finalErr;
+    }
+  }
 }
 
 let isStartingSocket = false;
@@ -322,6 +333,13 @@ export async function initializeSocket() {
   if (!ws) {
     throw new Error("Unexpectedly missing socket after creation");
   }
+}
+
+export function getSocket() {
+  if (!ws) {
+    throw new Error("Socket has not been initialized");
+  }
+  return ws;
 }
 
 let isFirstLarge = true;

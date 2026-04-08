@@ -122,8 +122,8 @@ export async function load(canvas, gl) {
 
     g("renderer", renderer);
 
-    vertexShader = await AssetLoader.loadText("assets/vertex-shader.glsl");
-    fragmentShader = await AssetLoader.loadText("assets/fragment-shader.glsl");
+    vertexShader = await AssetLoader.loadText("frontend/assets/vertex-shader.glsl");
+    fragmentShader = await AssetLoader.loadText("frontend/assets/fragment-shader.glsl");
     
     hasLoaded = true;
 

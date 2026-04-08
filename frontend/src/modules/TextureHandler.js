@@ -182,7 +182,7 @@ export async function loadTextures() {
       // Texture is already loaded, likely shared on another face
       continue;
     }
-    const path = `assets/textures/${filename}`;
+    const path = `frontend/assets/textures/${filename}`;
     textureLookup[filename] = {
       tx,
       ty,
@@ -216,7 +216,7 @@ export async function loadTextures() {
   mainTexture.magFilter = THREE.NearestFilter;
   mainTexture.minFilter = THREE.LinearFilter;
 
-  aoTexture = await processImageAndGenerateTextureFromPath("assets/ambient-occlusion.png", false);
+  aoTexture = await processImageAndGenerateTextureFromPath("frontend/assets/ambient-occlusion.png", false);
   aoTexture.wrapS = THREE.RepeatWrapping;
   aoTexture.wrapT = THREE.RepeatWrapping;
   aoTexture.magFilter = THREE.NearestFilter;

@@ -29,6 +29,22 @@ function pauseGame() {
   ForegroundHandler.showPausedGame();
 }
 
+async function initMultiplayerEventually() {
+  try {
+    const veredict = await MultiplayerHandler.load();
+    if (!veredict) {
+      console.log("MultiplayerHandler returned false");
+    }
+  } catch (err) {
+    console.log("MultiplayerHandler failed");
+    console.error(err);
+  }
+
+  if (!MultiplayerHandler.flags.active) {
+    WorldHandler.startLocalWorld();
+  }
+}
+
 async function initialization() {
   try {
     setLoadingText("Creating WebGL Context");
@@ -48,6 +64,9 @@ async function initialization() {
     setLoadingText("Initializing the World");
     await WorldHandler.load();
 
+    initMultiplayerEventually();
+
+
     setLoadingText("Loading Textures");
     await TextureHandler.load();
 
@@ -58,7 +77,7 @@ async function initialization() {
         InputHandler.update(frame);
         if (MultiplayerHandler.flags.active) {
           MultiplayerHandler.update(frame);
-        } else if (InputHandler.flags.dirty&&Math.abs(lastSavePos-frame)>100) {
+        } else if (InputHandler.flags.dirty && Math.abs(lastSavePos - frame) > 100) {
           lastSavePos = frame;
           console.log('Updating player position (local)');
           InputHandler.flags.dirty = false;
@@ -80,22 +99,6 @@ async function initialization() {
 
     setLoadingText("Initializing the Controls");
     await InputHandler.load(canvas, scene, camera);
-
-    setLoadingText("Initializing Multiplayer");
-    try {
-      const veredict = await MultiplayerHandler.load();
-      if (!veredict) {
-        console.log("MultiplayerHandler returned false");
-      }
-    } catch (err) {
-      console.log("MultiplayerHandler failed");
-      console.error(err);
-    }
-
-    if (!MultiplayerHandler.flags.active) {
-      WorldHandler.startLocalWorld();
-      
-    }
 
     setLoadingText("Initializing the GUI");
     await ForegroundHandler.load();

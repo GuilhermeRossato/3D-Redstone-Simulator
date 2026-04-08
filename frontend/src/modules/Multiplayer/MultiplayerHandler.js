@@ -2,7 +2,7 @@ import { setPlayerPosition } from "../InputHandler.js";
 import { updateSelfState } from "./ExternalSelfStateHandler.js";
 import * as EntityHandler from "../EntityHandler.js";
 import * as WorldHandler from "../../world/WorldHandler.js";
-import { initializeSocket, sendEvent } from "./SocketHandler.js";
+import { getSocket, initializeSocket, sendEvent } from "./SocketHandler.js";
 import { createSnackbarAlert } from "../../utils/createSnackbarAlert.js";
 import { g } from "../../utils/g.js";
 import { sleep } from "../../utils/sleep.js";
@@ -241,7 +241,7 @@ async function performLogin() {
     await sleep(2000);
   }
 
-  if (!pkt || pkt.success !== true) {
+  if (!pkt || pkt.status !== "success") {
     //snack();
     createSnackbarAlert("The server did not return success", "error");
     console.log("Invalid server object:", pkt);
@@ -266,7 +266,18 @@ async function performLogin() {
     document.cookie = `id=${pkt.cookieId}; expires=${new Date(new Date().getTime() + 31_536_000_000).toUTCString()}`;
     cookieId = pkt.cookieId;
   }
-
+  const ws = getSocket();
+  
+  if (typeof pkt.cookieId === "string" && pkt.cookieId) {
+    if (ws && ws.setCookieId && typeof ws.setCookieId === "function") {
+      ws.setCookieId(pkt.cookieId);
+    }
+  }
+  if (typeof pkt.playerId === "string" && pkt.playerId) {
+    if (ws && ws.setPlayerId && typeof ws.setPlayerId === "function") {
+      ws.setPlayerId(pkt.playerId);
+    }
+  }
   //snack("Getting context...");
 
   const blockTypeTimes = loadLocalBlockTypeTimes();
