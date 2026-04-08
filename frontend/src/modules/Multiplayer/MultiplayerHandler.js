@@ -214,6 +214,9 @@ async function performLogin() {
   if (startPose.length < 3 || startPose.slice(0, 6).some(num => isNaN(num))) {
     startPose = undefined;
   }
+  if (!startPose || !startPose.length) {
+    startPose = [0,0,0];
+  }
   if (startPose.length < 4) {
     startPose.push(0);
   }
