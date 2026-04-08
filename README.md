@@ -2,11 +2,20 @@
 
 This project uses three.js (webgl) to simulate minecraft and its game mechanics directly in the browser.
 
-[Click here to run the current version](https://grossato.com.br/static/3D-Redstone-Simulator/)
+[Click here to run the current version](https://grossato.com.br/3d-redstone-simulator/)
 
-The movement, the controls, and the game textures match the original game: Use the left click to break blocks, right to place (and middle click to copy type). Use W A S D keys to move and Space/Shift to jump/crounch or move vertically.
+The app controls matches the game this project is inspired on:
 
-Note that since this is under development the above link may not always bring you to a working release. If you want you can download the most recent [release](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/releases) and run it yourself locally. This project doesn't need building and all dependeencies are already present so it should be as easy as `npm run start` on a freshly downloaded repository but the multiplayer functionality only works on the web.
+- *W A S D*: Walk sideways/forward/backward
+- *Space* / *Q*: Jump / Move Up
+- *Shift* / *Z*: Crounch / Move Down
+- *R*: Reset position (teleport to 0,0,0)
+- *left click*: Break blocks.
+- *right click*: Place blocks.
+- *middle click*: Changes the block type to the same block infront of you.
+- Numeric digits (1-9): Set the current block type (to a specific type).
+
+Since this is under active development the above link may not always bring you to a working release. If you want you can download the most recent [release](https://github.com/GuilhermeRossato/3D-Redstone-Simulator/releases) and run it yourself locally.
 
 # Releases
  - v 0.1 - Performance Viability Release
