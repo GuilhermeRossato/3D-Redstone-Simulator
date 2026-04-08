@@ -44,7 +44,7 @@ async function usePhpSocket(playerId, cookieId, updateUsePhpTime = true) {
     type: "php-socket",
     playerId,
     cookieId, 
-    send: async (data) => {
+    send: async (data, callback) => {
       if (typeof data === "object") {
         data = JSON.stringify(data);
       }
@@ -62,6 +62,9 @@ async function usePhpSocket(playerId, cookieId, updateUsePhpTime = true) {
         obj = text.startsWith('{') ? JSON.parse(text) : text;
       } catch (err) {
         obj = text;
+      }
+      if (callback) {
+        callback(obj);
       }
       return obj;
     },
@@ -98,7 +101,7 @@ async function createSocket() {
       debug && console.log("[D]", "Last PHP socket time was", now - lastPhpSocketTimeNum, "ms ago");
       if (now - lastPhpSocketTimeNum < 60_000) {
         debug && console.log("[D]", "Last PHP socket time was recent, using PHP socket");
-        return await usePhpSocket(playerId, cookieId, true);
+        return await usePhpSocket(playerId, cookieId, false);
       }
     }
   }
@@ -294,7 +297,6 @@ export async function initializeSocket() {
     );
   }
   isStartingSocket = true;
-  const startTime = new Date().getTime();
   try {
     ws = await createSocket();
     isStartingSocket = false;
@@ -302,25 +304,6 @@ export async function initializeSocket() {
     isStartingSocket = false;
     console.log("Failed while starting socket for the first time:");
     console.log(err);
-    const has = localStorage.getItem("has-socket-connected-on-the-past");
-    if (has === "true" || has === "1") {
-      console.log(
-        "Socket has connected on the past so multiplayer setup will attempt to reconnect once regardless of previous error"
-      );
-    } else {
-      console.log(
-        "No indication that the socket has connected previously was found"
-      );
-      if (new Date().getTime() - startTime > 4000) {
-        console.log(
-          "The socket failed after a while so multiplayer setup will fail"
-        );
-        throw err;
-      }
-      console.log(
-        "First socket connection failed quickly so multiplayer setup will attempt to reconnect once regardless of previous error"
-      );
-    }
   }
   if (!ws) {
     console.log('[Warning] Socket is missing after creation:', ws);
@@ -340,7 +323,6 @@ export async function initializeSocket() {
     }
   }
   if (ws) {
-    localStorage.setItem("has-socket-connected-on-the-past", "true");
     isStartingSocket = false;
   }
   if (!ws) {
@@ -396,7 +378,7 @@ export async function sendEvent(obj, waitReply = false) {
           console.log('Sending', length);
         }
       }
-      ws.send(text);
+      ws.send(text, waitReply ? resolve : undefined);
       if (!waitReply) {
         resolve();
       }
