@@ -29,6 +29,18 @@ function createPlayerId() {
   return $id;
 }
 
+function generateCookieId($playerId = null) {
+  if (!$playerId) {
+    $playerId = substr(md5(uniqid(mt_rand(), true)), 0, 8);
+  }
+  $yearDigit = date("Y")[3];
+  $monthPair = str_pad(date("n"), 2, "0", STR_PAD_LEFT);
+  $datePair = str_pad(date("j"), 2, "0", STR_PAD_LEFT);
+  $randomNumber = mt_rand(1000000, 9999999);
+
+  return $playerId[strlen($playerId) - 1] . $monthPair . $yearDigit . $randomNumber . $datePair . $playerId[0];
+}
+
 if (!is_array($data)) {
   error_log("Invalid data received: " . $postData);
   http_response_code(400);
@@ -40,10 +52,8 @@ if (!isset($data["playerId"])||empty($data["playerId"])) {
   error_log("Missing playerId in received");
   $data["playerId"] = createPlayerId();
 }
-if (!isset($data["playerId"]) || !isset($data["cookieId"])) {
-  error_log("Missing playerId or cookieId in received data: " . $postData);
-  http_response_code(400);
-  echo json_encode(["error" => "Missing playerId or cookieId."]);
-  exit;
+if (!isset($data["cookieId"])||empty($data["cookieId"])) {
+  error_log("Missing cookieId in received");
+  $data["cookieId"] = generateCookieId();
 }
 echo json_encode(["status" => "success", "playerId" => $data["playerId"], "data" => $data]);
