@@ -1,23 +1,23 @@
 <?php
 
-$appVersionId = getenv('HTTP_X_APPENGINE_APPVERSIONID');
+    $appVersionId = getenv('HTTP_X_APPENGINE_APPVERSIONID');
 
-echo "<script>".PHP_EOL;
-echo "const appVersionId = " . json_encode($appVersionId) . ";".PHP_EOL;
-echo "window.appVersionId = appVersionId;".PHP_EOL;
-echo "</script>".PHP_EOL;
+    echo "<script>" . PHP_EOL;
+    echo "const appVersionId = " . json_encode($appVersionId) . ";" . PHP_EOL;
+    echo "window.appVersionId = appVersionId;" . PHP_EOL;
+    echo "</script>" . PHP_EOL;
 
-$fileList = [];
-$glob = glob("../**");
-foreach ($glob as $file) {
-  array_push($fileList, $file);
-}
-error_log("Files in parent directory: " . implode(", ", $fileList));
+    $fileList = [];
+    $glob     = glob("../**");
+    foreach ($glob as $file) {
+    array_push($fileList, $file);
+    }
+    error_log("Files in parent directory: " . implode(", ", $fileList));
 
-echo "<script>".PHP_EOL;
-echo "const fileList = " . json_encode($fileList) . ";".PHP_EOL;
-echo "window.fileList = fileList;".PHP_EOL;
-echo "</script>".PHP_EOL;
+    echo "<script>" . PHP_EOL;
+    echo "const fileList = " . json_encode($fileList) . ";" . PHP_EOL;
+    echo "window.fileList = fileList;" . PHP_EOL;
+    echo "</script>" . PHP_EOL;
 
 ?>
 <script>
@@ -32,6 +32,9 @@ echo "</script>".PHP_EOL;
  </pre>
 <script>
   function updateTimeInfo() {
+    window.updateText();
+  }
+  window.updateText = function () {
     const appVersionId = window.appVersionId;
     const fileList = window.fileList;
 
@@ -52,10 +55,22 @@ echo "</script>".PHP_EOL;
     const now = new Date();
     const elapsedSeconds = appVersionDate !== "Unknown" ? Math.floor((now - appVersionDate) / 1000) : "Unknown";
 
-    document.querySelector("div:nth-child(1) span:nth-child(2)").textContent = appVersionDate;
-    document.querySelector("div:nth-child(2) span:nth-child(2)").textContent = now.toString();
+    document.querySelector("div:nth-child(1) span:nth-child(2)").textContent = formatDate(appVersionDate);
+    document.querySelector("div:nth-child(2) span:nth-child(2)").textContent = formatDate(now);
     document.querySelector("div:nth-child(3) span:nth-child(2)").textContent = elapsedSeconds;
     document.querySelector("div:nth-child(4) span:nth-child(2)").textContent = "N/A";
+  }
+
+  // Make it "yyyy-mm-dd hh:mm:ss" in local timezone
+  function formatDate(date) {
+    return date instanceof Date && !isNaN(date) ?
+      date.getFullYear() + "-" +
+      String(date.getMonth() + 1).padStart(2, '0') + "-" +
+      String(date.getDate()).padStart(2, '0') + " " +
+      String(date.getHours()).padStart(2, '0') + ":" +
+      String(date.getMinutes()).padStart(2, '0') + ":" +
+      String(date.getSeconds()).padStart(2, '0')
+      : "Invalid Date";
   }
 
   updateTimeInfo();
