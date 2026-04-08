@@ -26,16 +26,47 @@ let isSocketClosed = false;
 let responseResolveRecord = {};
 
 function getWebsocketEndpoint() {
-    const protocol = window.location.hostname === "localhost" ? "ws" : "wss";
-    const host = window.location.host;
-    // host = "gui-test-zone.com.br";
-    return `${protocol}://${host}/3D-Redstone-Simulator`;
+  const protocol = window.location.hostname === "localhost" ? "ws" : "wss";
+  const host = window.location.host;
+  // host = "gui-test-zone.com.br";
+  return `${protocol}://${host}/3D-Redstone-Simulator`;
 }
 
-async function usePhpSocket() {
+async function usePhpSocket(playerId, cookieId, updateUsePhpTime = true) {
   console.log("Switching to PHP socket...");
   ws = null;
   setDebugInfo("Multiplayer", "Disconnected (PHP Socket)");
+  if (updateUsePhpTime) {
+    localStorage.setItem("use-php-socket-time", new Date().getTime().toString());
+  }
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  const obj = {
+    type: "php-socket",
+    playerId,
+    cookieId, 
+    send: async (data) => {
+      if (typeof data === "object") {
+        data = JSON.stringify(data);
+      }
+      console.log("Sending data through PHP socket:", data);
+      const r = await fetch("/3D-Redstone-Simulator/backend-php/api/socket/send.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: data,
+      });
+      const text = await r.text();
+      let obj;
+      try {
+        obj = text.startsWith('{') ? JSON.parse(text) : text;
+      } catch (err) {
+        obj = text;
+      }
+      return obj;
+    },
+  };
+  return obj;
 }
 
 async function createSocket() {
@@ -59,28 +90,42 @@ async function createSocket() {
     debug && console.log("[D]", "Self login code is too long, limiting it");
     playerId = playerId.split("|").slice(0, 1).join("|");
   }
+  const lastPhpSocketTime = localStorage.getItem("use-php-socket-time");
+  if (lastPhpSocketTime) {
+    const lastPhpSocketTimeNum = parseInt(lastPhpSocketTime);
+    if (!isNaN(lastPhpSocketTimeNum)) {
+      const now = new Date().getTime();
+      debug && console.log("[D]", "Last PHP socket time was", now - lastPhpSocketTimeNum, "ms ago");
+      if (now - lastPhpSocketTimeNum < 60_000) {
+        debug && console.log("[D]", "Last PHP socket time was recent, using PHP socket");
+        await usePhpSocket(playerId, cookieId, true);
+        return null;
+      }
+    }
+  }
   return await new Promise((resolve, reject) => {
     const base = getWebsocketEndpoint();
     if (playerId.startsWith("/")) {
       throw new Error("Cannot use player id for websocket");
     }
-      debug && console.log("[D]", "Using player id:", playerId);
-    
+    debug && console.log("[D]", "Using player id:", playerId);
+
     const url = `${base}/ws/${playerId}/${cookieId ? cookieId + "/" : ""}`;
     debug && console.log("[D]", "Creating websocket to", url);
     ws = new WebSocket(url);
     ws.onerror = (err) => {
+      isSocketClosed = true;
       console.log("Websocket error:", err);
       const lastTime = localStorage.getItem("last-websocket-error-time");
       const lastTimeNum = lastTime ? parseInt(lastTime) : NaN;
-      if (isNaN(lastTimeNum) || new Date().getTime() - lastTimeNum > 10_000) {
+      if (isNaN(lastTimeNum) || new Date().getTime() - lastTimeNum > 30_000) {
         console.log("Websocket error occurred over", new Date().getTime() - lastTimeNum, "ms after last error");
         localStorage.setItem("last-websocket-error-time", new Date().getTime().toString());
         location.reload();
         return;
       }
       console.log("Websocket error occurred shortly after last error, not reloading");
-      usePhpSocket();
+      usePhpSocket(playerId, cookieId, true).then((obj) => resolve(obj)).catch((err) => reject(err));
       return;
     }
 
@@ -103,8 +148,8 @@ async function createSocket() {
       onSocketClose();
       clearTimeout(timeoutTimer);
       const message = `Timeout event emitted for websocket ${evt && typeof evt["message"] === "string"
-          ? evt["message"]
-          : "without message"
+        ? evt["message"]
+        : "without message"
         } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
         })`;
       debug && console.log("[D]", message);
@@ -130,8 +175,8 @@ async function createSocket() {
       clearTimeout(timeoutTimer);
       const now = new Date().getTime();
       const message = `Error event emitted for websocket ${evt && typeof evt["message"] === "string"
-          ? evt["message"]
-          : "without message"
+        ? evt["message"]
+        : "without message"
         } at phase ${evt.eventPhase} (${resolved ? "after resolving" : "before resolving"
         }),  ${now - lastBeginTime} ms since begining connection and ${now - lastErrorTime
         } ms since last error event`;
@@ -160,7 +205,7 @@ async function createSocket() {
       debug && console.log("[D]", message);
       closeReason = new Error(message);
       lastCloseTime = now;
-      if (!resolved&&reject) {
+      if (!resolved && reject) {
         debug && console.log("[D]", "Resolving socket close event");
         resolved = true;
         reject(closeReason);
@@ -178,7 +223,7 @@ async function createSocket() {
           );
         try {
           isSocketClosed = true;
-          onSocketClose&&onSocketClose();
+          onSocketClose && onSocketClose();
           ws.close();
         } catch (err) {
           // Ignore
@@ -244,7 +289,6 @@ let isStartingSocket = false;
 
 export async function initializeSocket() {
   console.log("Initializing multiplier socket...");
-  let socket;
   if (isStartingSocket) {
     throw new Error(
       "Cannot initialize socket because it is already being started"
@@ -253,7 +297,7 @@ export async function initializeSocket() {
   isStartingSocket = true;
   const startTime = new Date().getTime();
   try {
-    socket = await createSocket();
+    ws = await createSocket();
     isStartingSocket = false;
   } catch (err) {
     isStartingSocket = false;
@@ -280,23 +324,27 @@ export async function initializeSocket() {
     }
   }
   if (!ws) {
-    console.log('[Warning] Socket is missing after creation:', socket);
+    console.log('[Warning] Socket is missing after creation:', ws);
   }
-  if (!socket) {
+  if (!ws) {
     isStartingSocket = true;
     console.log("Retrying socket connection once...");
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     try {
-      socket = await createSocket();
-      console.log("Socket retry succeeded");
-      localStorage.setItem("has-socket-connected-on-the-past", "true");
-      isStartingSocket = false;
+      ws = await createSocket();
+      if (ws) {
+        console.log("Socket retry succeeded");
+      }
     } catch (err) {
       isStartingSocket = false;
       throw err;
     }
   }
-  if (!socket) {
+  if (ws) {
+    localStorage.setItem("has-socket-connected-on-the-past", "true");
+    isStartingSocket = false;
+  }
+  if (!ws) {
     throw new Error("Unexpectedly missing socket after creation");
   }
 }
