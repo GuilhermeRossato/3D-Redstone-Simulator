@@ -24,6 +24,7 @@
   console.log("App Version ID:", window.appVersionId);
   console.log("Files in parent directory:", window.fileList);
 </script>
+<a href="flush.php?ret=deployment.php">Flush Memcache</a>
 <pre>
 <div><span>App Version Date:</span><span></span></div>
 <div><span>Now Current Date:</span><span></span></div>
