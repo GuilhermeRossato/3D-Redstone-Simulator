@@ -98,8 +98,7 @@ async function createSocket() {
       debug && console.log("[D]", "Last PHP socket time was", now - lastPhpSocketTimeNum, "ms ago");
       if (now - lastPhpSocketTimeNum < 60_000) {
         debug && console.log("[D]", "Last PHP socket time was recent, using PHP socket");
-        await usePhpSocket(playerId, cookieId, true);
-        return null;
+        return await usePhpSocket(playerId, cookieId, true);
       }
     }
   }
