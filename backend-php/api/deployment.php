@@ -49,14 +49,24 @@ echo "Now Current Date: " . (new DateTime('now'))->format('Y-m-d H:i:s P') . "\n
 echo "Elapsed seconds: " . $versionInfo['elapsed'] . PHP_EOL;
 echo "Interval: " . $versionInfo['interval'] . PHP_EOL;
 echo "</pre>";
-echo "<script>" . "setInterval(() => {" . "  const pre = document.querySelector('pre');" . "  const date = pre.textContent.split('App Version Date: ')[1].split('\\n').shift().trim();" . "  const elapsed = Math.floor((Date.now() - new Date(date).getTime()) / 1000);" . "  const interval = new Date(elapsed * 1000).toISOString().substr(11, 8);" . "  pre.textContent = \"Deployment date: \" + date + \"\\nElapsed seconds: \" + elapsed + \"\\nInterval: \" + interval;" . "}, 1000);" . "</script>";
+echo "<script>" . "setInterval(() => {" . "  const pre = document.querySelector('pre');" . "  const date = pre.textContent.split('App Version Date: ')[1].split('\\n').shift().trim();" . "  const elapsed = Math.floor((Date.now() - new Date(date).getTime()) / 1000);" . "  const interval = new Date(elapsed * 1000).toISOString().substr(11, 8);" . "  pre.textContent = \"App Version Date: \" + date + \"\\nElapsed seconds: \" + elapsed + \"\\nInterval: \" + interval;" . "}, 1000);" . "</script>";
 $routestr = "";
 // list api routes with glob
-foreach (glob("*.php") as $file) {
-  if ($file === "index.php" || $file === "deployment.php") {
-    continue;
+foreach (glob("../**") as $file) {
+  if (is_dir($file) && file_exists($file . "/index.php")) {
+    $route = basename($file);
+    if ($route !== "static") {
+      $routestr .= "/" . $route . ",";
+    }
+  } else if (is_dir($file) && $file==="static") {
+    $children = glob($file . "/*");
+    foreach ($children as $child) {
+      $routestr .= "/" . $child . ",";
+    }
+  } else if (is_file($file) && pathinfo($file, PATHINFO_EXTENSION) === "php" && basename($file) !== "index.php") {
+    $route = basename($file, ".php");
+    $routestr .= "/" . $route . ",";
   }
-  $routestr .= $file . ",";
 }
 $list     = explode(",", $routestr);
 echo "<h4>Available Routes:</h4>" . PHP_EOL;

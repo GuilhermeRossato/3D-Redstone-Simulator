@@ -32,6 +32,12 @@ function getWebsocketEndpoint() {
     return `${protocol}://${host}/3D-Redstone-Simulator`;
 }
 
+async function usePhpSocket() {
+  console.log("Switching to PHP socket...");
+  ws = null;
+  setDebugInfo("Multiplayer", "Disconnected (PHP Socket)");
+}
+
 async function createSocket() {
   if (lastBeginTime && new Date().getTime() - lastBeginTime < 1000) {
     debug && console.log("[D]", "Previous start time was recent:");
@@ -65,7 +71,18 @@ async function createSocket() {
     ws = new WebSocket(url);
     ws.onerror = (err) => {
       console.log("Websocket error:", err);
-    };
+      const lastTime = localStorage.getItem("last-websocket-error-time");
+      const lastTimeNum = lastTime ? parseInt(lastTime) : NaN;
+      if (isNaN(lastTimeNum) || new Date().getTime() - lastTimeNum > 10_000) {
+        console.log("Websocket error occurred over", new Date().getTime() - lastTimeNum, "ms after last error");
+        localStorage.setItem("last-websocket-error-time", new Date().getTime().toString());
+        location.reload();
+        return;
+      }
+      console.log("Websocket error occurred shortly after last error, not reloading");
+      usePhpSocket();
+      return;
+    }
 
     // @ts-ignore
     window["socket"] = window["ws"] = ws;
