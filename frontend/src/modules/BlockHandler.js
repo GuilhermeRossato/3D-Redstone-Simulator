@@ -158,6 +158,15 @@ export function getTextureListFromBlock(block) {
   console.warn("Texture list is empty and block is fully out of");
   return [];
 }
+export function getBlockTexture(block, side) {
+  if (!block || typeof side !== 'number') {
+    console.warn("Invalid parameters passed to getBlockTexture:", { block, side });
+    return FALLBACK_TEXTURE;
+  }
 
+  const texture = getTextureFromBlock(block, side);
+  console.log("getBlockTexture result:", { blockId: block?.id, side, texture });
+  return texture || FALLBACK_TEXTURE;
+}
 g("getTextureFromBlock", getTextureFromBlock);
 g("getTextureListFromBlock", getTextureListFromBlock);

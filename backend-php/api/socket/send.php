@@ -28,13 +28,31 @@ if (isset($_GET["playerId"])) {
 if (isset($_GET["cookieId"]) && (! isset($data["cookieId"]) || empty($data["cookieId"]))) {
     $data["cookieId"] = $_GET["cookieId"];
 }
+error_log("Received packet of type \"" . $data["type"] . "\" with player id " . ($data["playerId"] ?? "unknown") . " and cookie id " . ($data["cookieId"] ?? "unknown"));
 if ($data["type"] === "setup") {
     require_once __DIR__ . "/../../lib/packets/setup.php";
     $obj = handleSetupPacket($data);
+    header('Content-Type: application/json');
     echo json_encode($obj);
 } elseif ($data["type"] === "context") {
     require_once __DIR__ . "/../../lib/packets/context.php";
     $obj = handleContextPacket($data);
+    header('Content-Type: application/json');
+    echo json_encode($obj);
+} elseif ($data["type"] === "sync") {
+    require_once __DIR__ . "/../../lib/packets/sync.php";
+    $obj = handleSyncPacket($data);
+    header('Content-Type: application/json');
+    echo json_encode($obj);
+} elseif ($data["type"] === "spawn") {
+    require_once __DIR__ . "/../../lib/packets/spawn.php";
+    $obj = handleSpawnPacket($data);
+    header('Content-Type: application/json');
+    echo json_encode($obj);
+} elseif ($data["type"] === "move") {
+    require_once __DIR__ . "/../../lib/packets/move.php";
+    $obj = handleMovePacket($data);
+    header('Content-Type: application/json');
     echo json_encode($obj);
 } else {
     error_log("Unknown packet type received: " . $data["type"]);

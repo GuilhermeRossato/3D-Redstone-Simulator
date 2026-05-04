@@ -29,6 +29,10 @@ export const flags = {
   isForcedFullscreenMode: 'mobile',
 };
 
+function markPositionAsDirty(){
+  flags.dirty = true;
+}
+
 let activeTouches = {};
 
 function handleTouchEvent(event) {
@@ -522,7 +526,7 @@ export async function load(canvas, scene, receivedCamera) {
     const movementY = event.movementY || 0;
 
     if (movementX !== 0 || movementY !== 0) {
-      flags.dirty = true;
+      markPositionAsDirty();
     }
 
     yawObject.rotation.y -= movementX * 0.002;
@@ -536,11 +540,11 @@ export async function load(canvas, scene, receivedCamera) {
       !flags.dirty &&
       Math.abs(rotation.pitch - pitchObject.rotation.x) > 0.001
     ) {
-      flags.dirty = true;
+      markPositionAsDirty();
     }
     rotation.pitch = pitchObject.rotation.x;
     if (!flags.dirty && Math.abs(rotation.yaw - yawObject.rotation.y) > 0.001) {
-      flags.dirty = true;
+      markPositionAsDirty();
     }
     rotation.yaw = yawObject.rotation.y;
   });
@@ -770,17 +774,20 @@ const angleByMovementId = {
   15: Math.PI * 0,
 };
 
+let counter = 0;
+let moved = 0;
+
 export function update(frame) {
   const movementId = forward * 8 + backward * 4 + right * 2 + left;
   if (movementId != 0) {
-    flags.dirty = true;
+    markPositionAsDirty();
     moveTowardsAngle(angleByMovementId[movementId]);
   }
   if (up && !down) {
-    flags.dirty = true;
+    markPositionAsDirty();
     moveVertically(1);
   } else if (down && !up) {
-    flags.dirty = true;
+    markPositionAsDirty();
     moveVertically(-1);
   }
   if (nextUpdateAction) {
@@ -796,13 +803,12 @@ export function update(frame) {
         x: nextUpdateAction.x,
         y: nextUpdateAction.y,
         z: nextUpdateAction.z,
-        b: nextUpdateAction.id,
+        id: nextUpdateAction.id,
       });
       nextUpdateAction = null;
     } else if (nextUpdateAction.type === "delete") {
       set(nextUpdateAction.x, nextUpdateAction.y, nextUpdateAction.z, 0);
       selectionBox.visible = false;
-      frame = 0; // This makes the selection box be updated
       sendPlayerActionToServerEventually({
         type: "punch",
         x: nextUpdateAction.x,
@@ -812,8 +818,10 @@ export function update(frame) {
       nextUpdateAction = null;
     }
   }
+  
   // Update selection box every 4th frame
-  if (frame % 4 === 0) {
+  if ((counter++) > 4) {
+    counter = 0;
     targetBlock = getTargetBlock();
     if (targetBlock) {
       if (!selectionBox.visible) {
@@ -841,6 +849,10 @@ export function update(frame) {
     } else if (selectionBox.visible) {
       selectionBox.visible = false;
     }
+  }
+
+  if (MultiplayerHandler.flags.active && moved) {
+
   }
 }
 
@@ -877,6 +889,11 @@ export function setPlayerPosition(position, direction) {
   }
   yaw = position["yaw"] || position[3] || direction?.["yaw"] || direction?.[0];
   pitch = position["pitch"] || position[4] || direction?.["pitch"] || direction?.[1];
+  if (yaw === undefined && position instanceof Array &&   position.length >= 6) {
+    yaw = position[3];
+    pitch = position[4];
+  }
+    
   if (typeof yaw === "number" && !isNaN(yaw)) {
     yawObject.rotation.y = yaw;
   }

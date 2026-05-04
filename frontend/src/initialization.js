@@ -41,7 +41,13 @@ async function initMultiplayerEventually() {
   }
 
   if (!MultiplayerHandler.flags.active) {
-    WorldHandler.startLocalWorld();
+    // wait async until texture loading is done, then try again
+    const checkInterval = setInterval(() => {
+      if (TextureHandler.flags.loaded) {
+        clearInterval(checkInterval);
+        initMultiplayerEventually();
+      }
+    }, 1000);
   }
 }
 
@@ -66,7 +72,6 @@ async function initialization() {
 
     initMultiplayerEventually();
 
-
     setLoadingText("Loading Textures");
     await TextureHandler.load();
 
@@ -86,8 +91,8 @@ async function initialization() {
           const z = InputHandler.yawObject.position.z;
           const yaw = InputHandler.yawObject.rotation.y;
           const pitch = InputHandler.pitchObject.rotation.x;
-          localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
-          sessionStorage.setItem("last-player-pose", [x, y, z, yaw, pitch].join(","));
+          localStorage.setItem("last-player-pose", [x, y, z, yaw, pitch, 0].join(","));
+          sessionStorage.setItem("last-player-pose", [x, y, z, yaw, pitch, 0].join(","));
         }
         EntityHandler.update(frame);
       },

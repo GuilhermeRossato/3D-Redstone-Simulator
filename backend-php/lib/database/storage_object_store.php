@@ -45,6 +45,7 @@ function loadStorageObject($type, $name = null, $id = null, $fallback = null)
 {
     try {
         $filePath = getStorageObjectFilePath($type, $name, $id, false);
+        error_log("Loading storage object from: " . $filePath);
         if (! file_exists($filePath)) {
             return $fallback;
         }
@@ -100,10 +101,10 @@ function writeStorageObject($type, $name = null, $id = null, $state = [])
 function appendStorageArray($type, $name = null, $id = null, $array = [])
 {
     try {
-        if (empty($array)) {
+        $list = is_array($array) ? $array : [$array];
+        if (empty($list)) {
             return 0;
         }
-        $list = is_array($array) ? $array : [$array];
         $text = implode("\n", array_map(function ($e) {
             return json_encode($e) . ",";
         }, $list)) . "\n";

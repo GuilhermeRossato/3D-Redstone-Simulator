@@ -7,12 +7,26 @@ let sendCount = 0;
 let sendingPackets = false;
 let playerActionBuffer = [];
 export let error = null;
-export let movement = [];
+let movement = [];
 
 // Variable to store the last sent movement JSON string
 let previousMovementText = "";
 
+let lastRegionId = '';
+
+function getRegionIdFromPos(pose) {
+    const rx = Math.floor(pose[0] / 64);
+    const ry = Math.floor(pose[1] / 64);
+    const rz = Math.floor(pose[2] / 64);
+    return "r" + (ry) + "/" + (rx) + "x" + (rz);
+}
+
+export function updateLastRegionId(last) {
+  lastRegionId = last && typeof last === 'string' ? last : last instanceof Array ? getRegionIdFromPos(last) : '';
+}
+
 g('sendPlayerActionToServerEventually', sendPlayerActionToServerEventually);
+
 export async function sendPlayerActionToServerEventually(action) {
   if (MultiplayerHandler.flags.active) {
     playerActionBuffer.push(action);
@@ -51,9 +65,11 @@ async function sendPlayerMadeActions() {
       previousMovementText = currentMovementText;
       await MultiplayerHandler.sendClientAction({
         type: "move",
+        regionId: lastRegionId,
         pose: movement.slice(0, 6),
         id: playerEntityId,
       });
+      updateLastRegionId(movement);
       // console.log("Sent movement to server:", movement);
       if (sendCount > 2 && sendCount % 2 === 0) {
         localStorage.setItem("last-player-pose", movement.join(","));

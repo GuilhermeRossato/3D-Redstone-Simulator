@@ -11,8 +11,10 @@ export const flags = {
 
 /** @type {Record<number, Record<number, Record<number, Chunk>>>} */
 const chunks = {};
+const chunkList = [];
 
 g('chunks', chunks);
+g('chunkList', chunkList);
 
 export const blockDefinitions = g("blockDefinitions", {});
 
@@ -72,6 +74,7 @@ export function getChunk(cx, cy, cz, createOnMissing = true) {
   let chunk = chunks[cz][cx][cy];
   if (!chunk && createOnMissing) {
     chunk = new Chunk(cx, cy, cz);
+    chunkList.push(chunk);
     chunk.assignTo(scene);
     chunks[cz][cx][cy] = chunk;
   }
@@ -189,34 +192,40 @@ export function set(x, y, z, id) {
 
 export async function loadBlockData() {
   const p = window.location.pathname;
-  const prefix = `${p.substring(0, p.indexOf('/3D-Redstone-Simulator/'))}/3D-Redstone-Simulator/frontend/assets/blocks`;
-  const idsUrl = `${prefix}/ids.jsonl`;
-  const blockIds = AssetLoader.parseJSONL(await AssetLoader.loadText(idsUrl)).filter(b => b.id);
-
-  const texturesUrl = `${prefix}/textures.jsonl`;
-  const blockTextures = AssetLoader.parseJSONL(await AssetLoader.loadText(texturesUrl)).filter(b => b.id);
-  const invalids = blockTextures.flatMap((b, i) => b.id && b.textures && Array.isArray(b.textures) ? [] : [i]);
-  if (invalids.length) {
-    console.warn(`Found ${invalids.length} invalid block texture entries: ${invalids.join(',')}`)
-  }
-  for (const block of blockIds) {
-    const id = block.id;
-    if (!block.id) continue;
-    const data = blockTextures.find(b => b.id === id);
-    if (data) {
-      blockDefinitions[id] = {
-        ...block,
-        ...data,
-      };
-    } else {
-      blockDefinitions[id] = block;
-    }
+  const prefix = `${p.substring(0, p.indexOf('/3D-Redstone-Simulator/'))}/3D-Redstone-Simulator/frontend/`;
+  const url = `${prefix}/assets/init-block-types.jsonl`;
+  const list = AssetLoader.parseJSONL(await AssetLoader.loadText(url)).filter(b => b.id);
+  for (const block of list) {
+    if (block.id)
+      blockDefinitions[block.id] = block;
   }
   console.log(`Loaded ${Object.keys(blockDefinitions).length} block definitions`);
 
-  g('blockDefinitions', blockDefinitions);
+  setTimeout(() => {
+    // Load json block definitions from local storage
+    loadBlockTypeListFromLocal();
+  }, 250);
 
-  return await loadWorld();
+  g('blockDefinitions', blockDefinitions);
+}
+
+function loadBlockTypeListFromLocal() {
+  const stored = localStorage.getItem('blockDefinitions');
+  if (stored) {
+    let addedCount = 0;
+    try {
+      const storedDefinitions = JSON.parse(stored);
+      for (const block of storedDefinitions) {
+        if (block.id) {
+          blockDefinitions[block.id] = block;
+          addedCount++;
+        }
+      }
+      console.log(`Loaded ${addedCount} block definitions from local storage`);
+    } catch (err) {
+      console.error("Failed to parse stored block definitions, ignoring stored data", err);
+    }
+  }
 }
 
 export async function load() {

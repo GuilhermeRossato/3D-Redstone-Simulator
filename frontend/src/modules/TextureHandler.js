@@ -1,16 +1,16 @@
-import BlockData, { legacyBlockData } from '../data/LegacyBlockData.js';
 import { getTextureListFromBlock, FALLBACK_TEXTURE } from './BlockHandler.js';
 import * as THREE from '../libs/three.module.js';
 import * as GraphicsHandler from "./GraphicsHandler.js";
 import * as WorldHandler from "../world/WorldHandler.js";
+import { sleep } from '../utils/sleep.js';
 
 
 export const flags = {
-  resetTextures: false
+  resetTextures: false,
+  hasLoaded: false,
+  pendingMeshUpdates: [],
 }
 
-
-let hasLoaded = false;
 
 /** @type {Record<string, {tx: number; ty: number; path: string; image: HTMLImageElement}>} */
 let textureLookup = {};
@@ -21,9 +21,16 @@ let mainTexture, aoTexture;
  * @param {string} filePath
  * @returns {Promise<HTMLImageElement>}
  */
-function loadImage(filePath) {
+function loadImage(filePath, img = new Image()) {
   return new Promise((resolve, reject) => {
-    var img = new Image();
+    if (!filePath) {
+      reject(new Error("File path is required to load image"));
+      return;
+    }
+    if (!filePath.startsWith("/3D-Redstone-Simulator/")) {
+      reject(new Error(`File path must start with '/3D-Redstone-Simulator/', got: ${JSON.stringify(filePath)}`));
+      return;
+    }
     img.onload = resolve.bind(this, img);
     img.onerror = reject.bind(this, new Error(`Could not load asset "${filePath}"`));
     img.src = filePath;
@@ -123,114 +130,122 @@ async function processImageAndGenerateTextureFromPath(sourcePath, addCanvasToScr
 }
 
 export async function unloadTextures() {
-  if (!hasLoaded) {
+  if (!flags.hasLoaded) {
     return;
   }
 
   textureLookup = {};
   mainTexture = undefined;
   aoTexture = undefined;
-  hasLoaded = false;
+  flags.hasLoaded = false;
 }
 
 export async function loadTextures() {
-  // Unload existing textures if needed
-  await unloadTextures();
+  try {
+    // Unload existing textures if needed
+    await unloadTextures();
 
-  const textures = new Set([FALLBACK_TEXTURE]);
-  const defs = Object.values(WorldHandler.blockDefinitions);
-  for (const block of defs) {
-    const name = String(block.name || block.key).toLowerCase();
-    if (!block || !block.id || name === 'air') {
-      continue;
-    }
-    if (!block.textures || !(block.textures instanceof Array)) {
-      console.warn(`Block ${name} has no textures array`, block);
-      continue;
-    }
-    if (!block.textures.length) {
-      continue;
-    }
-    for (const texture of block.textures) {
-      if (!texture || typeof texture !== 'string') {
-        console.warn(`Block ${name} has invalid texture entry`, texture);
+    const textures = new Set([FALLBACK_TEXTURE]);
+    const defs = Object.values(WorldHandler.blockDefinitions);
+    for (const block of defs) {
+      const name = String(block.name || block.key).toLowerCase();
+      if (!block || !block.id || name === 'air') {
         continue;
       }
-      textures.add(texture);
-    }
-  }
-
-  // for (let block of legacyBlockData) {
-  //   if (block.name === 'Air') {
-  //     continue;
-  //   }
-  //   let method = window["getTextureListFromBlock"] || getTextureListFromBlock;
-  //   if (typeof method !== 'function') {
-  //     throw new Error("Missing getTextureListFromBlock function");
-  //   }
-  //   const textureList = method(block);
-  //   if (!(textureList instanceof Array)) {
-  //     throw new Error("Invalid texture list from block");
-  //   }
-  //   textureFilenameList.push(...textureList);
-  // }
-  
-  let tx = 0;
-  let ty = 0;
-  for (let filename of textures) {
-    if (textureLookup[filename]) {
-      // Texture is already loaded, likely shared on another face
-      continue;
-    }
-    const path = `frontend/assets/textures/${filename}`;
-    textureLookup[filename] = {
-      tx,
-      ty,
-      path,
-      image: await loadImage(path)
-    };
-    tx++;
-    if (tx >= 7) {
-      tx = 0;
-      ty++;
-      if (ty >= 8) {
-        // Soft error because this is bound to happen one day
-        console.error('Texture buffer overflow');
-        break;
+      if (!block.textures || !(block.textures instanceof Array)) {
+        console.warn(`Block ${name} has no textures array`, block);
+        continue;
+      }
+      if (!block.textures.length) {
+        continue;
+      }
+      for (const texture of block.textures) {
+        if (!texture || typeof texture !== 'string') {
+          console.warn(`Block ${name} has invalid texture entry`, texture);
+          continue;
+        }
+        textures.add(texture);
       }
     }
+    const promises = [];
+    let tx = 0;
+    let ty = 0;
+    for (let filename of textures) {
+      if (textureLookup[filename]) {
+        // Texture is already loaded, likely shared on another face
+        continue;
+      }
+      const path = `/3D-Redstone-Simulator/frontend/assets/textures/${filename}`;
+      const img = new Image();
+      const promise = loadImage(path, img);
+      promises.push(promise);
+      textureLookup[filename] = {
+        tx,
+        ty,
+        path,
+        image: img,
+      };
+      tx++;
+      if (tx >= 7) {
+        tx = 0;
+        ty++;
+        if (ty >= 8) {
+          // Soft error because this is bound to happen one day
+          console.error('Texture buffer overflow');
+          break;
+        }
+      }
+    }
+
+    await Promise.all(promises);
+
+    const gridCanvas = generateCanvasFromLookup(textureLookup, {
+      width: 16 * 8,
+      height: 16 * 8
+    });
+    const newCanvas = document.createElement("canvas");
+    newCanvas.width = gridCanvas.width;
+    newCanvas.height = gridCanvas.height;
+    copyToCanvasWithMargin(newCanvas, gridCanvas);
+
+    mainTexture = await createTextureFromCanvas(newCanvas);
+    mainTexture.wrapS = THREE.RepeatWrapping;
+    mainTexture.wrapT = THREE.RepeatWrapping;
+    mainTexture.magFilter = THREE.NearestFilter;
+    mainTexture.minFilter = THREE.LinearFilter;
+
+    aoTexture = await processImageAndGenerateTextureFromPath("/3D-Redstone-Simulator/frontend/assets/ambient-occlusion.png", false);
+    aoTexture.wrapS = THREE.RepeatWrapping;
+    aoTexture.wrapT = THREE.RepeatWrapping;
+    aoTexture.magFilter = THREE.NearestFilter;
+    aoTexture.minFilter = THREE.LinearFilter;
+
+    flags.hasLoaded = true;
+    flags.resetTextures = true;
+
+    await GraphicsHandler.createBlockMaterial();
+    console.log("Textures loaded successfully");
+    await sleep(100); // Allow some time for textures to be used in mesh generation
+    
+    if (flags.pendingMeshUpdates && flags.pendingMeshUpdates.length > 0) {
+      console.log("Processing pending mesh updates after texture load...");
+      flags.pendingMeshUpdates.forEach(chunk => {
+        chunk.parent = GraphicsHandler.scene;
+        console.log(`Requesting mesh update for chunk ${chunk.cx},${chunk.cy},${chunk.cz} after texture load`);
+        chunk.requestMeshUpdate();
+      });
+      flags.pendingMeshUpdates = null;
+    }
+    
+
+  } catch (error) {
+    console.error("Failed to load textures:", error);
+    throw error;
   }
-
-  const gridCanvas = generateCanvasFromLookup(textureLookup, {
-    width: 16 * 8,
-    height: 16 * 8
-  });
-  const newCanvas = document.createElement("canvas");
-  newCanvas.width = gridCanvas.width;
-  newCanvas.height = gridCanvas.height;
-  copyToCanvasWithMargin(newCanvas, gridCanvas);
-
-  mainTexture = await createTextureFromCanvas(newCanvas);
-  mainTexture.wrapS = THREE.RepeatWrapping;
-  mainTexture.wrapT = THREE.RepeatWrapping;
-  mainTexture.magFilter = THREE.NearestFilter;
-  mainTexture.minFilter = THREE.LinearFilter;
-
-  aoTexture = await processImageAndGenerateTextureFromPath("frontend/assets/ambient-occlusion.png", false);
-  aoTexture.wrapS = THREE.RepeatWrapping;
-  aoTexture.wrapT = THREE.RepeatWrapping;
-  aoTexture.magFilter = THREE.NearestFilter;
-  aoTexture.minFilter = THREE.LinearFilter;
-
-  hasLoaded = true;
-  flags.resetTextures = true;
-
-  await GraphicsHandler.createBlockMaterial();
-
 }
 
 export async function load() {
-  if (hasLoaded) {
+  if (flags.hasLoaded) {
     throw new Error('Textures are already loaded');
   }
 
@@ -238,14 +253,14 @@ export async function load() {
 }
 
 export function getMainTexture() {
-  if (!hasLoaded) {
+  if (!flags.hasLoaded) {
     throw new Error("Texture system not loaded");
   }
   return mainTexture;
 }
 
 export function getAoTexture() {
-  if (!hasLoaded) {
+  if (!flags.hasLoaded) {
     throw new Error("Texture system not loaded");
   }
   return aoTexture;

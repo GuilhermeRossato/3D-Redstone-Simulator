@@ -10,9 +10,13 @@ error_log("Received " . $method . " " . $requestUri);
 
 if ($requestUri === "/") {
     http_response_code(301);
-    header("Location: /3D-Redstone-Simulator/");
+    header("Location: /3D-Redstone-Simulator/frontend/index.html");
     exit;
-} elseif ($requestUri === "/3D-Redstone-Simulator/" || $requestUri === "/3D-Redstone-Simulator/index.php") {
+} elseif ($requestUri === "/3D-Redstone-Simulator/index.html" || $requestUri === "/3D-Redstone-Simulator/" || $requestUri === "/3D-Redstone-Simulator/index.php") {
+  http_response_code(301);
+    header("Location: /3D-Redstone-Simulator/frontend/index.html");
+    exit;
+} elseif ($requestUri === "/3D-Redstone-Simulator/frontend/index.html") {
     $filePath = __DIR__ . "/../frontend/index.html";
     $content  = file_get_contents($filePath);
     if ($content === false) {

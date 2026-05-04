@@ -39,10 +39,11 @@ export default class AssetLoader {
       return await response.blob();
   }
   
-  loadImage(filename) {
+  static loadImage(filename) {
     return new Promise((resolve, reject) => {
       if (!filename || filename.trim().length === 0) {
         reject(new Error("Required parameter 'filename' not provided for loadImage"))
+        return;
       }
       try {
         const image = new Image();

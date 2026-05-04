@@ -2,24 +2,27 @@
 
 require_once __DIR__ . "/storage_object_store.php";
 
-$playerCache = [];
-
-function setPlayerCache($playerId, $data) {
-    global $playerCache;
-    $playerCache[$playerId] = $data;
+function getActivePlayerFilePath($playerId) {
+    return getStorageObjectFilePath("active-players", $playerId, null);
 }
 
-function getPlayerCache($playerId) {
-    global $playerCache;
-    return $playerCache[$playerId] ?? null;
+function setActivePlayer($playerId, $data) {
+  if ($data === null || $data === false) {
+    throw new Exception("Invalid player data for playerId: " . $playerId);
+  }
+  writeStorageObject("active-players", $playerId, null, $data);
 }
 
-function getPlayerFilePath($playerId) {
-    return getStorageObjectFilePath("players", substr($playerId, 0, 1), $playerId, false);
+function getActivePlayer($playerId) {
+  return loadStorageObject("active-players", $playerId, null, null);
+}
+
+function getActivePlayersDir() {
+  return dirname(getActivePlayerFilePath("p"));
 }
 
 function loadPlayer($playerId, $fallback = null) {
-    $player = loadStorageObject("players", substr($playerId, 0, 1), $playerId, $fallback);
+    $player = loadStorageObject("players", substr($playerId, 1, 2), $playerId, $fallback);
     if ($player) {
         error_log("Loaded player: " . $playerId);
     } else {
@@ -29,13 +32,13 @@ function loadPlayer($playerId, $fallback = null) {
 }
 
 function savePlayer($playerId, $data) {
-    $result = writeStorageObject("players", substr($playerId, 0, 1), $playerId, $data);
+    $result = writeStorageObject("players", substr($playerId, 1, 2), $playerId, $data);
     error_log("Saved player: " . $playerId . " with data size: " . $result);
     return $result;
 }
 
 function deletePlayer($playerId) {
-    $result = clearStorageObject("players", substr($playerId, 0, 1), $playerId);
+    $result = clearStorageObject("players", substr($playerId, 1, 2), $playerId);
     if ($result) {
         error_log("Deleted player: " . $playerId);
     } else {
@@ -52,13 +55,13 @@ function listPlayers() {
 
 function createPlayer($playerId, $data) {
     $players = listPlayers();
-    if (in_array($playerId, $players)) {
+    $playerIdList = array_map(function($p) { return $p["playerId"]; }, $players);
+    if (in_array($playerId, $playerIdList)) {
         error_log("Player already exists: " . $playerId);
         return null;
     }
     appendStorageArray("players", "created", null, [$playerId]);
-    $player = savePlayer($playerId, $data);
+    savePlayer($playerId, $data);
     error_log("Created new player: " . $playerId);
-    return $player;
 }
 

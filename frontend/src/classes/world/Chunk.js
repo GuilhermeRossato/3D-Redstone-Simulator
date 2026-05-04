@@ -5,8 +5,8 @@ import * as BlockHandler from '../../modules/BlockHandler.js';
 import { getMaterial } from '../../modules/GraphicsHandler.js';
 import SIDE_DISPLACEMENT from '../../data/SideDisplacement.js';
 import * as TextureHandler from '../../modules/TextureHandler.js';
-import BlockData from '../../data/LegacyBlockData.js';
 import { g } from '../../utils/g.js';
+import { flags } from '../../initialization.js';
 
 const loadedChunks = [];
 
@@ -345,8 +345,19 @@ export default class Chunk {
       return null;
     }
     if (!this.willRebuildMesh) {
-      this.willRebuildMesh = true;
-      this.updateMeshTimer = setTimeout(this.rebuildMesh, WorldHandler.blockDefinitions ? Math.floor(1 + Math.random() * 30) : 100 + Math.floor(Math.random() * 300));
+      if (!this.mesh) {
+        if (!TextureHandler.flags.hasLoaded && !TextureHandler.flags.pendingMeshUpdates.includes(this)) {
+          console.warn("Texture is not loaded yet, delaying mesh build for chunk ", this.cx, this.cy, this.cz);
+          TextureHandler.flags.pendingMeshUpdates.push(this);
+        } else if (TextureHandler.flags.hasLoaded) {
+          console.log(`Requesting mesh update for chunk ${this.cx},${this.cy},${this.cz} with ${this.blockList.length} blocks, but mesh is not built yet. Building immediately...`);
+          this.rebuildMesh();
+        }
+      } else {
+        this.willRebuildMesh = true;
+        const delay = WorldHandler.blockDefinitions ? Math.floor(1 + Math.random() * 30) : 100 + Math.floor(Math.random() * 200);
+        this.updateMeshTimer = setTimeout(this.rebuildMesh, delay);
+      }
       // debug instant rebuild mesh on request - this.rebuildMesh();
     }
     // debug auto update mesh - setTimeout(() => this.requestMeshUpdate(), 500);
@@ -408,7 +419,9 @@ export default class Chunk {
       this.addBlock(x, y, z, id);
       changed = 1;
     }
-    this.requestMeshUpdate();
+    if (1) {
+      this.requestMeshUpdate();
+    }
     return changed;
   }
 
