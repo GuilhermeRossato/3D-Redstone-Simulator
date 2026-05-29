@@ -552,7 +552,7 @@ export async function sendClientAction(action) {
     return;
   }
   if (action.type === "move" && player) {
-    action.id = player.entity;
+    action.id = getPlayerEntityId();
   }
   if (["punch", "start-breaking", "stop-breaking", "finish-breaking", "place", "set", "remove",].includes(action.type)) {
     if (action.pos instanceof Array) {

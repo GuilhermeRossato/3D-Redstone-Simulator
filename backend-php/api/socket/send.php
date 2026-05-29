@@ -54,6 +54,11 @@ if ($data["type"] === "setup") {
     $obj = handleMovePacket($data);
     header('Content-Type: application/json');
     echo json_encode($obj);
+} elseif ($data["type"] === "place") {
+    require_once __DIR__ . "/../../lib/packets/place.php";
+    $obj = handlePlacePacket($data);
+    header('Content-Type: application/json');
+    echo json_encode($obj);
 } else {
     error_log("Unknown packet type received: " . $data["type"]);
     http_response_code(400);

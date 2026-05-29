@@ -50,8 +50,8 @@ async function sendPlayerMadeActions() {
       break; // Limit to sending 5 actions per call to avoid flooding
     }
     const action = playerActionBuffer.shift();
-    if (action.id !== playerEntityId) {
-      action.id = playerEntityId;
+    if (action.entityId !== playerEntityId) {
+      action.entityId = playerEntityId;
     }
     await MultiplayerHandler.sendClientAction(action);
   }

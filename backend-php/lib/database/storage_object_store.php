@@ -68,19 +68,69 @@ function loadStorageObject($type, $name = null, $id = null, $fallback = null)
     }
 }
 
-function loadStorageArray($type, $name = null, $id = null, $fallback = null)
+function loadStorageArray($type, $name = null, $id = null, $fallback = [])
 {
+    $result = [];
     try {
         $filePath = getStorageObjectFilePath($type, $name, $id, true);
-        if (! file_exists($filePath)) {
-            return [];
+        if (!file_exists($filePath)) {
+            error_log("Not loading missing storage array file from: " . $filePath);
+            return $fallback;
         }
-        $text = file_get_contents($filePath);
-        $list = json_decode("[" . rtrim($text, ",") . "]", true);
-        return $list ?: [];
+
+        error_log("Loading storage array from: " . $filePath);
+        $handle = fopen($filePath, 'r');
+        if (!$handle) {
+            error_log("Failed to open storage array file: " . $filePath);
+            return $fallback;
+        }
+
+        $buffer = '';
+        $sz = 0;
+        while (($chunk = fread($handle, 4096)) !== false && strlen($chunk) > 0) {
+          $sz += strlen($chunk);
+            $buffer .= $chunk;
+            while (($pos = strpos($buffer, ",\n")) !== false) {
+                $jsonStr = substr($buffer, 0, $pos);
+                $buffer = substr($buffer, $pos + 2);
+                if (empty(trim($jsonStr))) {
+                    continue;
+                }
+                try {
+                    $decoded = json_decode($jsonStr, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $result[] = $decoded;
+                    } else {
+                        error_log("JSON decode error: " . json_last_error_msg());
+                    }
+                } catch (Exception $e) {
+                    error_log("Error decoding JSON string: " . $e->getMessage());
+                }
+            }
+        }
+        
+        if (!empty(trim($buffer))) {
+            $jsonStr = rtrim($buffer, ",\n");
+             if (!empty(trim($jsonStr))) {
+                try {
+                    $decoded = json_decode($jsonStr, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $result[] = $decoded;
+                    } else {
+                        error_log("JSON decode error on final buffer: " . json_last_error_msg());
+                    }
+                } catch (Exception $e) {
+                    error_log("Error decoding final JSON string: " . $e->getMessage());
+                }
+             }
+        }
+
+        fclose($handle);
+        error_log("Decoded storage array with count: " . count($result) . " (file size: " . $sz . ")");
+        return $result;
     } catch (Exception $e) {
         error_log("Error loading storage array: " . $e->getMessage());
-        return [];
+        return $fallback;
     }
 }
 

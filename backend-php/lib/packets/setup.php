@@ -2,19 +2,21 @@
 
 require_once __DIR__ . "/../database/player_storage.php";
 require_once __DIR__ . "/../database/region_storage.php";
+require_once __DIR__ . "/../database/active_players.php";
 
 function handleSetupPacket($data)
 {
-    if (! isset($data["playerId"]) || empty($data["playerId"])) {
+    $pid = isset($data['playerId']) ? $data['playerId'] : null;
+    if (! isset($pid) || ! $pid || empty($pid)) {
         error_log("Missing playerId in received");
-        $data["playerId"] = createPlayerId();
+        $pid = createPlayerId();
     }
     if (! isset($data["cookieId"]) || empty($data["cookieId"])) {
         error_log("Missing cookieId in received");
         $data["cookieId"] = generateCookieId();
     }
-    if ($data["playerId"][0] !== "p") {
-        error_log("Invalid playerId format: " . $data["playerId"]);
+    if ($pid[0] !== "p") {
+        error_log("Invalid playerId format: " . $pid);
         http_response_code(400);
         return ["error" => "Invalid playerId format. Expected to start with 'p'."];
     }
@@ -24,48 +26,55 @@ function handleSetupPacket($data)
         return ["error" => "Invalid cookieId format. Expected to start with 'c'"];
     }
     setcookie("cookieId", $data["cookieId"], time() + (10 * 365 * 24 * 60 * 60), "/");
-    $player = loadPlayer($data["playerId"], null);
+    $player = loadPlayer($pid, null);
     $type   = "unknown";
     if (! $player) {
         $type = "created-player";
-        error_log("Player not found, creating id: " . $data["playerId"]);
+        error_log("Player not found, creating id: " . $pid);
         $playerData = [
-            "playerId"    => $data["playerId"],
+            "playerId"    => $pid,
             "cookieId"    => $data["cookieId"],
             "createdAt"   => time(),
             "lastLoginAt" => time(),
+            "regionList"  => [],
+            "profileList" => [],
             "pose"        => $data["pose"] ?? [0, 0, 0, 0, 0, 0],
         ];
-        if (abs($playerData["pose"][0]) < 0.5 && abs($playerData["pose"][1]) < 0.5 && abs($playerData["pose"][2]) < 0.5) {
-            error_log("Player pose is at origin, moving to spawn point.");
-            $playerData["pose"][0] = 8;
-            $playerData["pose"][1] = 8;
-            $playerData["pose"][2] = 8;
-            $playerData["pose"][3] = 0;
-            $playerData["pose"][4] = -1;
-            $playerData["pose"][5] = 0;
-        }
-        createPlayer($data["playerId"], $playerData);
+        createPlayer($pid, $playerData);
     } else {
         $type = "existing-player";
-        error_log("Player found: " . $data["playerId"]);
+        error_log("Player found: " . $pid);
         $player["lastLoginAt"] = time();
-        if (!array_key_exists("loginCount", $player)) {
+        if (! array_key_exists("loginCount", $player)) {
             $player["loginCount"] = 1;
         } else {
             $player["loginCount"] += 1;
         }
-        $player["pose"]        = $data["pose"] ?? $player["pose"] ?? [0, 0, 0, 0, 0, 0];
-        savePlayer($data["playerId"], $player);
+        savePlayer($pid, $player);
     }
-    $player = loadPlayer($data["playerId"], null);
-
-    setActivePlayer($data["playerId"], $player);
-    $player = getActivePlayer($data["playerId"]);
-    if (! $player) {
-        error_log("Failed to retrieve player from cache after setting it: " . $data["playerId"]);
-        return ["error" => "Failed to retrieve player from cache after setting it.", "playerId" => $data["playerId"]];
+    $player          = loadPlayer($pid, null);
+    $list            = getFastActivePlayer(false);
+    $activePlayerObj = null;
+    foreach ($list as $activePlayer) {
+        if ($activePlayer["playerId"] === $pid) {
+            error_log("Player " . $pid . " is already active, skipping adding to active players list.");
+            $activePlayerObj = $activePlayer;
+            break;
+        }
     }
+    if (! $activePlayerObj) {
+        $activePlayerObj = [
+            "playerId"    => $pid,
+            "entityId" => null,
+            "pose"        => [0, 0, 0, 0, 0, 0],
+            "lastLoginAt" => 0,
+            "queue"       => [],
+        ];
+        array_push($list, $activePlayerObj);
+    }
+    $activePlayerObj["pose"]        = $player["pose"];
+    $activePlayerObj["lastLoginAt"] = time();
+    setFastActivePlayer($list, false);
     $region     = getRegionIdFromPos($player["pose"]);
     $regionData = loadRegion($region);
     if (! $regionData) {
@@ -81,7 +90,7 @@ function handleSetupPacket($data)
         $regionData["entities"] = [];
         saveRegion($region, $regionData);
     }
-    return (["status" => "success", "type" => $type, "playerId" => $data["playerId"], "cookieId" => $data["cookieId"], "region" => $region]);
+    return (["status" => "success", "type" => $type, "playerId" => $pid, "cookieId" => $data["cookieId"], "region" => $region]);
 }
 
 /**

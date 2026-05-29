@@ -116,6 +116,33 @@ function loadRegion($regionId, $fallback = null)
     return $region;
 }
 
+function loadRegionWithEvents($regionId, $fallback = null)
+{
+    $parts  = getRegionFilePathParts($regionId);
+    $region = loadStorageObject($parts[0], $parts[1], $parts[2], $fallback);
+    if ($region) {
+         $currentRegionEvents = loadRegionEvents($regionId);
+            error_log("Applying " . count($currentRegionEvents) . " events to region " . $regionId . " for place packet.");
+            applyRegionEvents($region, $currentRegionEvents);
+            
+    } else {
+        error_log("Failed to load region: " . $regionId);
+    }
+    return $region;
+}
+
+function getRegionPlayerIdList($region, $list = []) {
+    if (! isset($region) || ! isset($region["entities"]) || ! is_array($region["entities"])) {
+        return $list;
+    }
+    foreach ($region["entities"] as $entity) {
+        if (isset($entity["playerId"]) && ! in_array($entity["playerId"], $list)) {
+            $list[] = $entity["playerId"];
+        }
+    }
+    return $list;
+}
+
 function saveRegion($regionId, $data)
 {
     $parts  = getRegionFilePathParts($regionId);
@@ -146,9 +173,9 @@ function getSurroundingOffsets()
 
 function getSurroundingRegionIds($regionId, $includeSelf = false)
 {
-    $pos     = getRegionPos($regionId);
-    if (!$pos) {
-      throw new Exception("Invalid regionId: " . $regionId);
+    $pos = getRegionPos($regionId);
+    if (! $pos) {
+        throw new Exception("Invalid regionId: " . $regionId);
     }
     $offsets = getSurroundingOffsets();
     $regions = [];
@@ -189,11 +216,15 @@ function createRegion($regionId, $data)
 
 function appendRegionEvent($event)
 {
+  if (! isset($event["regionId"])) {
+        error_log("Cannot append event without regionId: " . json_encode($event));
+        return;
+    }
     $regionId = $event["regionId"];
-    $parts = getRegionFilePathParts($regionId);
+    $parts    = getRegionFilePathParts($regionId);
     error_log("Appending event to region " . $regionId . ": " . json_encode($event));
     appendStorageArray($parts[0], $parts[1], $parts[2], [$event]);
-    
+
     if (isset($event["nextRegion"])) {
         $nextRegionId = $event["nextRegion"];
         $parts        = getRegionFilePathParts($nextRegionId);
@@ -342,10 +373,15 @@ function applyChunkBlockUpdate($region, $event)
 
 function applyRegionEvents($region, $events, $save = true)
 {
+    if (! $events) {
+        error_log("No events to apply for region " . (is_string($region) ? $region : $region["regionId"] ?? "unknown"));
+        return;
+    }
     foreach ($events as $event) {
         if (! isset($event["type"])) {
             continue;
         }
+        error_log("Applying event to region " . (is_string($region) ? $region : $region["regionId"] ?? "unknown") . ": " . json_encode($event));
         if ($event["type"] === "move") {
             applyRegionEntityPoseUpdate($region, $event["entityId"] ?? null, $event["pose"] ?? null);
             continue;
@@ -359,6 +395,8 @@ function applyRegionEvents($region, $events, $save = true)
         if ($event["type"] === "update") {
         }
         if ($event["type"] === "spawn") {
+          array_push($region["entities"], $event["entity"] ?? []);
+            continue;
         }
         if ($event["type"] === "despawn") {
         }
@@ -368,69 +406,73 @@ function applyRegionEvents($region, $events, $save = true)
 }
 function broadCastRegionEvents($events)
 {
-  if (is_array($events) && array_key_exists("type", $events)) {
-    $events = [$events];
-  }
-  $playerEventMap = [];
-  foreach ($events as $event) {
-    $regionId     = $event["regionId"];
-    $regionIdList = getSurroundingRegionIds($regionId);
-    if (isset($event["nextRegion"])) {
-      $nextRegionId = $event["nextRegion"];
-      $extras       = getSurroundingRegionIds($nextRegionId);
-      foreach ($extras as $id) {
-        if (! in_array($id, $regionIdList)) {
-          array_push($regionIdList, $id);
-        }
-      }
+    if (is_array($events) && !array_key_exists("type", $events)) {
+        $events = [$events];
     }
-    foreach ($regionIdList as $id) {
-      $regionData = loadRegion($id);
-      if (! $regionData) {
-        error_log("Failed to load region data for region: " . $id);
-        continue;
-      }
-      if (! is_array($regionData["entities"])) {
-        $regionData["entities"] = [];
-      }
-      foreach ($regionData["entities"] as &$entity) {
-        if (! isset($entity["type"]) || $entity["type"] !== "player") {
-          continue;
-        }
-        if (! isset($entity["playerId"]) || empty($entity["playerId"])) {
-          continue;
-        }
-        if (array_key_exists($entity["playerId"], $playerEventMap)) {
-          continue;
-        }
-        if (! isset($entity["pose"]) || $entity["playerId"] === $event["playerId"]) {
-          continue;
-        }
-        $dx    = abs($entity["pose"][0] - $event["pose"][0]);
-        $dy    = abs($entity["pose"][1] - $event["pose"][1]);
-        $dz    = abs($entity["pose"][2] - $event["pose"][2]);
-        $delta = sqrt($dx * $dx + $dy * $dy + $dz * $dz);
-        if ($delta > 64 + 8) {
-          continue;
-        }
-        $playerEventMap[$entity["playerId"]] = $delta;
-      }
-    }
-  }
-
-  foreach ($playerEventMap as $playerId => $delta) {
-    $p = getActivePlayer($playerId);
-    if (! $p) {
-      error_log("Failed to retrieve player from cache for playerId: " . $playerId);
-      continue;
-    }
-    $regionId = getRegionIdFromPos($p["pose"]);
-    $list     = $p["events"] ?? [];
+    $playerEventMap = [];
     foreach ($events as $event) {
-      array_push($list, $event);
+      if (!is_array($event) || !array_key_exists("regionId", $event)) {
+            error_log("Skipping event without regionId: " . json_encode($event));
+            continue;
+        }
+        $regionId     = $event["regionId"];
+        $regionIdList = getSurroundingRegionIds($regionId);
+        if (isset($event["nextRegion"])) {
+            $nextRegionId = $event["nextRegion"];
+            $extras       = getSurroundingRegionIds($nextRegionId);
+            foreach ($extras as $id) {
+                if (! in_array($id, $regionIdList)) {
+                    array_push($regionIdList, $id);
+                }
+            }
+        }
+        foreach ($regionIdList as $id) {
+            $regionData = loadRegion($id);
+            if (! $regionData) {
+                error_log("Failed to load region data for region: " . $id);
+                continue;
+            }
+            if (! is_array($regionData["entities"])) {
+                $regionData["entities"] = [];
+            }
+            foreach ($regionData["entities"] as &$entity) {
+                if (! isset($entity["type"]) || $entity["type"] !== "player") {
+                    continue;
+                }
+                if (! isset($entity["playerId"]) || empty($entity["playerId"])) {
+                    continue;
+                }
+                if (array_key_exists($entity["playerId"], $playerEventMap)) {
+                    continue;
+                }
+                if (! isset($entity["pose"]) || $entity["playerId"] === $event["playerId"]) {
+                    continue;
+                }
+                $dx    = abs($entity["pose"][0] - $event["pose"][0]);
+                $dy    = abs($entity["pose"][1] - $event["pose"][1]);
+                $dz    = abs($entity["pose"][2] - $event["pose"][2]);
+                $delta = sqrt($dx * $dx + $dy * $dy + $dz * $dz);
+                if ($delta > 64 + 8) {
+                    continue;
+                }
+                $playerEventMap[$entity["playerId"]] = $delta;
+            }
+        }
     }
-    $p["events"] = $list;
-    setActivePlayer($playerId, $p);
-  }
-  return count($playerEventMap);
+
+    foreach ($playerEventMap as $playerId => $delta) {
+        $p = getActivePlayer($playerId);
+        if (! $p) {
+            error_log("Failed to retrieve player from cache for playerId: " . $playerId);
+            continue;
+        }
+        $regionId = getRegionIdFromPos($p["pose"]);
+        $list     = $p["events"] ?? [];
+        foreach ($events as $event) {
+            array_push($list, $event);
+        }
+        $p["events"] = $list;
+        setActivePlayer($playerId, $p);
+    }
+    return count($playerEventMap);
 }

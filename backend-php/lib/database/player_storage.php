@@ -21,6 +21,22 @@ function getActivePlayersDir() {
   return dirname(getActivePlayerFilePath("p"));
 }
 
+function getActivePlayerList() {
+    $activePlayersDir = getActivePlayersDir();
+    if (! file_exists($activePlayersDir)) {
+        return [];
+    }
+    $files = scandir($activePlayersDir);
+    $playerIds = [];
+    foreach ($files as $file) {
+        if (str_ends_with($file, ".json")) {
+            $playerId = substr($file, 0, -5);
+            $playerIds[] = $playerId;
+        }
+    }
+    return $playerIds;
+}
+
 function loadPlayer($playerId, $fallback = null) {
     $player = loadStorageObject("players", substr($playerId, 1, 2), $playerId, $fallback);
     if ($player) {
@@ -49,13 +65,16 @@ function deletePlayer($playerId) {
 
 function listPlayers() {
     $players = loadStorageArray("players", "created", null);
+    if ($players === null) {
+        return [];
+    }
     error_log("Loaded player list with count: " . count($players));
     return $players;
 }
 
 function createPlayer($playerId, $data) {
     $players = listPlayers();
-    $playerIdList = array_map(function($p) { return $p["playerId"]; }, $players);
+    $playerIdList = $players;
     if (in_array($playerId, $playerIdList)) {
         error_log("Player already exists: " . $playerId);
         return null;

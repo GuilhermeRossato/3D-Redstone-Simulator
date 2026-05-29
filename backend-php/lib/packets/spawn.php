@@ -3,101 +3,64 @@
 require_once __DIR__ . "/../database/player_storage.php";
 require_once __DIR__ . "/../database/chunk_storage.php";
 require_once __DIR__ . "/../database/region_storage.php";
+require_once __DIR__ . "/../database/active_players.php";
 
 function handleSpawnPacket($data)
 {
-    $player = isset($data['playerId']) ? getActivePlayer($data["playerId"]) : null;
-    if (! $player) {
+    $pid = isset($data['playerId']) ? $data['playerId'] : null;
+
+    $list          = getFastActivePlayer(false);
+    $playerObj     = null;
+    $otherListList = [];
+    foreach ($list as $activePlayer) {
+      error_log("Checking active player in spawn packet: " . json_encode($activePlayer));
+        if ($activePlayer["playerId"] === $pid) {
+            $playerObj = $activePlayer;
+        } else if (isset($activePlayer["queue"]) && is_array($activePlayer["queue"])) {
+            $otherListList[] = $activePlayer["queue"];
+        }
+    }
+
+    if (! $playerObj) {
         error_log("Invalid player in spawn packet: " . json_encode($data));
         return [
             'error' => 'Missing required fields: playerId or pose.',
         ];
     }
     if (isset($data["pose"]) && is_array($data["pose"]) && count($data["pose"]) === 6) {
-        $player["pose"] = $data["pose"];
-        setActivePlayer($data["playerId"], $player);
-        savePlayer($data["playerId"], $player);
+        error_log("Updating player pose for spawn packet: " . json_encode($data["pose"]));
+        $playerObj["pose"] = $data["pose"];
     } else {
-        error_log("Using existing player pose for spawn packet due to missing or invalid pose data: " . json_encode($data));
+        error_log("Using player pose from active player data for spawn packet because no valid pose was provided: " . json_encode($playerObj["pose"]));
     }
-    $region     = getRegionIdFromPos($player["pose"]);
-    $regionData = loadRegion($region);
-    if (! $regionData) {
-        error_log("Failed to load region data for region: " . $region);
-        saveRegion($region, ["regionId" => $region, "createdAt" => time(), "entities" => []]);
-        $regionData = loadRegion($region);
-    }
-    if (! $regionData) {
-        error_log("Failed to retrieve region data after creating it: " . $region);
-        return ["error" => "Failed to retrieve region data after creating it.", "regionId" => $region];
-    }
-    if (! is_array($regionData["entities"])) {
-        $regionData["entities"] = [];
-    }
-    $lastEntityId = false;
-    $extra        = [];
-    $regionEntities         = [];
-    $entityId     = $extra["entityId"] ?? uniqid("e");
-    $entity       = [
+    $regionId = getRegionIdFromPos($playerObj["pose"]);
+
+    $entityObj = [
         "type"      => "player",
-        "entityId"  => $entityId,
-        "playerId"  => $data["playerId"],
+        "entityId"  => uniqid("e"),
+        "playerId"  => $pid,
         "createdAt" => time(),
-        "regionId"  => $region,
-        "pose"      => $player["pose"],
+        "regionId"  => $regionId,
+        "pose"      => $playerObj["pose"],
     ];
-    foreach ($regionData["entities"] as $entity) {
-        if (isset($entity["playerId"]) && $entity["playerId"] === $data["playerId"] && $entity["type"] === "player") {
-            $lastEntityId = $entity["entityId"];
-            foreach ($entity as $key => $value) {
-                if (! array_key_exists($key, $regionEntities)) {
-                    $regionEntities[$key] = $value;
-                }
-            }
-            continue;
-        }
-        array_push($regionEntities, $entity);
-    }
-    foreach ($extra as $key => $value) {
-        if (! array_key_exists($key, $entity)) {
-            $entity[$key] = $value;
-        }
-    }
-    $events = [];
-    if ($lastEntityId) {
-        array_push($events, [
-            "type"      => "despawn",
-            "timestamp" => time(),
-            "playerId"  => $data["playerId"],
-            "entityId"  => $lastEntityId,
-            "regionId"  => $region,
-        ]);
-        appendRegionEvent($events[0]);
-    }
     $evt = [
         "type"      => "spawn",
         "timestamp" => time(),
-        "playerId"  => $data["playerId"],
-        "entityId"  => $entityId,
-        "regionId"  => $region,
-        "entity"    => $entity,
+        "playerId"  => $pid,
+        "entityId"  => $entityObj["entityId"],
+        "regionId"  => $regionId,
+        "entity"    => $entityObj,
     ];
-    array_push($events, $evt);
-    appendRegionEvent($evt);
-    $regionData["entities"] = $regionEntities;
-    if (!array_key_exists("lastDirtyTimestamp", $regionData)) {
-        $regionData["lastDirtyTimestamp"] = time();
+    foreach ($otherListList as $otherList) {
+        array_push($otherList, $evt);
     }
-    $player["entityId"] = $entityId;
-    $player["entityId"] = $entityId;
-    $player["pose"] = $entity["pose"];
-    setActivePlayer($data["playerId"], $player);
-    savePlayer($data["playerId"], $player);
-    broadCastRegionEvents($events);
+    setFastActivePlayer($list, false);
+    $playerObj["entityId"] = $entityObj["entityId"];
+    $playerObj["entity"] = $entityObj;
     return [
         "status"   => "success",
-        "entity"   => $entity,
-        "player"   => $player,
-        "regionId" => $region,
+        "entity"   => $entityObj,
+        "player"   => $playerObj,
+        "regionId" => $regionId,
     ];
 }

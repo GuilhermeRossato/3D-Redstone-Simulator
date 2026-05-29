@@ -746,7 +746,7 @@ function launchReliveWorld() {
 let nextUpdateAction = null;
 
 function issueBlockCreationRequest(x, y, z, id) {
-  nextUpdateAction = { type: "create", x, y, z, id };
+  nextUpdateAction = { type: "create", x, y, z, bid: id };
 }
 g("issueBlockCreationRequest", issueBlockCreationRequest);
 
@@ -796,14 +796,14 @@ export function update(frame) {
         nextUpdateAction.x,
         nextUpdateAction.y,
         nextUpdateAction.z,
-        nextUpdateAction.id
+        nextUpdateAction.bid
       );
       sendPlayerActionToServerEventually({
         type: "place",
         x: nextUpdateAction.x,
         y: nextUpdateAction.y,
         z: nextUpdateAction.z,
-        id: nextUpdateAction.id,
+        bid: nextUpdateAction.bid,
       });
       nextUpdateAction = null;
     } else if (nextUpdateAction.type === "delete") {
